@@ -56,15 +56,19 @@ Sistema completo de gerenciamento de tarefas com IA integrada, suportando múlti
 git clone https://github.com/Harley062/tcc-gerenciador-de-tarefas.git
 cd tcc-gerenciador-de-tarefas
 
-# Inicie todos os serviços (inclui Ollama/Llama)
+# Inicie todos os serviços (inclui Ollama/Llama automático)
 docker compose up -d --build
 
-# Aguarde ~2 minutos para:
-# - PostgreSQL inicializar
-# - Redis inicializar
-# - Backend inicializar
-# - Frontend compilar
-# - Ollama baixar o modelo Llama2 (~4GB)
+# Aguarde ~3-5 minutos para:
+# - PostgreSQL inicializar (✅ automático)
+# - Redis inicializar (✅ automático)
+# - Ollama inicializar (✅ automático)
+# - Llama2 model baixar (~4GB) (✅ automático)
+# - Backend inicializar (✅ automático)
+# - Frontend compilar (✅ automático)
+
+# Acompanhe o progresso do download do Llama2:
+docker compose logs ollama-init -f
 ```
 
 ### Acesso
@@ -173,14 +177,27 @@ LOG_LEVEL=INFO
 
 ### Configurar Ollama
 
-O Ollama já vem configurado no Docker Compose com o modelo Llama2. Para usar outros modelos:
+O Ollama é **instalado automaticamente** no Docker Compose com o modelo Llama2. 
 
+**Verificar instalação:**
+```bash
+# Ver status do Ollama
+docker compose ps ollama
+
+# Ver logs da inicialização (download do modelo)
+docker compose logs ollama-init
+
+# Verificar modelos instalados
+docker compose exec ollama ollama list
+
+# Testar Ollama
+curl http://localhost:11434/api/tags
+```
+
+**Instalar modelos adicionais:**
 ```bash
 # Entrar no container Ollama
 docker compose exec ollama bash
-
-# Listar modelos disponíveis
-ollama list
 
 # Baixar outro modelo (ex: llama3, mistral, codellama)
 ollama pull llama3
@@ -189,7 +206,7 @@ ollama pull llama3
 exit
 ```
 
-Depois, atualize o endpoint nas configurações do usuário para usar o novo modelo.
+**Nota:** O primeiro `docker compose up` pode demorar 3-5 minutos enquanto o modelo Llama2 (~4GB) é baixado automaticamente. Acompanhe o progresso com `docker compose logs ollama-init -f`.
 
 ## 📊 Banco de Dados
 
