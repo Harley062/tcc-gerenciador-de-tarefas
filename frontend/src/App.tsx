@@ -7,13 +7,15 @@ import ListView from './components/ListView';
 import KanbanView from './components/KanbanView';
 import CalendarView from './components/CalendarView';
 import SettingsView from './components/SettingsView';
+import DashboardView from './components/DashboardView';
+import ChatAssistant from './components/ChatAssistant';
 
-type ViewType = 'list' | 'kanban' | 'calendar' | 'settings';
+type ViewType = 'dashboard' | 'list' | 'kanban' | 'calendar' | 'settings';
 
 const App: React.FC = () => {
   const { isAuthenticated, checkAuth, logout, user } = useAuthStore();
   const { setupWebSocket, fetchTasks } = useTaskStore();
-  const [currentView, setCurrentView] = useState<ViewType>('list');
+  const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [showInput, setShowInput] = useState(false);
 
   useEffect(() => {
@@ -49,6 +51,16 @@ const App: React.FC = () => {
               </button>
 
               <div className="flex gap-2 border-l pl-4">
+                <button
+                  onClick={() => setCurrentView('dashboard')}
+                  className={`px-3 py-2 rounded-lg transition-colors ${
+                    currentView === 'dashboard'
+                      ? 'bg-primary-100 text-primary-700'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  📊 Dashboard
+                </button>
                 <button
                   onClick={() => setCurrentView('list')}
                   className={`px-3 py-2 rounded-lg transition-colors ${
@@ -112,11 +124,15 @@ const App: React.FC = () => {
           </div>
         )}
 
+        {currentView === 'dashboard' && <DashboardView />}
         {currentView === 'list' && <ListView />}
         {currentView === 'kanban' && <KanbanView />}
         {currentView === 'calendar' && <CalendarView />}
         {currentView === 'settings' && <SettingsView />}
       </main>
+
+      {/* AI Chat Assistant - Always available */}
+      <ChatAssistant />
     </div>
   );
 };
