@@ -14,7 +14,8 @@ from presentation.api.middleware.error_handler import (
 )
 from presentation.api.middleware.logging_middleware import LoggingMiddleware
 from presentation.api.middleware.rate_limit import RateLimitMiddleware
-from presentation.api.routes import auth, projects, tasks
+from presentation.api.routes import ai, auth, projects, tasks
+from presentation.api.routes import settings as settings_router
 from presentation.config import get_settings
 from presentation.logging_config import setup_logging
 from presentation.websocket.handlers import handle_websocket
@@ -54,6 +55,8 @@ app.add_middleware(RateLimitMiddleware, requests_per_minute=60, tokens_per_minut
 app.include_router(auth.router, prefix="/api")
 app.include_router(tasks.router, prefix="/api")
 app.include_router(projects.router, prefix="/api")
+app.include_router(settings_router.router)
+app.include_router(ai.router, prefix="/api")
 
 
 @app.get("/")

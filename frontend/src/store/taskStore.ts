@@ -25,9 +25,18 @@ export interface Task {
 
 interface TaskState {
   tasks: Task[];
+  total: number;
   isLoading: boolean;
   error: string | null;
-  fetchTasks: (status?: string, projectId?: string) => Promise<void>;
+  fetchTasks: (options?: {
+    status?: string;
+    projectId?: string;
+    limit?: number;
+    offset?: number;
+    sortBy?: string;
+    sortOrder?: string;
+    q?: string;
+  }) => Promise<void>;
   createTask: (input: string, projectId?: string) => Promise<Task>;
   createTaskStructured: (taskData: any) => Promise<Task>;
   updateTask: (taskId: string, updates: any) => Promise<void>;
@@ -37,14 +46,26 @@ interface TaskState {
 
 export const useTaskStore = create<TaskState>((set, get) => ({
   tasks: [],
+  total: 0,
   isLoading: false,
   error: null,
 
-  fetchTasks: async (status?: string, projectId?: string) => {
+  fetchTasks: async (options?: {
+    status?: string;
+    projectId?: string;
+    limit?: number;
+    offset?: number;
+    sortBy?: string;
+    sortOrder?: string;
+    q?: string;
+  }) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await apiService.getTasks(status, projectId);
-      set({ tasks: response.tasks, isLoading: false });
+      const response = await apiService.getTasks({
+        ...options,
+        limit: options?.limit || 100, // Use higher default limit for now
+      });
+      set({ tasks: response.tasks, total: response.total, isLoading: false });
     } catch (error: any) {
       set({ 
         error: error.response?.data?.detail || 'Failed to fetch tasks', 

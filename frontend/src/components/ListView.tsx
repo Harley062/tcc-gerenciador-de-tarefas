@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useTaskStore, Task } from '../store/taskStore';
 import TaskCard from './TaskCard';
+import AIInsightsPanel from './AIInsightsPanel';
 
 const ListView: React.FC = () => {
   const { tasks, fetchTasks, updateTask, deleteTask, isLoading } = useTaskStore();
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTaskForAI, setSelectedTaskForAI] = useState<Task | null>(null);
 
   useEffect(() => {
-    fetchTasks(statusFilter || undefined);
+    fetchTasks({ status: statusFilter || undefined });
   }, [statusFilter, fetchTasks]);
 
   const handleStatusChange = async (taskId: string, status: Task['status']) => {
@@ -75,14 +77,29 @@ const ListView: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredTasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onStatusChange={handleStatusChange}
-              onDelete={handleDelete}
-            />
+            <div key={task.id} className="relative">
+              <TaskCard
+                task={task}
+                onStatusChange={handleStatusChange}
+                onDelete={handleDelete}
+              />
+              <button
+                onClick={() => setSelectedTaskForAI(task)}
+                className="absolute top-2 right-2 bg-purple-500 text-white px-2 py-1 rounded text-xs hover:bg-purple-600"
+                title="Ver Insights de IA"
+              >
+                🤖 IA
+              </button>
+            </div>
           ))}
         </div>
+      )}
+
+      {selectedTaskForAI && (
+        <AIInsightsPanel
+          task={selectedTaskForAI}
+          onClose={() => setSelectedTaskForAI(null)}
+        />
       )}
     </div>
   );

@@ -1,338 +1,323 @@
 # TaskMaster - Sistema de Gerenciamento de Tarefas Inteligente (SGTI)
 
-Sistema completo de gerenciamento de tarefas com integração GPT-4 para criação de tarefas usando linguagem natural.
+Sistema completo de gerenciamento de tarefas com IA integrada, suportando múltiplos provedores de LLM (GPT-4, Llama, Regex) e criação automática de tarefas recorrentes.
 
 ## 🚀 Funcionalidades
 
-### Core Features
-- ✅ **Criação de Tarefas via Linguagem Natural**: Use GPT-4 para interpretar comandos como "Reunião com cliente amanhã às 14h"
-- ✅ **Autenticação JWT**: Sistema completo de registro, login e refresh tokens
-- ✅ **CRUD Completo de Tarefas**: Criar, ler, atualizar e deletar tarefas com paginação e busca
-- ✅ **Gerenciamento de Projetos**: CRUD completo para organizar tarefas em projetos
-- ✅ **WebSocket em Tempo Real**: Atualizações instantâneas de tarefas (task_created, task_updated, task_deleted)
-- ✅ **Cache Inteligente**: Redis para otimizar chamadas GPT e reduzir custos
-- ✅ **Fallback Parser**: Sistema de backup quando GPT não está disponível
-- ✅ **Rate Limiting**: Controle de requisições e tokens
-- ✅ **Logging Estruturado**: Logs JSON com request_id, métricas e rastreamento
-- ✅ **Tratamento Global de Erros**: Respostas consistentes com correlation IDs
+### IA e Parsing Inteligente
+- **Multi-LLM Support**: Escolha entre GPT-4, Llama (via Ollama), ou Regex parser
+- **Tarefas Recorrentes**: Detecção automática de padrões como "toda semana", "diariamente", "mensalmente"
+- **Parsing em Português**: Suporte completo para linguagem natural em português
+- **Sugestão Automática**: Tags, prioridades e estimativas de duração
 
-### Visualizações Frontend
-- 📋 **ListView**: Lista tradicional com filtros por status e busca
-- 📊 **KanbanView**: Quadro drag-and-drop para gerenciamento visual
-- 📅 **CalendarView**: Visualização de tarefas por data
+### Gerenciamento de Tarefas
+- **Múltiplas Visualizações**: Lista, Kanban (drag-and-drop), Calendário
+- **Projetos**: Organize tarefas em projetos
+- **Subtarefas**: Hierarquia de tarefas
+- **WebSocket**: Atualizações em tempo real
+- **Filtros e Busca**: Paginação server-side, ordenação, busca full-text
 
-### Melhorias de Performance
-- 🔍 **Busca Server-Side**: Busca em título e descrição com paginação
-- 📄 **Paginação**: Limite de 20 tarefas por página (máximo 100)
-- 🔄 **Ordenação**: Ordenar por created_at, due_date, priority (asc/desc)
-- ⚡ **GPT Otimizado**: Schema JSON estrito com validação Pydantic
-- 📊 **Métricas**: Logging de tokens, custos e latência do GPT
+### Configurações de Usuário
+- **API Keys**: Configure sua chave GPT-4 pela aplicação
+- **Provedor de IA**: Escolha qual LLM usar
+- **Preferências**: Duração padrão, funcionalidades de IA
 
-## 🏗️ Arquitetura
+## 🛠️ Stack Tecnológica
 
-O projeto segue **Clean Architecture** com separação clara de responsabilidades:
+**Backend:**
+- Python 3.11+ com FastAPI
+- PostgreSQL 15 (banco de dados)
+- Redis 7 (cache)
+- SQLAlchemy (ORM async)
+- Ollama (Llama local)
 
-```
-taskmaster/
-├── backend/                    # Backend FastAPI
-│   ├── domain/                # Entidades e regras de negócio
-│   │   ├── entities/          # Task, User, Project
-│   │   ├── value_objects/     # TaskStatus, Priority
-│   │   └── repositories/      # Interfaces de repositórios
-│   ├── application/           # Casos de uso e serviços
-│   │   ├── use_cases/         # Lógica de aplicação
-│   │   └── services/          # GPT, Auth, Notification
-│   ├── infrastructure/        # Implementações técnicas
-│   │   ├── database/          # PostgreSQL + SQLAlchemy
-│   │   ├── gpt/              # OpenAI Adapter
-│   │   └── cache/            # Redis Cache
-│   └── presentation/          # API e WebSocket
-│       ├── api/              # FastAPI routes
-│       └── websocket/        # WebSocket handlers
-├── frontend/                  # React + TypeScript
-│   └── src/
-│       ├── components/       # React components
-│       ├── services/         # API e WebSocket clients
-│       └── store/           # Zustand state management
-└── docker/                   # Docker configuration
-```
+**Frontend:**
+- React 18 com TypeScript
+- Zustand (state management)
+- Axios (HTTP client)
+- React Beautiful DND (drag-and-drop)
+- TailwindCSS (styling)
 
-## 📋 Stack Tecnológica
+**IA:**
+- OpenAI GPT-4 (opcional)
+- Ollama/Llama2 (incluído)
+- Regex Parser (fallback)
 
-### Backend
-- **Python 3.11+** com FastAPI
-- **PostgreSQL 15+** para persistência
-- **Redis 7** para cache
-- **OpenAI GPT-4** para parsing de linguagem natural
-- **SQLAlchemy** (async) para ORM
-- **JWT** para autenticação
-- **WebSockets** para tempo real
-
-### Frontend
-- **React 18+** com TypeScript
-- **Tailwind CSS** para estilização
-- **Zustand** para gerenciamento de estado
-- **Axios** para requisições HTTP
-- **React Beautiful DnD** para drag-and-drop
-- **React Calendar** para visualização de calendário
-
-## 🚀 Setup e Instalação
+## 📦 Instalação e Uso
 
 ### Pré-requisitos
 - Docker e Docker Compose
-- Python 3.11+
-- Node.js 18+
-- Poetry (para gerenciamento de dependências Python)
+- Git
 
-### 1. Clone o Repositório
+### Instalação Rápida
+
 ```bash
+# Clone o repositório
 git clone https://github.com/Harley062/tcc-gerenciador-de-tarefas.git
 cd tcc-gerenciador-de-tarefas
+
+# Inicie todos os serviços (inclui Ollama/Llama automático)
+docker compose up -d --build
+
+# Aguarde ~3-5 minutos para:
+# - PostgreSQL inicializar (✅ automático)
+# - Redis inicializar (✅ automático)
+# - Ollama inicializar (✅ automático)
+# - Llama2 model baixar (~4GB) (✅ automático)
+# - Backend inicializar (✅ automático)
+# - Frontend compilar (✅ automático)
+
+# Acompanhe o progresso do download do Llama2:
+docker compose logs ollama-init -f
 ```
 
-### 2. Configuração de Variáveis de Ambiente
+### Acesso
 
-#### Backend
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
+- **Ollama**: http://localhost:11434
+
+### Primeiro Uso
+
+1. Acesse http://localhost:3000
+2. Clique em "Registrar" e crie uma conta
+3. Faça login
+4. Clique em "⚙️ Configurações" para configurar a IA
+5. Escolha seu provedor:
+   - **Regex**: Já funciona (padrão)
+   - **Llama**: Já funciona (incluído no Docker)
+   - **GPT-4**: Insira sua API key da OpenAI
+
+### Testando Tarefas Recorrentes
+
+```
+# Exemplos de entrada em linguagem natural:
+
+"planning toda semana"
+→ Cria 8 tarefas semanais (próximas segundas-feiras às 9h)
+
+"backup diário às 22h"
+→ Cria 8 tarefas diárias (22h)
+
+"reunião mensal dia 10"
+→ Cria 8 tarefas mensais (dia 10 de cada mês)
+
+"reunião com cliente amanhã às 14h"
+→ Cria 1 tarefa para amanhã às 14h
+```
+
+## 🏗️ Arquitetura
+
+### Clean Architecture (Backend)
+
+```
+backend/
+├── domain/              # Entidades e regras de negócio
+│   ├── entities/
+│   ├── value_objects/
+│   └── repositories/
+├── application/         # Casos de uso e serviços
+│   ├── use_cases/
+│   └── services/
+├── infrastructure/      # Implementações técnicas
+│   ├── database/
+│   ├── gpt/
+│   ├── llm/
+│   └── cache/
+└── presentation/        # API e WebSocket
+    ├── api/
+    └── websocket/
+```
+
+### Componentes Principais
+
+**Multi-LLM System:**
+- `EnhancedGPTService`: Orquestra múltiplos provedores
+- `OpenAIAdapter`: Integração GPT-4
+- `LlamaAdapter`: Integração Ollama/Llama
+- `RegexParser`: Fallback pattern matching
+
+**Recurring Tasks:**
+- Detecção automática de padrões de recorrência
+- Expansão em múltiplas tarefas (default: 8 ocorrências)
+- Agrupamento por `series_id` no metadata
+- Suporte a frequências: daily, weekly, monthly
+
+## 🔧 Configuração Avançada
+
+### Variáveis de Ambiente
+
+Crie um arquivo `.env` no diretório `backend/`:
+
 ```bash
-cd backend
-cp .env.example .env
+# Database
+DATABASE_URL=postgresql+asyncpg://taskmaster:taskmaster123@postgres/taskmaster
+
+# Redis
+REDIS_URL=redis://redis:6379
+
+# OpenAI (opcional)
+OPENAI_API_KEY=sk-...
+
+# Ollama
+OLLAMA_ENDPOINT=http://ollama:11434
+
+# JWT
+JWT_SECRET_KEY=your-secret-key-here
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+
+# CORS
+CORS_ORIGINS=http://localhost:3000
+
+# Logging
+LOG_LEVEL=INFO
 ```
 
-Edite `.env` e configure:
-```env
-DATABASE_URL=postgresql+asyncpg://taskmaster:taskmaster123@localhost/taskmaster
-REDIS_URL=redis://localhost:6379
-OPENAI_API_KEY=sua_chave_openai_aqui
-JWT_SECRET_KEY=gere_uma_chave_secreta_forte_aqui
-```
+### Configurar Ollama
 
-#### Frontend
+O Ollama é **instalado automaticamente** no Docker Compose com o modelo Llama2. 
+
+**Verificar instalação:**
 ```bash
-cd frontend
-cp .env.example .env
+# Ver status do Ollama
+docker compose ps ollama
+
+# Ver logs da inicialização (download do modelo)
+docker compose logs ollama-init
+
+# Verificar modelos instalados
+docker compose exec ollama ollama list
+
+# Testar Ollama
+curl http://localhost:11434/api/tags
 ```
 
-### 3. Usando Docker Compose (Recomendado)
-
+**Instalar modelos adicionais:**
 ```bash
-# Na raiz do projeto
-docker-compose up -d
+# Entrar no container Ollama
+docker compose exec ollama bash
+
+# Baixar outro modelo (ex: llama3, mistral, codellama)
+ollama pull llama3
+
+# Sair
+exit
 ```
 
-Isso iniciará:
-- PostgreSQL na porta 5432
-- Redis na porta 6379
-- Backend na porta 8000
-- Frontend na porta 3000
-
-### 4. Setup Manual (Alternativa)
-
-#### Backend
-```bash
-cd backend
-
-# Instalar dependências
-poetry install
-
-# Iniciar PostgreSQL e Redis
-docker-compose up -d postgres redis
-
-# Executar migrações (as tabelas são criadas automaticamente)
-# Iniciar servidor
-poetry run uvicorn presentation.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-#### Frontend
-```bash
-cd frontend
-
-# Instalar dependências
-npm install
-
-# Iniciar servidor de desenvolvimento
-npm start
-```
+**Nota:** O primeiro `docker compose up` pode demorar 3-5 minutos enquanto o modelo Llama2 (~4GB) é baixado automaticamente. Acompanhe o progresso com `docker compose logs ollama-init -f`.
 
 ## 📊 Banco de Dados
 
-### Schema Principal
+### Tabelas Principais
 
-**users**
-- id (UUID)
-- email (VARCHAR, UNIQUE)
-- hashed_password (VARCHAR)
-- full_name (VARCHAR)
-- is_active (BOOLEAN)
-- created_at, updated_at (TIMESTAMP)
+- `users`: Usuários do sistema
+- `user_settings`: Configurações e preferências de IA
+- `projects`: Projetos para organização
+- `tasks`: Tarefas com metadata de recorrência
+- `gpt_cache`: Cache de respostas de IA
 
-**tasks**
-- id (UUID)
-- user_id (UUID, FK)
-- project_id (UUID, FK, nullable)
-- parent_task_id (UUID, FK, nullable)
-- title (VARCHAR)
-- description (TEXT)
-- status (ENUM: todo, in_progress, done, cancelled)
-- priority (ENUM: low, medium, high, urgent)
-- due_date (TIMESTAMP)
-- estimated_duration (INTEGER)
-- tags (TEXT[])
-- metadata (JSONB)
-- natural_language_input (TEXT)
-- gpt_response (JSONB)
-- created_at, updated_at (TIMESTAMP)
+### Migrações
 
-**projects**
-- id (UUID)
-- user_id (UUID, FK)
-- name (VARCHAR)
-- description (TEXT)
-- color (VARCHAR)
-- icon (VARCHAR)
-- created_at, updated_at (TIMESTAMP)
+As tabelas são criadas automaticamente na inicialização. Para aplicar migrações manualmente:
 
-**gpt_cache**
-- id (UUID)
-- input_hash (VARCHAR, UNIQUE)
-- input_text (TEXT)
-- output (JSONB)
-- model (VARCHAR)
-- tokens_used (INTEGER)
-- cost (DECIMAL)
-- created_at, last_accessed (TIMESTAMP)
-- access_count (INTEGER)
-
-## 🔌 API Endpoints
-
-### Autenticação
-- `POST /api/auth/register` - Registrar novo usuário
-- `POST /api/auth/login` - Login
-- `POST /api/auth/refresh` - Renovar token
-- `GET /api/auth/me` - Obter usuário atual
-
-### Tarefas
-- `POST /api/tasks` - Criar tarefa (linguagem natural ou estruturada)
-- `GET /api/tasks` - Listar tarefas (com filtros, paginação, ordenação, busca)
-  - Query params: `status`, `project_id`, `limit`, `offset`, `sort_by`, `sort_order`, `q`
-- `GET /api/tasks/{id}` - Obter tarefa específica
-- `PUT /api/tasks/{id}` - Atualizar tarefa
-- `DELETE /api/tasks/{id}` - Deletar tarefa
-- `POST /api/tasks/{id}/subtasks` - Criar subtarefa
-- `GET /api/tasks/{id}/subtasks` - Listar subtarefas
-
-### Projetos
-- `POST /api/projects` - Criar projeto
-- `GET /api/projects` - Listar projetos do usuário
-- `GET /api/projects/{id}` - Obter projeto específico
-- `PUT /api/projects/{id}` - Atualizar projeto
-- `DELETE /api/projects/{id}` - Deletar projeto
-
-### WebSocket
-- `WS /ws?token={jwt_token}` - Conexão WebSocket para atualizações em tempo real
-  - Eventos: `task_created`, `task_updated`, `task_deleted`
+```bash
+docker compose exec postgres psql -U taskmaster -d taskmaster -f /path/to/migration.sql
+```
 
 ## 🧪 Testes
 
-### Backend
 ```bash
+# Backend
 cd backend
+poetry install
 poetry run pytest
-poetry run pytest --cov=. --cov-report=html
-```
 
-### Frontend
-```bash
+# Frontend
 cd frontend
+npm install
 npm test
-npm run test:coverage
 ```
 
-## 📝 Exemplos de Uso
+## 📝 API Endpoints
 
-### Criar Tarefa com Linguagem Natural
+### Autenticação
+- `POST /api/auth/register` - Registrar usuário
+- `POST /api/auth/login` - Login
+- `POST /api/auth/refresh` - Refresh token
+- `GET /api/auth/me` - Dados do usuário
 
+### Tarefas
+- `GET /api/tasks` - Listar tarefas (com paginação, filtros, busca)
+- `POST /api/tasks` - Criar tarefa (linguagem natural ou estruturada)
+- `GET /api/tasks/{id}` - Detalhes da tarefa
+- `PUT /api/tasks/{id}` - Atualizar tarefa
+- `DELETE /api/tasks/{id}` - Deletar tarefa
+- `POST /api/tasks/{id}/subtasks` - Criar subtarefa
+
+### Projetos
+- `GET /api/projects` - Listar projetos
+- `POST /api/projects` - Criar projeto
+- `PUT /api/projects/{id}` - Atualizar projeto
+- `DELETE /api/projects/{id}` - Deletar projeto
+
+### Configurações
+- `GET /api/settings` - Obter configurações do usuário
+- `PUT /api/settings` - Atualizar configurações
+
+### WebSocket
+- `WS /ws?token={jwt_token}` - Conexão WebSocket para atualizações em tempo real
+
+## 🐛 Troubleshooting
+
+### Backend não inicia
 ```bash
-curl -X POST http://localhost:8000/api/tasks \
-  -H "Authorization: Bearer {token}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "natural_language_input": "Reunião com cliente amanhã às 14h"
-  }'
+# Ver logs
+docker compose logs backend
+
+# Reconstruir
+docker compose down
+docker compose up -d --build backend
 ```
 
-Resposta:
-```json
-{
-  "id": "uuid",
-  "title": "Reunião com cliente",
-  "description": "Reunião agendada com cliente",
-  "priority": "medium",
-  "due_date": "2025-11-15T14:00:00",
-  "status": "todo",
-  "tags": ["reunião", "cliente"],
-  "gpt_response": {
-    "tokens_used": 95,
-    "model": "gpt-4",
-    "cost": 0.00285
-  }
-}
-```
-
-### Criar Tarefa Estruturada
-
+### Ollama não responde
 ```bash
-curl -X POST http://localhost:8000/api/tasks \
-  -H "Authorization: Bearer {token}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Implementar feature X",
-    "description": "Desenvolver nova funcionalidade",
-    "priority": "high",
-    "status": "todo",
-    "tags": ["desenvolvimento", "feature"]
-  }'
+# Verificar status
+docker compose ps ollama
+
+# Ver logs
+docker compose logs ollama
+
+# Reiniciar
+docker compose restart ollama
+
+# Verificar se o modelo foi baixado
+docker compose exec ollama ollama list
 ```
 
-## 🎯 Métricas de Performance
-
-- **Tempo de resposta P95**: < 500ms
-- **Taxa de erro**: < 0.1%
-- **Precisão do parser GPT**: > 95%
-- **Custo médio por requisição GPT**: < $0.002
-- **Taxa de cache hit**: > 60%
-
-## 🔒 Segurança
-
-- JWT com expiração de 30 minutos (access token)
-- Refresh tokens com expiração de 7 dias
-- Senhas hasheadas com bcrypt
-- Rate limiting: 60 requisições/minuto
-- CORS configurado
-- Validação de entrada com Pydantic
-- Tratamento global de erros com correlation IDs
-- Logging estruturado para auditoria
-
-## 🚀 Deploy
-
-### Backend (FastAPI)
+### Frontend não compila
 ```bash
-cd backend
-docker build -t taskmaster-backend .
-docker run -p 8000:8000 taskmaster-backend
+# Limpar e reconstruir
+docker compose down
+docker compose up -d --build frontend
 ```
 
-### Frontend (React)
+### Erro de conexão com banco
 ```bash
-cd frontend
-npm run build
-# Servir pasta build/ com servidor web (nginx, etc)
+# Verificar se PostgreSQL está rodando
+docker compose ps postgres
+
+# Recriar banco
+docker compose down -v
+docker compose up -d
 ```
 
-## 📚 Documentação da API
+## 📚 Documentação Adicional
 
-Acesse a documentação interativa Swagger:
-- **Swagger UI**: http://localhost:8000/docs
+- **API Docs**: http://localhost:8000/docs (Swagger UI)
 - **ReDoc**: http://localhost:8000/redoc
+- **Ollama Docs**: https://ollama.ai/docs
 
 ## 🤝 Contribuindo
 
@@ -344,7 +329,7 @@ Acesse a documentação interativa Swagger:
 
 ## 📄 Licença
 
-Este projeto foi desenvolvido como parte do TCC (Trabalho de Conclusão de Curso).
+Este projeto foi desenvolvido como TCC (Trabalho de Conclusão de Curso).
 
 ## 👤 Autor
 
@@ -355,14 +340,5 @@ Este projeto foi desenvolvido como parte do TCC (Trabalho de Conclusão de Curso
 ## 🙏 Agradecimentos
 
 - OpenAI pela API GPT-4
-- Comunidade FastAPI
-- Comunidade React
-- Todos os contribuidores de bibliotecas open-source utilizadas
-
-## 📞 Suporte
-
-Para questões e suporte, abra uma issue no GitHub ou entre em contato via email.
-
----
-
-**Desenvolvido com ❤️ usando Clean Architecture e as melhores práticas de desenvolvimento**
+- Ollama pelo runtime de LLM local
+- FastAPI e React pelas excelentes frameworks

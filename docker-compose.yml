@@ -39,10 +39,13 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      ollama:
+        condition: service_healthy
     environment:
       - DATABASE_URL=postgresql+asyncpg://taskmaster:taskmaster123@postgres/taskmaster
       - REDIS_URL=redis://redis:6379
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OLLAMA_ENDPOINT=http://ollama:11434
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-secret-key-change-in-production}
       - ENVIRONMENT=development
     volumes:
@@ -64,5 +67,33 @@ services:
       - /app/node_modules
     command: npm start
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: taskmaster-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  ollama-init:
+    image: curlimages/curl:latest
+    container_name: taskmaster-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ./scripts:/scripts
+    entrypoint: ["/bin/sh", "/scripts/init-ollama.sh"]
+    restart: "no"
+
 volumes:
   postgres_data:
+  ollama_data:

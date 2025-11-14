@@ -16,6 +16,7 @@ class ParsedTaskSchema(BaseModel):
     due_date: Optional[str] = Field(None, description="ISO format datetime")
     estimated_duration: Optional[int] = Field(None, description="Estimated duration in minutes")
     tags: list[str] = Field(default_factory=list, description="Relevant tags")
+    recurrence: Optional[dict] = Field(None, description="Recurrence pattern if task repeats")
 
 
 class OpenAIAdapter:
@@ -38,13 +39,17 @@ Return a JSON object with these fields:
 - due_date: string (ISO format datetime with timezone, null if not mentioned)
 - estimated_duration: integer (minutes, null if not mentioned)
 - tags: array of strings (relevant tags extracted from context)
+- recurrence: object (if task repeats: {{"frequency": "daily|weekly|monthly", "interval": 1}}, null otherwise)
 
 Examples:
 Input: "Reunião com cliente amanhã às 14h"
-Output: {{"title": "Reunião com cliente", "description": "Reunião agendada com cliente", "priority": "medium", "due_date": "{current_date}T14:00:00+00:00", "estimated_duration": 60, "tags": ["reunião", "cliente"]}}
+Output: {{"title": "Reunião com cliente", "description": "Reunião agendada com cliente", "priority": "medium", "due_date": "{current_date}T14:00:00+00:00", "estimated_duration": 60, "tags": ["reunião", "cliente"], "recurrence": null}}
+
+Input: "planning toda semana"
+Output: {{"title": "Planning semanal", "description": "Reunião de planning recorrente", "priority": "medium", "due_date": null, "estimated_duration": 60, "tags": ["planning", "reunião"], "recurrence": {{"frequency": "weekly", "interval": 1}}}}
 
 Input: "Urgent: Fix production bug in payment system by end of day"
-Output: {{"title": "Fix production bug in payment system", "description": "Critical bug fix needed in payment system", "priority": "urgent", "due_date": "{current_date}T23:59:59+00:00", "estimated_duration": null, "tags": ["bug", "production", "payment"]}}
+Output: {{"title": "Fix production bug in payment system", "description": "Critical bug fix needed in payment system", "priority": "urgent", "due_date": "{current_date}T23:59:59+00:00", "estimated_duration": null, "tags": ["bug", "production", "payment"], "recurrence": null}}
 
 Only return valid JSON matching the schema, no additional text."""
 
@@ -102,7 +107,7 @@ Only return valid JSON matching the schema, no additional text."""
         prompt = f"Task: {task_title}"
         if task_description:
             prompt += f"\nDescription: {task_description}"
-        prompt += "\n\nSuggest 3-5 subtasks to complete this task. Return as JSON array with objects containing 'title' and 'estimated_duration' (in minutes)."
+        prompt += "\n\nSuggest 3-5 subtasks to complete this task. Return as JSON array with objects containing 'title', 'description', and 'estimated_duration' (in minutes)."
 
         try:
             response = await self.client.chat.completions.create(
@@ -113,16 +118,50 @@ Only return valid JSON matching the schema, no additional text."""
                 ],
                 temperature=0.5,
                 max_tokens=400,
+                response_format={"type": "json_object"},
             )
 
             content = response.choices[0].message.content
             if not content:
                 return []
 
-            return json.loads(content)
+            result = json.loads(content)
+            return result if isinstance(result, list) else result.get("subtasks", [])
 
         except Exception:
             return []
+
+    async def generate_completion(
+        self, 
+        prompt: str, 
+        response_format: Optional[dict] = None
+    ) -> dict[str, Any]:
+        """Generate a general completion from GPT"""
+        try:
+            kwargs = {
+                "model": self.model,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.7,
+                "max_tokens": 500,
+            }
+            
+            if response_format:
+                kwargs["response_format"] = response_format
+            
+            response = await self.client.chat.completions.create(**kwargs)
+            
+            content = response.choices[0].message.content
+            tokens_used = response.usage.total_tokens if response.usage else 0
+            
+            return {
+                "content": content,
+                "tokens_used": tokens_used,
+                "model": self.model,
+                "cost": self._calculate_cost(tokens_used),
+            }
+        except Exception as e:
+            logger.error(f"GPT completion failed: {e}")
+            raise
 
     def _calculate_cost(self, tokens: int) -> float:
         cost_per_1k_tokens = 0.03 if self.model == "gpt-4" else 0.002

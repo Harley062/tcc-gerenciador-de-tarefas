@@ -10,7 +10,7 @@ const CalendarView: React.FC = () => {
   const [tasksForDate, setTasksForDate] = useState<Task[]>([]);
 
   useEffect(() => {
-    fetchTasks();
+    fetchTasks({});
   }, [fetchTasks]);
 
   useEffect(() => {

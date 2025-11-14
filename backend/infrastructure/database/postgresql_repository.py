@@ -156,7 +156,7 @@ class PostgreSQLTaskRepository(TaskRepository):
             actual_duration=task.actual_duration,
             completed_at=task.completed_at,
             tags=task.tags,
-            metadata=task.metadata,
+            task_metadata=task.metadata,
             natural_language_input=task.natural_language_input,
             gpt_response=task.gpt_response,
         )
@@ -224,7 +224,7 @@ class PostgreSQLTaskRepository(TaskRepository):
             task_model.actual_duration = task.actual_duration
             task_model.completed_at = task.completed_at
             task_model.tags = task.tags
-            task_model.metadata = task.metadata
+            task_model.task_metadata = task.metadata
             task_model.project_id = task.project_id
             task_model.updated_at = datetime.utcnow()
             await self.session.flush()
@@ -262,7 +262,7 @@ class PostgreSQLTaskRepository(TaskRepository):
             actual_duration=model.actual_duration,
             completed_at=model.completed_at,
             tags=model.tags or [],
-            metadata=model.metadata or {},
+            metadata=model.task_metadata or {},
             natural_language_input=model.natural_language_input,
             gpt_response=model.gpt_response,
             created_at=model.created_at,

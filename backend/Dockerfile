@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-RUN pip install poetry
+RUN pip install "poetry==1.8.5"
 
 COPY pyproject.toml poetry.lock* ./
 

@@ -30,6 +30,10 @@ class UserResponse(BaseModel):
     created_at: Optional[str]
 
 
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+
 class CreateTaskNaturalLanguageRequest(BaseModel):
     natural_language_input: str
     project_id: Optional[UUID] = None

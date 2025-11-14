@@ -15,6 +15,7 @@ class ParsedTask:
         due_date: Optional[datetime] = None,
         estimated_duration: Optional[int] = None,
         tags: Optional[list[str]] = None,
+        recurrence: Optional[dict] = None,
     ):
         self.title = title
         self.description = description
@@ -22,6 +23,7 @@ class ParsedTask:
         self.due_date = due_date
         self.estimated_duration = estimated_duration
         self.tags = tags or []
+        self.recurrence = recurrence
 
 
 class GPTService:
@@ -75,6 +77,7 @@ class GPTService:
             due_date=due_date,
             estimated_duration=data.get("estimated_duration"),
             tags=data.get("tags", []),
+            recurrence=data.get("recurrence"),
         )
 
     def _fallback_parser(self, text: str) -> ParsedTask:
