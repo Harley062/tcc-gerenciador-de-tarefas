@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const apiClient = axios.create({
-  baseURL: API_URL,
+  baseURL: `${API_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -46,12 +46,12 @@ export interface UpdateSettingsRequest {
 
 export const settingsApi = {
   getSettings: async (): Promise<UserSettings> => {
-    const response = await apiClient.get('/api/settings');
+    const response = await apiClient.get('/settings');
     return response.data;
   },
 
   updateSettings: async (settings: UpdateSettingsRequest): Promise<UserSettings> => {
-    const response = await apiClient.put('/api/settings', settings);
+    const response = await apiClient.put('/settings', settings);
     return response.data;
   },
 };
