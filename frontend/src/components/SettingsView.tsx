@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { settingsApi, UserSettings, UpdateSettingsRequest } from '../services/settingsApi';
+import { settingsApi, UpdateSettingsRequest } from '../services/settingsApi';
 import { aiApi } from '../services/aiApi';
 import { useToast } from './ToastContainer';
 
@@ -50,8 +50,7 @@ const SettingsView: React.FC = () => {
     setMessage(null);
 
     try {
-      const updated = await settingsApi.updateSettings(formData);
-      setSettings(updated);
+      await settingsApi.updateSettings(formData);
       setMessage({ type: 'success', text: 'Configurações salvas com sucesso!' });
       showSuccess('Configurações salvas com sucesso!');
     } catch (error) {
@@ -80,8 +79,7 @@ const SettingsView: React.FC = () => {
 
   const fallbackToRegex = async () => {
     try {
-      const updated = await settingsApi.updateSettings({ ...formData, llm_provider: 'regex' });
-      setSettings(updated);
+      await settingsApi.updateSettings({ ...formData, llm_provider: 'regex' });
       setFormData({ ...formData, llm_provider: 'regex' });
       showSuccess('Alterado para Regex Parser com sucesso!');
     } catch (error) {
