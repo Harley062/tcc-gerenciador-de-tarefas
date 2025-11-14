@@ -107,7 +107,7 @@ const SettingsView: React.FC = () => {
                 className="form-radio"
               />
               <span>
-                <strong>Llama (Ollama)</strong> - IA local gratuita (requer Ollama instalado)
+                <strong>Llama (Ollama)</strong> - IA local gratuita
               </span>
             </label>
 
@@ -164,17 +164,6 @@ const SettingsView: React.FC = () => {
                 placeholder="http://localhost:11434"
                 className="w-full px-3 py-2 border rounded-lg"
               />
-              <p className="text-sm text-gray-600 mt-1">
-                Instale Ollama em{' '}
-                <a
-                  href="https://ollama.ai"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  ollama.ai
-                </a>
-              </p>
             </div>
           )}
         </div>
