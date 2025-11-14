@@ -109,16 +109,56 @@ class ChatMessageResponse(BaseModel):
 
 async def get_ai_insights_service(
     current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
 ) -> AIInsightsService:
     """Get AI insights service with user's settings"""
-    return AIInsightsService(provider="regex")
+    from infrastructure.database.user_settings_repository import UserSettingsRepository
+    from infrastructure.gpt.openai_adapter import OpenAIAdapter
+    from infrastructure.llm.llama_adapter import LlamaAdapter
+    
+    settings_repo = UserSettingsRepository(session)
+    settings = await settings_repo.get_or_create(current_user.id)
+    
+    openai_adapter = None
+    llama_adapter = None
+    
+    if settings.llm_provider == "gpt4" and settings.openai_api_key:
+        openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4")
+    elif settings.llm_provider == "llama":
+        llama_adapter = LlamaAdapter(endpoint=settings.llama_endpoint, model="llama2")
+    
+    return AIInsightsService(
+        provider=settings.llm_provider,
+        openai_adapter=openai_adapter,
+        llama_adapter=llama_adapter
+    )
 
 
 async def get_chat_assistant_service(
     current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
 ) -> ChatAssistantService:
     """Get chat assistant service with user's settings"""
-    return ChatAssistantService(provider="regex")
+    from infrastructure.database.user_settings_repository import UserSettingsRepository
+    from infrastructure.gpt.openai_adapter import OpenAIAdapter
+    from infrastructure.llm.llama_adapter import LlamaAdapter
+    
+    settings_repo = UserSettingsRepository(session)
+    settings = await settings_repo.get_or_create(current_user.id)
+    
+    openai_adapter = None
+    llama_adapter = None
+    
+    if settings.llm_provider == "gpt4" and settings.openai_api_key:
+        openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4")
+    elif settings.llm_provider == "llama":
+        llama_adapter = LlamaAdapter(endpoint=settings.llama_endpoint, model="llama2")
+    
+    return ChatAssistantService(
+        provider=settings.llm_provider,
+        openai_adapter=openai_adapter,
+        llama_adapter=llama_adapter
+    )
 
 
 @router.post("/subtasks/suggest", response_model=SubtaskSuggestionsResponse)
