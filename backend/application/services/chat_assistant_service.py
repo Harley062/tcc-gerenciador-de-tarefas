@@ -141,7 +141,7 @@ class ChatAssistantService:
             return {
                 "message": f"Você não tem tarefas {period}. 🎉",
                 "action": None,
-                "data": []
+                "data": None
             }
         
         task_list = "\n".join([
