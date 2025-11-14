@@ -67,7 +67,7 @@ class TaskModel(Base):
     actual_duration = Column(Integer)
     completed_at = Column(DateTime(timezone=True))
     tags = Column(ARRAY(Text))
-    metadata = Column(JSONB)
+    task_metadata = Column(JSONB, name="metadata")
     natural_language_input = Column(Text)
     gpt_response = Column(JSONB)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
