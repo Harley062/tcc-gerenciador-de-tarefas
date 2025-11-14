@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useTaskStore, Task } from '../store/taskStore';
 import TaskCard from './TaskCard';
 import AIInsightsPanel from './AIInsightsPanel';
+import TaskEditModal from './TaskEditModal';
 
 const ListView: React.FC = () => {
   const { tasks, fetchTasks, updateTask, deleteTask, isLoading } = useTaskStore();
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTaskForAI, setSelectedTaskForAI] = useState<Task | null>(null);
+  const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<Task | null>(null);
 
   useEffect(() => {
     fetchTasks({ status: statusFilter || undefined });
@@ -80,6 +82,7 @@ const ListView: React.FC = () => {
             <div key={task.id} className="relative">
               <TaskCard
                 task={task}
+                onEdit={(task) => setSelectedTaskForEdit(task)}
                 onStatusChange={handleStatusChange}
                 onDelete={handleDelete}
               />
@@ -99,6 +102,15 @@ const ListView: React.FC = () => {
         <AIInsightsPanel
           task={selectedTaskForAI}
           onClose={() => setSelectedTaskForAI(null)}
+          onTaskUpdated={() => fetchTasks({})}
+        />
+      )}
+
+      {selectedTaskForEdit && (
+        <TaskEditModal
+          task={selectedTaskForEdit}
+          onClose={() => setSelectedTaskForEdit(null)}
+          onSaved={() => fetchTasks({})}
         />
       )}
     </div>

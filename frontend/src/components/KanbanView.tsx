@@ -18,13 +18,15 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useTaskStore, Task } from '../store/taskStore';
 import TaskCard from './TaskCard';
+import TaskEditModal from './TaskEditModal';
 
 interface SortableTaskProps {
   task: Task;
+  onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
 }
 
-const SortableTask: React.FC<SortableTaskProps> = ({ task, onDelete }) => {
+const SortableTask: React.FC<SortableTaskProps> = ({ task, onEdit, onDelete }) => {
   const {
     attributes,
     listeners,
@@ -48,7 +50,7 @@ const SortableTask: React.FC<SortableTaskProps> = ({ task, onDelete }) => {
       {...listeners}
       className="mb-3"
     >
-      <TaskCard task={task} onDelete={onDelete} />
+      <TaskCard task={task} onEdit={onEdit} onDelete={onDelete} />
     </div>
   );
 };
@@ -58,6 +60,7 @@ interface DroppableColumnProps {
   title: string;
   tasks: Task[];
   colorClass: string;
+  onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
 }
 
@@ -66,6 +69,7 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
   title,
   tasks,
   colorClass,
+  onEdit,
   onDelete
 }) => {
   const { setNodeRef, isOver } = useDroppable({
@@ -90,6 +94,7 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
             <SortableTask
               key={task.id}
               task={task}
+              onEdit={onEdit}
               onDelete={onDelete}
             />
           ))}
@@ -107,6 +112,7 @@ const KanbanView: React.FC = () => {
     done: [],
   });
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<Task | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -228,6 +234,7 @@ const KanbanView: React.FC = () => {
               title={columnTitles[columnId as keyof typeof columnTitles]}
               tasks={columnTasks}
               colorClass={columnColors[columnId as keyof typeof columnColors]}
+              onEdit={(task) => setSelectedTaskForEdit(task)}
               onDelete={handleDelete}
             />
           ))}
@@ -241,6 +248,14 @@ const KanbanView: React.FC = () => {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {selectedTaskForEdit && (
+        <TaskEditModal
+          task={selectedTaskForEdit}
+          onClose={() => setSelectedTaskForEdit(null)}
+          onSaved={() => fetchTasks({})}
+        />
+      )}
     </div>
   );
 };

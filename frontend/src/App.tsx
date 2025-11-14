@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAuthStore } from './store/authStore';
 import { useTaskStore } from './store/taskStore';
 import Login from './components/Login';
@@ -9,6 +9,7 @@ import CalendarView from './components/CalendarView';
 import SettingsView from './components/SettingsView';
 import DashboardView from './components/DashboardView';
 import ChatAssistant from './components/ChatAssistant';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 
 type ViewType = 'dashboard' | 'list' | 'kanban' | 'calendar' | 'settings';
 
@@ -17,6 +18,8 @@ const App: React.FC = () => {
   const { setupWebSocket, fetchTasks } = useTaskStore();
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [showInput, setShowInput] = useState(false);
+  const quickAddInputRef = useRef<HTMLInputElement>(null);
+  const listViewSearchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     checkAuth();
@@ -29,6 +32,25 @@ const App: React.FC = () => {
     }
   }, [isAuthenticated, setupWebSocket, fetchTasks]);
 
+  useKeyboardShortcuts([
+    { key: 'n', callback: () => quickAddInputRef.current?.focus() },
+    { key: '1', callback: () => setCurrentView('dashboard') },
+    { key: '2', callback: () => setCurrentView('list') },
+    { key: '3', callback: () => setCurrentView('kanban') },
+    { key: '4', callback: () => setCurrentView('calendar') },
+    { key: '5', callback: () => setCurrentView('settings') },
+    { key: '/', callback: () => {
+      if (currentView === 'list' && listViewSearchRef.current) {
+        listViewSearchRef.current.focus();
+      }
+    }},
+    { key: 'Escape', callback: () => {
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    }},
+  ]);
+
   if (!isAuthenticated) {
     return <Login onSuccess={() => {}} />;
   }
@@ -38,14 +60,36 @@ const App: React.FC = () => {
       <nav className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
+            <div className="flex items-center gap-4">
               <h1 className="text-2xl font-bold text-primary-600">TaskMaster</h1>
+              
+              {/* Persistent Quick-Add Input */}
+              <div className="hidden md:block">
+                <input
+                  ref={quickAddInputRef}
+                  type="text"
+                  placeholder="Adicionar tarefa rápida... (pressione N)"
+                  className="w-64 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                      const input = e.currentTarget.value;
+                      e.currentTarget.value = '';
+                      fetchTasks({});
+                      import('./services/api').then(({ default: api }) => {
+                        api.createTaskNaturalLanguage(input).then(() => {
+                          fetchTasks({});
+                        });
+                      });
+                    }
+                  }}
+                />
+              </div>
             </div>
 
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setShowInput(!showInput)}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors md:hidden"
               >
                 {showInput ? 'Ocultar Input' : 'Nova Tarefa'}
               </button>

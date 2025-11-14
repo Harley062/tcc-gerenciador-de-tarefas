@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { settingsApi, UserSettings, UpdateSettingsRequest } from '../services/settingsApi';
+import { aiApi } from '../services/aiApi';
+import { useToast } from './ToastContainer';
 
 const SettingsView: React.FC = () => {
-  const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [testingProvider, setTestingProvider] = useState<string | null>(null);
+  const { showSuccess, showError, showInfo } = useToast();
 
   const [formData, setFormData] = useState<UpdateSettingsRequest>({
     llm_provider: 'regex',
@@ -24,7 +27,6 @@ const SettingsView: React.FC = () => {
   const loadSettings = async () => {
     try {
       const data = await settingsApi.getSettings();
-      setSettings(data);
       setFormData({
         llm_provider: data.llm_provider,
         openai_api_key: data.openai_api_key || '',
@@ -51,11 +53,40 @@ const SettingsView: React.FC = () => {
       const updated = await settingsApi.updateSettings(formData);
       setSettings(updated);
       setMessage({ type: 'success', text: 'Configurações salvas com sucesso!' });
+      showSuccess('Configurações salvas com sucesso!');
     } catch (error) {
       console.error('Failed to save settings:', error);
       setMessage({ type: 'error', text: 'Falha ao salvar configurações' });
+      showError('Falha ao salvar configurações');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const testProvider = async (provider: 'gpt4' | 'llama') => {
+    setTestingProvider(provider);
+    try {
+      showInfo(`Testando ${provider === 'gpt4' ? 'OpenAI' : 'Llama'}...`);
+      await aiApi.analyzeSentiment('teste');
+      showSuccess(`${provider === 'gpt4' ? 'OpenAI' : 'Llama'} está funcionando corretamente!`);
+    } catch (error: any) {
+      console.error(`Failed to test ${provider}:`, error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Erro desconhecido';
+      showError(`Falha ao testar ${provider === 'gpt4' ? 'OpenAI' : 'Llama'}: ${errorMessage}`);
+    } finally {
+      setTestingProvider(null);
+    }
+  };
+
+  const fallbackToRegex = async () => {
+    try {
+      const updated = await settingsApi.updateSettings({ ...formData, llm_provider: 'regex' });
+      setSettings(updated);
+      setFormData({ ...formData, llm_provider: 'regex' });
+      showSuccess('Alterado para Regex Parser com sucesso!');
+    } catch (error) {
+      console.error('Failed to fallback to regex:', error);
+      showError('Falha ao alterar para Regex Parser');
     }
   };
 
@@ -149,6 +180,14 @@ const SettingsView: React.FC = () => {
                   platform.openai.com
                 </a>
               </p>
+              <button
+                type="button"
+                onClick={() => testProvider('gpt4')}
+                disabled={testingProvider === 'gpt4' || !formData.openai_api_key}
+                className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {testingProvider === 'gpt4' ? 'Testando...' : '🧪 Testar OpenAI'}
+              </button>
             </div>
           )}
 
@@ -164,6 +203,23 @@ const SettingsView: React.FC = () => {
                 placeholder="http://localhost:11434"
                 className="w-full px-3 py-2 border rounded-lg"
               />
+              <button
+                type="button"
+                onClick={() => testProvider('llama')}
+                disabled={testingProvider === 'llama'}
+                className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {testingProvider === 'llama' ? 'Testando...' : '🧪 Testar Llama'}
+              </button>
+              {testingProvider === null && (
+                <button
+                  type="button"
+                  onClick={fallbackToRegex}
+                  className="mt-2 ml-2 px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                >
+                  ⚠️ Usar Regex como Fallback
+                </button>
+              )}
             </div>
           )}
         </div>

@@ -3,11 +3,13 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { useTaskStore, Task } from '../store/taskStore';
 import TaskCard from './TaskCard';
+import TaskEditModal from './TaskEditModal';
 
 const CalendarView: React.FC = () => {
   const { tasks, fetchTasks, updateTask, deleteTask, isLoading } = useTaskStore();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [tasksForDate, setTasksForDate] = useState<Task[]>([]);
+  const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<Task | null>(null);
 
   useEffect(() => {
     fetchTasks({});
@@ -109,6 +111,7 @@ const CalendarView: React.FC = () => {
                 <TaskCard
                   key={task.id}
                   task={task}
+                  onEdit={(task) => setSelectedTaskForEdit(task)}
                   onStatusChange={handleStatusChange}
                   onDelete={handleDelete}
                 />
@@ -117,6 +120,14 @@ const CalendarView: React.FC = () => {
           )}
         </div>
       </div>
+
+      {selectedTaskForEdit && (
+        <TaskEditModal
+          task={selectedTaskForEdit}
+          onClose={() => setSelectedTaskForEdit(null)}
+          onSaved={() => fetchTasks({})}
+        />
+      )}
     </div>
   );
 };

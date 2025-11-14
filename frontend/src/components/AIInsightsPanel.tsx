@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { aiApi, SubtaskSuggestion, Dependency, SchedulingSuggestion } from '../services/aiApi';
 import { Task } from '../store/taskStore';
+import ApplyAISuggestionsModal from './ApplyAISuggestionsModal';
 
 interface AIInsightsPanelProps {
   task: Task;
   onClose: () => void;
   onCreateSubtasks?: (subtasks: SubtaskSuggestion[]) => void;
+  onTaskUpdated?: () => void;
 }
 
-const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ task, onClose, onCreateSubtasks }) => {
+const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ task, onClose, onCreateSubtasks, onTaskUpdated }) => {
   const [activeTab, setActiveTab] = useState<'subtasks' | 'scheduling' | 'dependencies'>('subtasks');
+  const [showApplyModal, setShowApplyModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [subtasks, setSubtasks] = useState<SubtaskSuggestion[]>([]);
   const [scheduling, setScheduling] = useState<SchedulingSuggestion | null>(null);
@@ -69,14 +72,23 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ task, onClose, onCrea
   }, [activeTab]);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
-        <div className="p-4 border-b flex justify-between items-center">
-          <h2 className="text-xl font-bold">🤖 Insights de IA</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            ✕
-          </button>
-        </div>
+    <>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+          <div className="p-4 border-b flex justify-between items-center">
+            <h2 className="text-xl font-bold">🤖 Insights de IA</h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowApplyModal(true)}
+                className="px-3 py-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded hover:from-purple-600 hover:to-blue-600 transition-colors text-sm font-medium"
+              >
+                ✨ Aplicar com IA
+              </button>
+              <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+                ✕
+              </button>
+            </div>
+          </div>
 
         <div className="flex border-b">
           <button
@@ -200,6 +212,19 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ task, onClose, onCrea
         </div>
       </div>
     </div>
+
+    {showApplyModal && (
+      <ApplyAISuggestionsModal
+        task={task}
+        onClose={() => setShowApplyModal(false)}
+        onApplied={() => {
+          if (onTaskUpdated) {
+            onTaskUpdated();
+          }
+        }}
+      />
+    )}
+  </>
   );
 };
 
