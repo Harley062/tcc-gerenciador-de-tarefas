@@ -22,7 +22,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated) {
       setupWebSocket();
-      fetchTasks();
+      fetchTasks({});
     }
   }, [isAuthenticated, setupWebSocket, fetchTasks]);
 
@@ -97,7 +97,7 @@ const App: React.FC = () => {
       <main className="py-6">
         {showInput && (
           <div className="mb-6">
-            <NaturalLanguageInput onTaskCreated={() => fetchTasks()} />
+            <NaturalLanguageInput onTaskCreated={() => fetchTasks({})} />
           </div>
         )}
 

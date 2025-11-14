@@ -8,7 +8,7 @@ const ListView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    fetchTasks(statusFilter || undefined);
+    fetchTasks({ status: statusFilter || undefined });
   }, [statusFilter, fetchTasks]);
 
   const handleStatusChange = async (taskId: string, status: Task['status']) => {

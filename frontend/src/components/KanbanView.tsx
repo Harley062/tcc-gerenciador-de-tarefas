@@ -12,7 +12,7 @@ const KanbanView: React.FC = () => {
   });
 
   useEffect(() => {
-    fetchTasks();
+    fetchTasks({});
   }, [fetchTasks]);
 
   useEffect(() => {
