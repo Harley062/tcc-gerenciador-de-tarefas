@@ -16,6 +16,7 @@ class ParsedTaskSchema(BaseModel):
     due_date: Optional[str] = Field(None, description="ISO format datetime")
     estimated_duration: Optional[int] = Field(None, description="Estimated duration in minutes")
     tags: list[str] = Field(default_factory=list, description="Relevant tags")
+    recurrence: Optional[dict] = Field(None, description="Recurrence pattern if task repeats")
 
 
 class OpenAIAdapter:
@@ -38,13 +39,17 @@ Return a JSON object with these fields:
 - due_date: string (ISO format datetime with timezone, null if not mentioned)
 - estimated_duration: integer (minutes, null if not mentioned)
 - tags: array of strings (relevant tags extracted from context)
+- recurrence: object (if task repeats: {{"frequency": "daily|weekly|monthly", "interval": 1}}, null otherwise)
 
 Examples:
 Input: "Reunião com cliente amanhã às 14h"
-Output: {{"title": "Reunião com cliente", "description": "Reunião agendada com cliente", "priority": "medium", "due_date": "{current_date}T14:00:00+00:00", "estimated_duration": 60, "tags": ["reunião", "cliente"]}}
+Output: {{"title": "Reunião com cliente", "description": "Reunião agendada com cliente", "priority": "medium", "due_date": "{current_date}T14:00:00+00:00", "estimated_duration": 60, "tags": ["reunião", "cliente"], "recurrence": null}}
+
+Input: "planning toda semana"
+Output: {{"title": "Planning semanal", "description": "Reunião de planning recorrente", "priority": "medium", "due_date": null, "estimated_duration": 60, "tags": ["planning", "reunião"], "recurrence": {{"frequency": "weekly", "interval": 1}}}}
 
 Input: "Urgent: Fix production bug in payment system by end of day"
-Output: {{"title": "Fix production bug in payment system", "description": "Critical bug fix needed in payment system", "priority": "urgent", "due_date": "{current_date}T23:59:59+00:00", "estimated_duration": null, "tags": ["bug", "production", "payment"]}}
+Output: {{"title": "Fix production bug in payment system", "description": "Critical bug fix needed in payment system", "priority": "urgent", "due_date": "{current_date}T23:59:59+00:00", "estimated_duration": null, "tags": ["bug", "production", "payment"], "recurrence": null}}
 
 Only return valid JSON matching the schema, no additional text."""
 

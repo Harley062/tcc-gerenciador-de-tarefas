@@ -6,8 +6,9 @@ import NaturalLanguageInput from './components/NaturalLanguageInput';
 import ListView from './components/ListView';
 import KanbanView from './components/KanbanView';
 import CalendarView from './components/CalendarView';
+import SettingsView from './components/SettingsView';
 
-type ViewType = 'list' | 'kanban' | 'calendar';
+type ViewType = 'list' | 'kanban' | 'calendar' | 'settings';
 
 const App: React.FC = () => {
   const { isAuthenticated, checkAuth, logout, user } = useAuthStore();
@@ -78,6 +79,16 @@ const App: React.FC = () => {
                 >
                   Calendário
                 </button>
+                <button
+                  onClick={() => setCurrentView('settings')}
+                  className={`px-3 py-2 rounded-lg transition-colors ${
+                    currentView === 'settings'
+                      ? 'bg-primary-100 text-primary-700'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  ⚙️ Configurações
+                </button>
               </div>
 
               <div className="flex items-center gap-3 border-l pl-4">
@@ -104,6 +115,7 @@ const App: React.FC = () => {
         {currentView === 'list' && <ListView />}
         {currentView === 'kanban' && <KanbanView />}
         {currentView === 'calendar' && <CalendarView />}
+        {currentView === 'settings' && <SettingsView />}
       </main>
     </div>
   );

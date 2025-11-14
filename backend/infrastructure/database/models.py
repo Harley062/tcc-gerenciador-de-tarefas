@@ -33,6 +33,7 @@ class UserModel(Base):
 
     projects = relationship("ProjectModel", back_populates="user", cascade="all, delete-orphan")
     tasks = relationship("TaskModel", back_populates="user", cascade="all, delete-orphan")
+    settings = relationship("UserSettingsModel", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 
 class ProjectModel(Base):
@@ -76,6 +77,24 @@ class TaskModel(Base):
     user = relationship("UserModel", back_populates="tasks")
     project = relationship("ProjectModel", back_populates="tasks")
     subtasks = relationship("TaskModel", cascade="all, delete-orphan")
+
+
+class UserSettingsModel(Base):
+    __tablename__ = "user_settings"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    llm_provider = Column(String(20), default="regex", nullable=False)
+    openai_api_key = Column(Text)
+    llama_endpoint = Column(String(255), default="http://localhost:11434")
+    default_task_duration = Column(Integer, default=60)
+    enable_auto_subtasks = Column(Boolean, default=False)
+    enable_auto_priority = Column(Boolean, default=True)
+    enable_auto_tags = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+    updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("UserModel", back_populates="settings")
 
 
 class GPTCacheModel(Base):
