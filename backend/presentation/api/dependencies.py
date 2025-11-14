@@ -7,6 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from application.services.auth_service import AuthService
 from application.services.gpt_service import GPTService
 from application.use_cases.create_task import CreateTaskUseCase
+from application.use_cases.manage_projects import (
+    CreateProjectUseCase,
+    DeleteProjectUseCase,
+    GetProjectByIdUseCase,
+    GetProjectsUseCase,
+    UpdateProjectUseCase,
+)
 from application.use_cases.manage_tasks import (
     DeleteTaskUseCase,
     GetSubtasksUseCase,
@@ -18,11 +25,13 @@ from domain.entities.user import User
 from infrastructure.cache.redis_cache import RedisCache
 from infrastructure.database.connection import Database
 from infrastructure.database.postgresql_repository import (
+    PostgreSQLProjectRepository,
     PostgreSQLTaskRepository,
     PostgreSQLUserRepository,
 )
 from infrastructure.gpt.openai_adapter import OpenAIAdapter
 from presentation.config import get_settings
+from presentation.websocket.connection_manager import connection_manager
 
 settings = get_settings()
 
@@ -72,7 +81,9 @@ async def get_create_task_use_case(
     gpt_service: GPTService = Depends(get_gpt_service),
 ) -> CreateTaskUseCase:
     task_repository = PostgreSQLTaskRepository(session)
-    return CreateTaskUseCase(task_repository, gpt_service)
+    use_case = CreateTaskUseCase(task_repository, gpt_service)
+    use_case.set_event_callback(connection_manager.broadcast_to_user)
+    return use_case
 
 
 async def get_get_tasks_use_case(
@@ -93,14 +104,18 @@ async def get_update_task_use_case(
     session: AsyncSession = Depends(get_db_session),
 ) -> UpdateTaskUseCase:
     task_repository = PostgreSQLTaskRepository(session)
-    return UpdateTaskUseCase(task_repository)
+    use_case = UpdateTaskUseCase(task_repository)
+    use_case.set_event_callback(connection_manager.broadcast_to_user)
+    return use_case
 
 
 async def get_delete_task_use_case(
     session: AsyncSession = Depends(get_db_session),
 ) -> DeleteTaskUseCase:
     task_repository = PostgreSQLTaskRepository(session)
-    return DeleteTaskUseCase(task_repository)
+    use_case = DeleteTaskUseCase(task_repository)
+    use_case.set_event_callback(connection_manager.broadcast_to_user)
+    return use_case
 
 
 async def get_get_subtasks_use_case(
@@ -108,3 +123,38 @@ async def get_get_subtasks_use_case(
 ) -> GetSubtasksUseCase:
     task_repository = PostgreSQLTaskRepository(session)
     return GetSubtasksUseCase(task_repository)
+
+
+async def get_create_project_use_case(
+    session: AsyncSession = Depends(get_db_session),
+) -> CreateProjectUseCase:
+    project_repository = PostgreSQLProjectRepository(session)
+    return CreateProjectUseCase(project_repository)
+
+
+async def get_get_projects_use_case(
+    session: AsyncSession = Depends(get_db_session),
+) -> GetProjectsUseCase:
+    project_repository = PostgreSQLProjectRepository(session)
+    return GetProjectsUseCase(project_repository)
+
+
+async def get_get_project_by_id_use_case(
+    session: AsyncSession = Depends(get_db_session),
+) -> GetProjectByIdUseCase:
+    project_repository = PostgreSQLProjectRepository(session)
+    return GetProjectByIdUseCase(project_repository)
+
+
+async def get_update_project_use_case(
+    session: AsyncSession = Depends(get_db_session),
+) -> UpdateProjectUseCase:
+    project_repository = PostgreSQLProjectRepository(session)
+    return UpdateProjectUseCase(project_repository)
+
+
+async def get_delete_project_use_case(
+    session: AsyncSession = Depends(get_db_session),
+) -> DeleteProjectUseCase:
+    project_repository = PostgreSQLProjectRepository(session)
+    return DeleteProjectUseCase(project_repository)

@@ -83,3 +83,33 @@ class TaskResponse(BaseModel):
 class TaskListResponse(BaseModel):
     tasks: list[TaskResponse]
     total: int
+
+
+class CreateProjectRequest(BaseModel):
+    name: str
+    description: Optional[str] = None
+    color: Optional[str] = None
+    icon: Optional[str] = None
+
+
+class UpdateProjectRequest(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    color: Optional[str] = None
+    icon: Optional[str] = None
+
+
+class ProjectResponse(BaseModel):
+    id: str
+    user_id: str
+    name: str
+    description: Optional[str]
+    color: Optional[str]
+    icon: Optional[str]
+    created_at: Optional[str]
+    updated_at: Optional[str]
+
+
+class ProjectListResponse(BaseModel):
+    projects: list[ProjectResponse]
+    total: int

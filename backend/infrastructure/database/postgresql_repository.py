@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.entities.project import Project
@@ -174,15 +174,42 @@ class PostgreSQLTaskRepository(TaskRepository):
         user_id: UUID,
         status: Optional[TaskStatus] = None,
         project_id: Optional[UUID] = None,
-    ) -> list[Task]:
+        limit: int = 20,
+        offset: int = 0,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
+        search_query: Optional[str] = None,
+    ) -> tuple[list[Task], int]:
         query = select(TaskModel).where(TaskModel.user_id == user_id)
+        
         if status:
             query = query.where(TaskModel.status == status.value)
         if project_id:
             query = query.where(TaskModel.project_id == project_id)
+        if search_query:
+            search_pattern = f"%{search_query}%"
+            query = query.where(
+                or_(
+                    TaskModel.title.ilike(search_pattern),
+                    TaskModel.description.ilike(search_pattern),
+                )
+            )
+        
+        count_query = select(func.count()).select_from(query.subquery())
+        total_result = await self.session.execute(count_query)
+        total = total_result.scalar() or 0
+        
+        sort_column = getattr(TaskModel, sort_by, TaskModel.created_at)
+        if sort_order == "asc":
+            query = query.order_by(sort_column.asc())
+        else:
+            query = query.order_by(sort_column.desc())
+        
+        query = query.limit(limit).offset(offset)
+        
         result = await self.session.execute(query)
         task_models = result.scalars().all()
-        return [self._to_entity(model) for model in task_models]
+        return [self._to_entity(model) for model in task_models], total
 
     async def update(self, task: Task) -> Task:
         result = await self.session.execute(select(TaskModel).where(TaskModel.id == task.id))

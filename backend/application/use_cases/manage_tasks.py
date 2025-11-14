@@ -16,8 +16,22 @@ class GetTasksUseCase:
         user_id: UUID,
         status: Optional[TaskStatus] = None,
         project_id: Optional[UUID] = None,
-    ) -> list[Task]:
-        return await self.task_repository.get_by_user_id(user_id, status, project_id)
+        limit: int = 20,
+        offset: int = 0,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
+        search_query: Optional[str] = None,
+    ) -> tuple[list[Task], int]:
+        return await self.task_repository.get_by_user_id(
+            user_id=user_id,
+            status=status,
+            project_id=project_id,
+            limit=limit,
+            offset=offset,
+            sort_by=sort_by,
+            sort_order=sort_order,
+            search_query=search_query,
+        )
 
 
 class GetTaskByIdUseCase:
@@ -34,6 +48,11 @@ class GetTaskByIdUseCase:
 class UpdateTaskUseCase:
     def __init__(self, task_repository: TaskRepository):
         self.task_repository = task_repository
+        self.event_callback = None
+
+    def set_event_callback(self, callback):
+        """Set callback function to emit events after task update"""
+        self.event_callback = callback
 
     async def execute(
         self,
@@ -74,18 +93,34 @@ class UpdateTaskUseCase:
         if project_id is not None:
             task.project_id = project_id
 
-        return await self.task_repository.update(task)
+        updated_task = await self.task_repository.update(task)
+        
+        if updated_task and self.event_callback:
+            await self.event_callback("task_updated", updated_task.to_dict(), user_id)
+        
+        return updated_task
 
 
 class DeleteTaskUseCase:
     def __init__(self, task_repository: TaskRepository):
         self.task_repository = task_repository
+        self.event_callback = None
+
+    def set_event_callback(self, callback):
+        """Set callback function to emit events after task deletion"""
+        self.event_callback = callback
 
     async def execute(self, task_id: UUID, user_id: UUID) -> bool:
         task = await self.task_repository.get_by_id(task_id)
         if not task or task.user_id != user_id:
             return False
-        return await self.task_repository.delete(task_id)
+        
+        success = await self.task_repository.delete(task_id)
+        
+        if success and self.event_callback:
+            await self.event_callback("task_deleted", {"id": str(task_id)}, user_id)
+        
+        return success
 
 
 class GetSubtasksUseCase:
