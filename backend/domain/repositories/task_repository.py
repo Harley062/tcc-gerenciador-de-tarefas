@@ -21,7 +21,12 @@ class TaskRepository(ABC):
         user_id: UUID,
         status: Optional[TaskStatus] = None,
         project_id: Optional[UUID] = None,
-    ) -> list[Task]:
+        limit: int = 20,
+        offset: int = 0,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
+        search_query: Optional[str] = None,
+    ) -> tuple[list[Task], int]:
         pass
 
     @abstractmethod

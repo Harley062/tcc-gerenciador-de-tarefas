@@ -7,16 +7,26 @@ Sistema completo de gerenciamento de tarefas com integração GPT-4 para criaç�
 ### Core Features
 - ✅ **Criação de Tarefas via Linguagem Natural**: Use GPT-4 para interpretar comandos como "Reunião com cliente amanhã às 14h"
 - ✅ **Autenticação JWT**: Sistema completo de registro, login e refresh tokens
-- ✅ **CRUD Completo de Tarefas**: Criar, ler, atualizar e deletar tarefas
-- ✅ **WebSocket em Tempo Real**: Atualizações instantâneas de tarefas
+- ✅ **CRUD Completo de Tarefas**: Criar, ler, atualizar e deletar tarefas com paginação e busca
+- ✅ **Gerenciamento de Projetos**: CRUD completo para organizar tarefas em projetos
+- ✅ **WebSocket em Tempo Real**: Atualizações instantâneas de tarefas (task_created, task_updated, task_deleted)
 - ✅ **Cache Inteligente**: Redis para otimizar chamadas GPT e reduzir custos
 - ✅ **Fallback Parser**: Sistema de backup quando GPT não está disponível
 - ✅ **Rate Limiting**: Controle de requisições e tokens
+- ✅ **Logging Estruturado**: Logs JSON com request_id, métricas e rastreamento
+- ✅ **Tratamento Global de Erros**: Respostas consistentes com correlation IDs
 
 ### Visualizações Frontend
 - 📋 **ListView**: Lista tradicional com filtros por status e busca
 - 📊 **KanbanView**: Quadro drag-and-drop para gerenciamento visual
 - 📅 **CalendarView**: Visualização de tarefas por data
+
+### Melhorias de Performance
+- 🔍 **Busca Server-Side**: Busca em título e descrição com paginação
+- 📄 **Paginação**: Limite de 20 tarefas por página (máximo 100)
+- 🔄 **Ordenação**: Ordenar por created_at, due_date, priority (asc/desc)
+- ⚡ **GPT Otimizado**: Schema JSON estrito com validação Pydantic
+- 📊 **Métricas**: Logging de tokens, custos e latência do GPT
 
 ## 🏗️ Arquitetura
 
@@ -202,15 +212,24 @@ npm start
 
 ### Tarefas
 - `POST /api/tasks` - Criar tarefa (linguagem natural ou estruturada)
-- `GET /api/tasks` - Listar tarefas (com filtros)
+- `GET /api/tasks` - Listar tarefas (com filtros, paginação, ordenação, busca)
+  - Query params: `status`, `project_id`, `limit`, `offset`, `sort_by`, `sort_order`, `q`
 - `GET /api/tasks/{id}` - Obter tarefa específica
 - `PUT /api/tasks/{id}` - Atualizar tarefa
 - `DELETE /api/tasks/{id}` - Deletar tarefa
 - `POST /api/tasks/{id}/subtasks` - Criar subtarefa
 - `GET /api/tasks/{id}/subtasks` - Listar subtarefas
 
+### Projetos
+- `POST /api/projects` - Criar projeto
+- `GET /api/projects` - Listar projetos do usuário
+- `GET /api/projects/{id}` - Obter projeto específico
+- `PUT /api/projects/{id}` - Atualizar projeto
+- `DELETE /api/projects/{id}` - Deletar projeto
+
 ### WebSocket
 - `WS /ws?token={jwt_token}` - Conexão WebSocket para atualizações em tempo real
+  - Eventos: `task_created`, `task_updated`, `task_deleted`
 
 ## 🧪 Testes
 
@@ -290,6 +309,8 @@ curl -X POST http://localhost:8000/api/tasks \
 - Rate limiting: 60 requisições/minuto
 - CORS configurado
 - Validação de entrada com Pydantic
+- Tratamento global de erros com correlation IDs
+- Logging estruturado para auditoria
 
 ## 🚀 Deploy
 

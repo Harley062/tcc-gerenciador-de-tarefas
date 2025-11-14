@@ -68,18 +68,28 @@ async def create_task(
 async def get_tasks(
     status: Optional[str] = None,
     project_id: Optional[UUID] = None,
+    limit: int = 20,
+    offset: int = 0,
+    sort_by: str = "created_at",
+    sort_order: str = "desc",
+    q: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     get_tasks_use_case: GetTasksUseCase = Depends(get_get_tasks_use_case),
 ) -> TaskListResponse:
     task_status = TaskStatus(status) if status else None
-    tasks = await get_tasks_use_case.execute(
+    tasks, total = await get_tasks_use_case.execute(
         user_id=current_user.id,
         status=task_status,
         project_id=project_id,
+        limit=min(limit, 100),
+        offset=offset,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        search_query=q,
     )
 
     task_responses = [TaskResponse(**task.to_dict()) for task in tasks]
-    return TaskListResponse(tasks=task_responses, total=len(task_responses))
+    return TaskListResponse(tasks=task_responses, total=total)
 
 
 @router.get("/{task_id}", response_model=TaskResponse)

@@ -12,6 +12,11 @@ class CreateTaskUseCase:
     def __init__(self, task_repository: TaskRepository, gpt_service: GPTService):
         self.task_repository = task_repository
         self.gpt_service = gpt_service
+        self.event_callback = None
+
+    def set_event_callback(self, callback):
+        """Set callback function to emit events after task creation"""
+        self.event_callback = callback
 
     async def execute_from_natural_language(
         self, user_id: UUID, natural_language_input: str, project_id: Optional[UUID] = None
@@ -32,6 +37,10 @@ class CreateTaskUseCase:
         )
 
         created_task = await self.task_repository.create(task)
+        
+        if self.event_callback:
+            await self.event_callback("task_created", created_task.to_dict(), user_id)
+        
         return created_task, gpt_response
 
     async def execute_structured(
@@ -60,4 +69,9 @@ class CreateTaskUseCase:
             tags=tags,
         )
 
-        return await self.task_repository.create(task)
+        created_task = await self.task_repository.create(task)
+        
+        if self.event_callback:
+            await self.event_callback("task_created", created_task.to_dict(), user_id)
+        
+        return created_task
