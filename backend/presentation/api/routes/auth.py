@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from application.services.auth_service import AuthService
-from presentation.api.dependencies import get_auth_service
+from domain.entities.user import User
+from presentation.api.dependencies import get_auth_service, get_current_user
 from presentation.api.schemas import (
     TokenResponse,
     UserLoginRequest,
@@ -83,9 +84,7 @@ async def refresh_token(
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
-    current_user = Depends(get_auth_service),
+    current_user: User = Depends(get_current_user),
 ) -> UserResponse:
-    from presentation.api.dependencies import get_current_user
-    user = await get_current_user()
-    user_dict = user.to_dict()
+    user_dict = current_user.to_dict()
     return UserResponse(**user_dict)

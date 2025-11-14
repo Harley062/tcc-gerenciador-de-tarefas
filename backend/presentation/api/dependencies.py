@@ -54,6 +54,7 @@ async def get_auth_service(session: AsyncSession = Depends(get_db_session)) -> A
         secret_key=settings.jwt_secret_key,
         algorithm=settings.jwt_algorithm,
         access_token_expire_minutes=settings.access_token_expire_minutes,
+        refresh_token_expire_days=settings.refresh_token_expire_days,
     )
 
 
