@@ -7,9 +7,9 @@ from uuid import UUID, uuid4
 @dataclass
 class UserSettings:
     user_id: UUID
-    llm_provider: str = "regex"  # gpt4, llama, regex
+    llm_provider: str = "llama"  # gpt4, llama (default: llama since Ollama is auto-installed)
     openai_api_key: Optional[str] = None
-    llama_endpoint: str = "http://localhost:11434"
+    llama_endpoint: str = "http://taskmaster-ollama:11434"
     default_task_duration: int = 60
     enable_auto_subtasks: bool = False
     enable_auto_priority: bool = True

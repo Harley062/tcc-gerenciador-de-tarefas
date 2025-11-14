@@ -58,8 +58,8 @@ async def update_settings(
     
     # Update only provided fields
     if request.llm_provider is not None:
-        if request.llm_provider not in ["gpt4", "llama", "regex"]:
-            raise HTTPException(status_code=400, detail="Invalid LLM provider")
+        if request.llm_provider not in ["gpt4", "llama"]:
+            raise HTTPException(status_code=400, detail="Invalid LLM provider. Must be 'gpt4' or 'llama'")
         settings.llm_provider = request.llm_provider
     
     if request.openai_api_key is not None:
