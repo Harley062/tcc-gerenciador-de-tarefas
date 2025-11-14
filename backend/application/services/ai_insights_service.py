@@ -269,13 +269,34 @@ Keep subtasks specific, actionable, and in logical order."""
         period: str = "daily"
     ) -> Dict[str, Any]:
         """Generate AI-powered summary of tasks"""
-        completed = [t for t in tasks if t.status == "done"]
-        in_progress = [t for t in tasks if t.status == "in_progress"]
-        todo = [t for t in tasks if t.status == "todo"]
+        def get_status(task):
+            return task.status.value if hasattr(task.status, 'value') else str(task.status)
         
-        total_time = sum(t.actual_duration or t.estimated_duration or 0 for t in completed)
+        def get_priority(task):
+            return task.priority.value if hasattr(task.priority, 'value') else str(task.priority)
         
-        high_priority_pending = len([t for t in todo + in_progress if t.priority == "high"])
+        def get_due_date(task):
+            if hasattr(task.due_date, 'isoformat'):
+                return task.due_date.isoformat()
+            elif isinstance(task.due_date, str):
+                return task.due_date
+            return None
+        
+        def get_duration(task):
+            val = task.actual_duration if task.actual_duration is not None else (task.estimated_duration or 0)
+            if isinstance(val, (int, float)):
+                return int(val)
+            elif isinstance(val, str) and val.isdigit():
+                return int(val)
+            return 0
+        
+        completed = [t for t in tasks if get_status(t) == "done"]
+        in_progress = [t for t in tasks if get_status(t) == "in_progress"]
+        todo = [t for t in tasks if get_status(t) == "todo"]
+        
+        total_time = sum(get_duration(t) for t in completed)
+        
+        high_priority_pending = [t for t in todo + in_progress if get_priority(t) == "high"]
         
         insights = []
         if len(completed) > 5:
@@ -283,8 +304,8 @@ Keep subtasks specific, actionable, and in logical order."""
         elif len(completed) == 0:
             insights.append("💡 Nenhuma tarefa concluída ainda. Que tal começar pela mais importante?")
         
-        if high_priority_pending > 3:
-            insights.append(f"⚠️ Você tem {high_priority_pending} tarefas de alta prioridade pendentes.")
+        if len(high_priority_pending) > 3:
+            insights.append(f"⚠️ Você tem {len(high_priority_pending)} tarefas de alta prioridade pendentes.")
         
         if len(in_progress) > 5:
             insights.append("🎯 Muitas tarefas em progresso. Considere focar em finalizar algumas antes de iniciar novas.")
@@ -298,8 +319,8 @@ Keep subtasks specific, actionable, and in logical order."""
                 "total_time_minutes": total_time
             },
             "insights": insights,
-            "top_completed": [{"title": t.title, "priority": t.priority} for t in completed[:5]],
-            "high_priority_pending": [{"title": t.title, "due_date": t.due_date.isoformat() if t.due_date else None} for t in todo + in_progress if t.priority == "high"][:5],
+            "top_completed": [{"title": t.title, "priority": get_priority(t)} for t in completed[:5]],
+            "high_priority_pending": [{"title": t.title, "due_date": get_due_date(t)} for t in high_priority_pending[:5]],
             "recommendations": [
                 "Foque em tarefas de alta prioridade primeiro",
                 "Divida tarefas grandes em subtarefas menores",

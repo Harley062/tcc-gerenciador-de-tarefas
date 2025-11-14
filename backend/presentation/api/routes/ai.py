@@ -139,7 +139,7 @@ async def suggest_subtasks(
             provider=ai_service.provider
         )
     except Exception as e:
-        logger.error(f"Subtask suggestion failed: {e}")
+        logger.error("Subtask suggestion failed", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate subtask suggestions"
@@ -157,7 +157,7 @@ async def analyze_sentiment(
         result = await ai_service.analyze_sentiment_urgency(request.text)
         return SentimentAnalysisResponse(**result)
     except Exception as e:
-        logger.error(f"Sentiment analysis failed: {e}")
+        logger.error("Sentiment analysis failed", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to analyze sentiment"
@@ -174,7 +174,7 @@ async def estimate_duration(
     """Estimate task duration using AI"""
     try:
         repo = PostgreSQLTaskRepository(session)
-        historical_tasks = await repo.get_by_user(current_user.id)
+        historical_tasks, _ = await repo.get_by_user_id(current_user.id, limit=1000)
         
         duration = await ai_service.estimate_duration(
             task_title=request.task_title,
@@ -187,7 +187,7 @@ async def estimate_duration(
             confidence=0.7
         )
     except Exception as e:
-        logger.error(f"Duration estimation failed: {e}")
+        logger.error("Duration estimation failed", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to estimate duration"
@@ -212,14 +212,14 @@ async def suggest_scheduling(
                 detail="Task not found"
             )
         
-        all_tasks = await repo.get_by_user(current_user.id)
+        all_tasks, _ = await repo.get_by_user_id(current_user.id, limit=1000)
         
         suggestion = await ai_service.suggest_scheduling(task, all_tasks)
         return SchedulingSuggestionResponse(**suggestion)
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Scheduling suggestion failed: {e}")
+        logger.error("Scheduling suggestion failed", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate scheduling suggestion"
@@ -244,7 +244,7 @@ async def detect_dependencies(
                 detail="Task not found"
             )
         
-        all_tasks = await repo.get_by_user(current_user.id)
+        all_tasks, _ = await repo.get_by_user_id(current_user.id, limit=1000)
         
         dependencies = await ai_service.detect_dependencies(task, all_tasks)
         
@@ -254,7 +254,7 @@ async def detect_dependencies(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Dependency detection failed: {e}")
+        logger.error("Dependency detection failed", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to detect dependencies"
@@ -271,13 +271,13 @@ async def generate_summary(
     """Generate AI-powered summary of tasks"""
     try:
         repo = PostgreSQLTaskRepository(session)
-        tasks = await repo.get_by_user(current_user.id)
+        tasks, _ = await repo.get_by_user_id(current_user.id, limit=10000)
         
         summary = await ai_service.generate_summary(tasks, request.period)
         
         return SummaryResponse(**summary)
     except Exception as e:
-        logger.error(f"Summary generation failed: {e}")
+        logger.error("Summary generation failed", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate summary"
@@ -294,7 +294,7 @@ async def chat_message(
     """Process a chat message and return response"""
     try:
         repo = PostgreSQLTaskRepository(session)
-        tasks = await repo.get_by_user(current_user.id)
+        tasks, _ = await repo.get_by_user_id(current_user.id, limit=1000)
         
         response = await chat_service.process_message(
             message=request.message,
@@ -303,7 +303,7 @@ async def chat_message(
         
         return ChatMessageResponse(**response)
     except Exception as e:
-        logger.error(f"Chat processing failed: {e}")
+        logger.error("Chat processing failed", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to process chat message"
