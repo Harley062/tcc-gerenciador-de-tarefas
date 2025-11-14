@@ -1,4 +1,24 @@
-import api from './api';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+const apiClient = axios.create({
+  baseURL: `${API_URL}/api`,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 export interface SubtaskSuggestion {
   title: string;
@@ -55,7 +75,7 @@ export interface ChatMessage {
 
 export const aiApi = {
   suggestSubtasks: async (taskTitle: string, taskDescription?: string): Promise<SubtaskSuggestion[]> => {
-    const response = await api.post('/ai/subtasks/suggest', {
+    const response = await apiClient.post('/ai/subtasks/suggest', {
       task_title: taskTitle,
       task_description: taskDescription,
     });
@@ -63,12 +83,12 @@ export const aiApi = {
   },
 
   analyzeSentiment: async (text: string): Promise<SentimentAnalysis> => {
-    const response = await api.post('/ai/sentiment/analyze', { text });
+    const response = await apiClient.post('/ai/sentiment/analyze', { text });
     return response.data;
   },
 
   estimateDuration: async (taskTitle: string, taskDescription?: string): Promise<DurationEstimate> => {
-    const response = await api.post('/ai/duration/estimate', {
+    const response = await apiClient.post('/ai/duration/estimate', {
       task_title: taskTitle,
       task_description: taskDescription,
     });
@@ -76,31 +96,31 @@ export const aiApi = {
   },
 
   suggestScheduling: async (taskId: string): Promise<SchedulingSuggestion> => {
-    const response = await api.post('/ai/scheduling/suggest', { task_id: taskId });
+    const response = await apiClient.post('/ai/scheduling/suggest', { task_id: taskId });
     return response.data;
   },
 
   detectDependencies: async (taskId: string): Promise<Dependency[]> => {
-    const response = await api.post('/ai/dependencies/detect', { task_id: taskId });
+    const response = await apiClient.post('/ai/dependencies/detect', { task_id: taskId });
     return response.data.dependencies;
   },
 
   generateSummary: async (period: string = 'daily'): Promise<TaskSummary> => {
-    const response = await api.post('/ai/summary/generate', { period });
+    const response = await apiClient.post('/ai/summary/generate', { period });
     return response.data;
   },
 
   sendChatMessage: async (message: string): Promise<ChatMessage> => {
-    const response = await api.post('/ai/chat', { message });
+    const response = await apiClient.post('/ai/chat', { message });
     return response.data;
   },
 
   getChatHistory: async (): Promise<any[]> => {
-    const response = await api.get('/ai/chat/history');
+    const response = await apiClient.get('/ai/chat/history');
     return response.data.history;
   },
 
   clearChatHistory: async (): Promise<void> => {
-    await api.delete('/ai/chat/history');
+    await apiClient.delete('/ai/chat/history');
   },
 };
