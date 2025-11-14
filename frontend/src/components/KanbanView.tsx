@@ -98,6 +98,7 @@ const KanbanView: React.FC = () => {
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
+                            style={provided.draggableProps.style}
                             className={`mb-3 ${snapshot.isDragging ? 'opacity-50' : ''}`}
                           >
                             <TaskCard
