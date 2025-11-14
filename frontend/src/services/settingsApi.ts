@@ -1,5 +1,25 @@
 import axios from 'axios';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+const apiClient = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 export interface UserSettings {
   id: string;
   user_id: string;
@@ -26,12 +46,12 @@ export interface UpdateSettingsRequest {
 
 export const settingsApi = {
   getSettings: async (): Promise<UserSettings> => {
-    const response = await axios.get('/api/settings');
+    const response = await apiClient.get('/api/settings');
     return response.data;
   },
 
   updateSettings: async (settings: UpdateSettingsRequest): Promise<UserSettings> => {
-    const response = await axios.put('/api/settings', settings);
+    const response = await apiClient.put('/api/settings', settings);
     return response.data;
   },
 };
