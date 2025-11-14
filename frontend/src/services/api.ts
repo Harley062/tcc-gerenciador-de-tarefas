@@ -99,10 +99,23 @@ class ApiService {
     return response.data;
   }
 
-  async getTasks(status?: string, projectId?: string) {
+  async getTasks(options?: {
+    status?: string;
+    projectId?: string;
+    limit?: number;
+    offset?: number;
+    sortBy?: string;
+    sortOrder?: string;
+    q?: string;
+  }) {
     const params: any = {};
-    if (status) params.status = status;
-    if (projectId) params.project_id = projectId;
+    if (options?.status) params.status = options.status;
+    if (options?.projectId) params.project_id = options.projectId;
+    if (options?.limit !== undefined) params.limit = options.limit;
+    if (options?.offset !== undefined) params.offset = options.offset;
+    if (options?.sortBy) params.sort_by = options.sortBy;
+    if (options?.sortOrder) params.sort_order = options.sortOrder;
+    if (options?.q) params.q = options.q;
     const response = await this.api.get('/tasks', { params });
     return response.data;
   }

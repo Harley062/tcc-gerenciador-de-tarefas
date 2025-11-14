@@ -4,6 +4,7 @@ from application.services.auth_service import AuthService
 from domain.entities.user import User
 from presentation.api.dependencies import get_auth_service, get_current_user
 from presentation.api.schemas import (
+    RefreshTokenRequest,
     TokenResponse,
     UserLoginRequest,
     UserRegisterRequest,
@@ -57,10 +58,10 @@ async def login(
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(
-    refresh_token: str,
+    request: RefreshTokenRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ) -> TokenResponse:
-    payload = auth_service.verify_token(refresh_token, "refresh")
+    payload = auth_service.verify_token(request.refresh_token, "refresh")
     if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
