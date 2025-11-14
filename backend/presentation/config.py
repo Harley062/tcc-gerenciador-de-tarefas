@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379"
     openai_api_key: str = ""
     openai_model: str = "gpt-4"
-    ollama_endpoint: str = "http://localhost:11434"
+    ollama_endpoint: str = "http://ollama:11434"
     jwt_secret_key: str = "your-secret-key-change-in-production"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30

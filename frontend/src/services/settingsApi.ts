@@ -23,7 +23,7 @@ apiClient.interceptors.request.use(
 export interface UserSettings {
   id: string;
   user_id: string;
-  llm_provider: 'gpt4' | 'llama' | 'regex';
+  llm_provider: 'gpt4' | 'llama';
   openai_api_key: string | null;
   llama_endpoint: string;
   default_task_duration: number;
@@ -35,7 +35,7 @@ export interface UserSettings {
 }
 
 export interface UpdateSettingsRequest {
-  llm_provider?: 'gpt4' | 'llama' | 'regex';
+  llm_provider?: 'gpt4' | 'llama';
   openai_api_key?: string;
   llama_endpoint?: string;
   default_task_duration?: number;

@@ -26,6 +26,7 @@ const ApplyAISuggestionsModal: React.FC<ApplyAISuggestionsModalProps> = ({ task,
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [provider, setProvider] = useState<string>('');
   const [suggestions, setSuggestions] = useState<AISuggestions>({
     sentiment: null,
     duration: null,
@@ -47,23 +48,25 @@ const ApplyAISuggestionsModal: React.FC<ApplyAISuggestionsModalProps> = ({ task,
     setError(null);
     try {
       const taskText = `${task.title}${task.description ? ' ' + task.description : ''}`;
-      
+
       const [sentimentResult, durationResult, subtasksResult] = await Promise.all([
         aiApi.analyzeSentiment(taskText).catch(() => null),
         aiApi.estimateDuration(task.title, task.description).catch(() => null),
-        aiApi.suggestSubtasks(task.title, task.description).catch(() => []),
+        aiApi.suggestSubtasks(task.title, task.description).catch(() => ({ subtasks: [], provider: 'unknown' })),
       ]);
 
       setSuggestions({
         sentiment: sentimentResult,
         duration: durationResult,
-        subtasks: subtasksResult,
+        subtasks: subtasksResult.subtasks,
       });
+
+      setProvider(subtasksResult.provider);
 
       setSelected({
         priority: !!sentimentResult,
         estimatedDuration: !!durationResult,
-        subtasks: subtasksResult.map(() => true),
+        subtasks: subtasksResult.subtasks.map(() => true),
       });
     } catch (err) {
       setError('Falha ao carregar sugestões de IA');
@@ -128,7 +131,20 @@ const ApplyAISuggestionsModal: React.FC<ApplyAISuggestionsModalProps> = ({ task,
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[85vh] overflow-hidden">
         <div className="p-4 border-b flex justify-between items-center bg-gradient-to-r from-purple-500 to-blue-500">
-          <h2 className="text-xl font-bold text-white">✨ Aplicar Sugestões de IA</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold text-white">✨ Aplicar Sugestões de IA</h2>
+            {provider && (
+              <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                provider === 'gpt4' ? 'bg-green-500 text-white' :
+                provider === 'llama' ? 'bg-blue-500 text-white' :
+                'bg-yellow-500 text-gray-900'
+              }`}>
+                {provider === 'gpt4' ? '🤖 GPT-4' :
+                 provider === 'llama' ? '🦙 Llama' :
+                 '🔧 Heurística'}
+              </span>
+            )}
+          </div>
           <button onClick={onClose} className="text-white hover:text-gray-200 text-2xl">
             ✕
           </button>
@@ -217,32 +233,53 @@ const ApplyAISuggestionsModal: React.FC<ApplyAISuggestionsModalProps> = ({ task,
                 </div>
               )}
 
-              {suggestions.subtasks.length > 0 && (
-                <div className="border rounded-lg p-4">
-                  <div className="font-semibold text-gray-800 mb-3">
-                    Subtarefas Sugeridas ({suggestions.subtasks.length})
-                  </div>
+              <div className="border rounded-lg p-4">
+                <div className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <span>📋</span>
+                  <span>Subtarefas Sugeridas</span>
+                  {suggestions.subtasks.length > 0 && (
+                    <span className="text-sm font-normal text-gray-500">
+                      ({suggestions.subtasks.length})
+                    </span>
+                  )}
+                </div>
+                {suggestions.subtasks.length > 0 ? (
                   <div className="space-y-2">
                     {suggestions.subtasks.map((subtask, index) => (
-                      <label key={index} className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded">
+                      <label key={index} className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded border border-gray-200 cursor-pointer transition-colors">
                         <input
                           type="checkbox"
                           checked={selected.subtasks[index]}
                           onChange={() => toggleSubtask(index)}
-                          className="mt-1"
+                          className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                         />
                         <div className="flex-1">
-                          <div className="font-medium text-sm">{subtask.title}</div>
-                          <div className="text-xs text-gray-600 mt-1">{subtask.description}</div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            ⏱️ {subtask.estimated_duration}min
+                          <div className="font-medium text-sm text-gray-800">{subtask.title}</div>
+                          {subtask.description && (
+                            <div className="text-xs text-gray-600 mt-1">{subtask.description}</div>
+                          )}
+                          <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                            </svg>
+                            {subtask.estimated_duration} min
                           </div>
                         </div>
                       </label>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    <svg className="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <p className="text-sm">Nenhuma subtarefa sugerida pela IA.</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Configure um provedor LLM nas configurações para receber sugestões.
+                    </p>
+                  </div>
+                )}
+              </div>
 
               {!suggestions.sentiment && !suggestions.duration && suggestions.subtasks.length === 0 && (
                 <div className="text-center py-8 text-gray-500">

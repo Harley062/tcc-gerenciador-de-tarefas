@@ -14,6 +14,8 @@ from domain.entities.user import User
 from infrastructure.database.postgresql_repository import PostgreSQLTaskRepository
 from presentation.api.dependencies import get_current_user, get_db_session
 from pydantic import BaseModel
+import os
+from presentation.config import get_settings
 
 logger = logging.getLogger("taskmaster")
 
@@ -115,6 +117,8 @@ async def get_ai_insights_service(
     from infrastructure.database.user_settings_repository import UserSettingsRepository
     from infrastructure.gpt.openai_adapter import OpenAIAdapter
     from infrastructure.llm.llama_adapter import LlamaAdapter
+    import os
+    from presentation.config import get_settings
     
     settings_repo = UserSettingsRepository(session)
     settings = await settings_repo.get_or_create(current_user.id)
@@ -125,7 +129,16 @@ async def get_ai_insights_service(
     if settings.llm_provider == "gpt4" and settings.openai_api_key:
         openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4")
     elif settings.llm_provider == "llama":
-        llama_adapter = LlamaAdapter(endpoint=settings.llama_endpoint, model="llama2")
+        # Resolve endpoint: prefer user setting, then env var, then global settings default
+        resolved_endpoint = (
+            settings.llama_endpoint
+            or os.getenv("OLLAMA_ENDPOINT")
+            or get_settings().ollama_endpoint
+        )
+        # Normalize localhost values to compose service name when running in docker
+        if "localhost" in (resolved_endpoint or ""):
+            resolved_endpoint = os.getenv("OLLAMA_ENDPOINT") or get_settings().ollama_endpoint
+        llama_adapter = LlamaAdapter(endpoint=resolved_endpoint, model="llama2")
     
     return AIInsightsService(
         provider=settings.llm_provider,
@@ -152,7 +165,14 @@ async def get_chat_assistant_service(
     if settings.llm_provider == "gpt4" and settings.openai_api_key:
         openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4")
     elif settings.llm_provider == "llama":
-        llama_adapter = LlamaAdapter(endpoint=settings.llama_endpoint, model="llama2")
+        resolved_endpoint = (
+            settings.llama_endpoint
+            or os.getenv("OLLAMA_ENDPOINT")
+            or get_settings().ollama_endpoint
+        )
+        if "localhost" in (resolved_endpoint or ""):
+            resolved_endpoint = os.getenv("OLLAMA_ENDPOINT") or get_settings().ollama_endpoint
+        llama_adapter = LlamaAdapter(endpoint=resolved_endpoint, model="llama2")
     
     return ChatAssistantService(
         provider=settings.llm_provider,
@@ -169,11 +189,28 @@ async def suggest_subtasks(
 ):
     """Suggest subtasks for a given task using AI"""
     try:
+        logger.info(
+            f"Subtask suggestion request",
+            extra={
+                "provider": ai_service.provider,
+                "task_title": request.task_title[:50],
+                "has_description": bool(request.task_description),
+            }
+        )
+
         subtasks = await ai_service.suggest_subtasks(
             task_title=request.task_title,
             task_description=request.task_description
         )
-        
+
+        logger.info(
+            f"Subtask suggestion completed",
+            extra={
+                "provider": ai_service.provider,
+                "subtasks_count": len(subtasks),
+            }
+        )
+
         return SubtaskSuggestionsResponse(
             subtasks=[SubtaskSuggestion(**st) for st in subtasks],
             provider=ai_service.provider

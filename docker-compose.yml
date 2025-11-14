@@ -44,7 +44,6 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://taskmaster:taskmaster123@postgres/taskmaster
       - REDIS_URL=redis://redis:6379
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OLLAMA_ENDPOINT=http://ollama:11434
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-secret-key-change-in-production}
       - CORS_ORIGINS=http://localhost:3000,http://localhost:8000

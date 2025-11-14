@@ -74,12 +74,15 @@ export interface ChatMessage {
 }
 
 export const aiApi = {
-  suggestSubtasks: async (taskTitle: string, taskDescription?: string): Promise<SubtaskSuggestion[]> => {
+  suggestSubtasks: async (taskTitle: string, taskDescription?: string): Promise<{ subtasks: SubtaskSuggestion[], provider: string }> => {
     const response = await apiClient.post('/ai/subtasks/suggest', {
       task_title: taskTitle,
       task_description: taskDescription,
     });
-    return response.data.subtasks;
+    return {
+      subtasks: response.data.subtasks,
+      provider: response.data.provider
+    };
   },
 
   analyzeSentiment: async (text: string): Promise<SentimentAnalysis> => {

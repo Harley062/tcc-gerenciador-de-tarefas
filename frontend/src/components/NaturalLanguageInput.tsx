@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTaskStore } from '../store/taskStore';
+import SubtaskSuggestionsModal from './SubtaskSuggestionsModal';
 
 interface NaturalLanguageInputProps {
   onTaskCreated?: () => void;
@@ -9,6 +10,8 @@ const NaturalLanguageInput: React.FC<NaturalLanguageInputProps> = ({ onTaskCreat
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [preview, setPreview] = useState<any>(null);
+  const [showSubtaskModal, setShowSubtaskModal] = useState(false);
+  const [createdTask, setCreatedTask] = useState<any>(null);
   const createTask = useTaskStore((state) => state.createTask);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,16 +22,25 @@ const NaturalLanguageInput: React.FC<NaturalLanguageInputProps> = ({ onTaskCreat
     try {
       const task = await createTask(input);
       setPreview(task);
+      setCreatedTask(task);
       setInput('');
+
+      // Show subtask suggestions modal after a short delay
       setTimeout(() => {
-        setPreview(null);
-        onTaskCreated?.();
-      }, 3000);
+        setShowSubtaskModal(true);
+      }, 500);
     } catch (error) {
       console.error('Failed to create task:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleCloseSubtaskModal = () => {
+    setShowSubtaskModal(false);
+    setPreview(null);
+    setCreatedTask(null);
+    onTaskCreated?.();
   };
 
   const examples = [
@@ -103,6 +115,17 @@ const NaturalLanguageInput: React.FC<NaturalLanguageInputProps> = ({ onTaskCreat
           </div>
         </div>
       </div>
+
+      {/* Subtask Suggestions Modal */}
+      {showSubtaskModal && createdTask && (
+        <SubtaskSuggestionsModal
+          taskId={createdTask.id}
+          taskTitle={createdTask.title}
+          taskDescription={createdTask.description}
+          onClose={handleCloseSubtaskModal}
+          onSubtasksCreated={handleCloseSubtaskModal}
+        />
+      )}
     </div>
   );
 };

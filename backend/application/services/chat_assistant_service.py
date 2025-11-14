@@ -20,7 +20,7 @@ class ChatAssistantService:
         self,
         openai_adapter: Optional[OpenAIAdapter] = None,
         llama_adapter: Optional[LlamaAdapter] = None,
-        provider: str = "regex"
+        provider: str = "llama"
     ):
         self.openai_adapter = openai_adapter
         self.llama_adapter = llama_adapter

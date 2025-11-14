@@ -240,12 +240,50 @@ const KanbanView: React.FC = () => {
   };
 
   const handleDelete = async (taskId: string) => {
-    if (window.confirm('Tem certeza que deseja deletar esta tarefa?')) {
-      try {
-        await deleteTask(taskId);
-      } catch (error) {
-        console.error('Failed to delete task:', error);
-      }
+    // show a simple DOM modal instead of window.confirm
+    const confirmed = await new Promise<boolean>((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50';
+      const modal = document.createElement('div');
+      modal.className = 'bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full shadow-lg';
+
+      modal.innerHTML = `
+      <h3 class="text-lg font-bold mb-2">Confirmar exclusão</h3>
+      <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">Tem certeza que deseja deletar esta tarefa?</p>
+      `;
+
+      const buttons = document.createElement('div');
+      buttons.className = 'flex justify-end gap-2';
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'px-3 py-1 rounded bg-gray-200 dark:bg-gray-700';
+      cancelBtn.textContent = 'Cancelar';
+      cancelBtn.onclick = () => {
+      document.body.removeChild(overlay);
+      resolve(false);
+      };
+
+      const confirmBtn = document.createElement('button');
+      confirmBtn.className = 'px-3 py-1 rounded bg-red-600 text-white';
+      confirmBtn.textContent = 'Deletar';
+      confirmBtn.onclick = () => {
+      document.body.removeChild(overlay);
+      resolve(true);
+      };
+
+      buttons.appendChild(cancelBtn);
+      buttons.appendChild(confirmBtn);
+      modal.appendChild(buttons);
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+      confirmBtn.focus();
+    });
+
+    if (!confirmed) return;
+    try {
+      await deleteTask(taskId);
+    } catch (error) {
+      console.error('Failed to delete task:', error);
     }
   };
 

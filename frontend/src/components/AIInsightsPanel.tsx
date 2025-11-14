@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { aiApi, SubtaskSuggestion, Dependency, SchedulingSuggestion } from '../services/aiApi';
+import api from '../services/api';
 import { Task } from '../store/taskStore';
 import ApplyAISuggestionsModal from './ApplyAISuggestionsModal';
 
@@ -15,6 +16,7 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ task, onClose, onCrea
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [subtasks, setSubtasks] = useState<SubtaskSuggestion[]>([]);
+  const [creatingIndex, setCreatingIndex] = useState<number | null>(null);
   const [scheduling, setScheduling] = useState<SchedulingSuggestion | null>(null);
   const [dependencies, setDependencies] = useState<Dependency[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -23,8 +25,8 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ task, onClose, onCrea
     setLoading(true);
     setError(null);
     try {
-      const suggestions = await aiApi.suggestSubtasks(task.title, task.description);
-      setSubtasks(suggestions);
+      const result = await aiApi.suggestSubtasks(task.title, task.description);
+      setSubtasks(result.subtasks);
     } catch (err) {
       setError('Falha ao gerar sugestões de subtarefas');
       console.error(err);
@@ -141,9 +143,37 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ task, onClose, onCrea
                           <h4 className="font-semibold">{subtask.title}</h4>
                           <p className="text-sm text-gray-600 mt-1">{subtask.description}</p>
                         </div>
-                        <span className="text-sm text-gray-500 ml-2">
-                          ⏱️ {subtask.estimated_duration}min
-                        </span>
+                        <div className="flex flex-col items-end ml-2">
+                          <span className="text-sm text-gray-500">
+                            ⏱️ {subtask.estimated_duration}min
+                          </span>
+                          <button
+                            onClick={async () => {
+                              try {
+                                setCreatingIndex(index);
+                                await api.createSubtask(task.id, {
+                                  title: subtask.title,
+                                  description: subtask.description,
+                                  estimated_duration: subtask.estimated_duration,
+                                  status: 'todo',
+                                  priority: 'medium',
+                                });
+                                // remove created subtask from list
+                                setSubtasks((prev) => prev.filter((_, i) => i !== index));
+                                if (onTaskUpdated) onTaskUpdated();
+                              } catch (err) {
+                                console.error('Failed to create subtask:', err);
+                                setError('Falha ao criar subtarefa');
+                              } finally {
+                                setCreatingIndex(null);
+                              }
+                            }}
+                            disabled={creatingIndex !== null}
+                            className="mt-2 px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 disabled:opacity-50"
+                          >
+                            {creatingIndex === index ? 'Criando...' : 'Criar'}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}

@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS user_settings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    llm_provider VARCHAR(20) DEFAULT 'regex' CHECK (llm_provider IN ('gpt4', 'llama', 'regex')),
+    llm_provider VARCHAR(20) DEFAULT 'llama' CHECK (llm_provider IN ('gpt4', 'llama')),
     openai_api_key TEXT,
     llama_endpoint VARCHAR(255) DEFAULT 'http://localhost:11434',
     default_task_duration INTEGER DEFAULT 60,

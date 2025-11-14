@@ -9,7 +9,9 @@ import CalendarView from './components/CalendarView';
 import SettingsView from './components/SettingsView';
 import DashboardView from './components/DashboardView';
 import ChatAssistant from './components/ChatAssistant';
+import SubtaskSuggestionsModal from './components/SubtaskSuggestionsModal';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import api from './services/api';
 
 type ViewType = 'dashboard' | 'list' | 'kanban' | 'calendar' | 'settings';
 
@@ -22,6 +24,8 @@ const App: React.FC = () => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
   });
+  const [showQuickAddSubtaskModal, setShowQuickAddSubtaskModal] = useState(false);
+  const [quickAddCreatedTask, setQuickAddCreatedTask] = useState<any>(null);
   const quickAddInputRef = useRef<HTMLInputElement>(null);
   const listViewSearchRef = useRef<HTMLInputElement>(null);
 
@@ -84,16 +88,19 @@ const App: React.FC = () => {
                     type="text"
                     placeholder="Adicionar tarefa rápida... (N)"
                     className="w-72 pl-10 pr-4 py-2 text-sm input shadow-sm"
-                    onKeyDown={(e) => {
+                    onKeyDown={async (e) => {
                       if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                         const input = e.currentTarget.value;
                         e.currentTarget.value = '';
-                        fetchTasks({});
-                        import('./services/api').then(({ default: api }) => {
-                          api.createTaskNaturalLanguage(input).then(() => {
-                            fetchTasks({});
-                          });
-                        });
+                        try {
+                          const task = await api.createTaskNaturalLanguage(input);
+                          setQuickAddCreatedTask(task);
+                          setShowQuickAddSubtaskModal(true);
+                          fetchTasks({});
+                        } catch (error) {
+                          console.error('Failed to create task:', error);
+                          fetchTasks({});
+                        }
                       }
                     }}
                   />
@@ -237,6 +244,25 @@ const App: React.FC = () => {
 
       {/* AI Chat Assistant - Always available */}
       <ChatAssistant />
+
+      {/* Quick Add Subtask Suggestions Modal */}
+      {showQuickAddSubtaskModal && quickAddCreatedTask && (
+        <SubtaskSuggestionsModal
+          taskId={quickAddCreatedTask.id}
+          taskTitle={quickAddCreatedTask.title}
+          taskDescription={quickAddCreatedTask.description}
+          onClose={() => {
+            setShowQuickAddSubtaskModal(false);
+            setQuickAddCreatedTask(null);
+            fetchTasks({});
+          }}
+          onSubtasksCreated={() => {
+            setShowQuickAddSubtaskModal(false);
+            setQuickAddCreatedTask(null);
+            fetchTasks({});
+          }}
+        />
+      )}
     </div>
   );
 };

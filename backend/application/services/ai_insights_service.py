@@ -20,28 +20,42 @@ class AIInsightsService:
         self,
         openai_adapter: Optional[OpenAIAdapter] = None,
         llama_adapter: Optional[LlamaAdapter] = None,
-        provider: str = "regex"
+        provider: str = "llama"
     ):
         self.openai_adapter = openai_adapter
         self.llama_adapter = llama_adapter
         self.provider = provider
     
     async def suggest_subtasks(
-        self, 
-        task_title: str, 
+        self,
+        task_title: str,
         task_description: Optional[str] = None
     ) -> List[Dict[str, Any]]:
-        """Suggest subtasks for a given task using AI"""
+        """Suggest subtasks for a given task using AI with fallback to heuristics"""
+        subtasks = []
+
         try:
+            # Try AI providers first
             if self.provider == "gpt4" and self.openai_adapter:
-                return await self._suggest_subtasks_gpt(task_title, task_description)
+                logger.info(f"Using GPT-4 for subtask suggestions")
+                subtasks = await self._suggest_subtasks_gpt(task_title, task_description)
             elif self.provider == "llama" and self.llama_adapter:
-                return await self._suggest_subtasks_llama(task_title, task_description)
-            else:
-                return await self._suggest_subtasks_heuristic(task_title, task_description)
+                logger.info(f"Using Llama for subtask suggestions")
+                subtasks = await self._suggest_subtasks_llama(task_title, task_description)
+            elif self.provider == "llama":
+                logger.info(f"Using heuristic rules for subtask suggestions (provider: {self.provider})")
+                subtasks = await self._suggest_subtasks_heuristic(task_title, task_description)
+
+            # If AI didn't return anything, use heuristics as fallback
+            if not subtasks:
+                logger.info(f"Using heuristic fallback for subtask suggestions (provider: {self.provider})")
+                subtasks = await self._suggest_subtasks_heuristic(task_title, task_description)
+
         except Exception as e:
-            logger.error(f"Subtask suggestion failed: {e}")
-            return []
+            logger.error(f"Subtask suggestion failed, using heuristic fallback: {e}")
+            subtasks = await self._suggest_subtasks_heuristic(task_title, task_description)
+
+        return subtasks
     
     async def _suggest_subtasks_gpt(
         self, 
@@ -152,13 +166,45 @@ Keep subtasks specific, actionable, and in logical order."""
                 {"title": "Enviar ou publicar", "description": "Compartilhar documento final", "estimated_duration": 10},
             ])
         else:
-            subtasks.extend([
-                {"title": "Planejar execução", "description": "Definir passos e recursos necessários", "estimated_duration": 20},
-                {"title": "Preparar materiais", "description": "Reunir tudo que será necessário", "estimated_duration": 30},
-                {"title": "Executar tarefa principal", "description": "Realizar o trabalho central", "estimated_duration": 60},
-                {"title": "Verificar resultado", "description": "Conferir se foi feito corretamente", "estimated_duration": 15},
-                {"title": "Finalizar e documentar", "description": "Concluir e registrar o que foi feito", "estimated_duration": 15},
-            ])
+            # Try to create more tailored generic subtasks based on title and description
+            # Extract meaningful words from title to create context-aware step names
+            def meaningful_words(text: str):
+                stopwords = {"de", "da", "do", "e", "o", "a", "com", "para", "por", "em", "um", "uma"}
+                words = [w.strip().lower() for w in text.split() if len(w) > 3]
+                return [w for w in words if w not in stopwords]
+
+            context_words = meaningful_words(task_title or "")
+            ctx = context_words[:3]
+
+            if ctx:
+                subtasks.append({
+                    "title": f"Planejar: definir passos para {' '.join(ctx)}",
+                    "description": f"Definir o que precisa ser feito para {' '.join(ctx)}",
+                    "estimated_duration": 20,
+                })
+                subtasks.append({
+                    "title": f"Preparar recursos para {' '.join(ctx)}",
+                    "description": "Reunir materiais, acessos e informações necessárias",
+                    "estimated_duration": 30,
+                })
+                subtasks.append({
+                    "title": f"Executar ação principal relacionada a {' '.join(ctx)}",
+                    "description": "Realizar a atividade principal descrita na tarefa",
+                    "estimated_duration": 60,
+                })
+                subtasks.append({
+                    "title": "Verificar resultado e ajustar",
+                    "description": "Conferir se o resultado atende aos critérios e ajustar se necessário",
+                    "estimated_duration": 20,
+                })
+            else:
+                subtasks.extend([
+                    {"title": "Planejar execução", "description": "Definir passos e recursos necessários", "estimated_duration": 20},
+                    {"title": "Preparar materiais", "description": "Reunir tudo que será necessário", "estimated_duration": 30},
+                    {"title": "Executar tarefa principal", "description": "Realizar o trabalho central", "estimated_duration": 60},
+                    {"title": "Verificar resultado", "description": "Conferir se foi feito corretamente", "estimated_duration": 15},
+                    {"title": "Finalizar e documentar", "description": "Concluir e registrar o que foi feito", "estimated_duration": 15},
+                ])
         
         return subtasks[:5]
     

@@ -1,11 +1,11 @@
 # TaskMaster - Sistema de Gerenciamento de Tarefas Inteligente (SGTI)
 
-Sistema completo de gerenciamento de tarefas com IA integrada, suportando múltiplos provedores de LLM (GPT-4, Llama, Regex) e criação automática de tarefas recorrentes.
+Sistema completo de gerenciamento de tarefas com IA integrada, suportando múltiplos provedores de LLM (GPT-4, Llama) e criação automática de tarefas recorrentes.
 
 ## 🚀 Funcionalidades
 
 ### IA e Parsing Inteligente
-- **Multi-LLM Support**: Escolha entre GPT-4, Llama (via Ollama), ou Regex parser
+- **Multi-LLM Support**: Escolha entre GPT-4 e Llama (via Ollama)
 - **Tarefas Recorrentes**: Detecção automática de padrões como "toda semana", "diariamente", "mensalmente"
 - **Parsing em Português**: Suporte completo para linguagem natural em português
 - **Sugestão Automática**: Tags, prioridades e estimativas de duração
@@ -41,7 +41,6 @@ Sistema completo de gerenciamento de tarefas com IA integrada, suportando múlti
 **IA:**
 - OpenAI GPT-4 (opcional)
 - Ollama/Llama2 (incluído)
-- Regex Parser (fallback)
 
 ## 📦 Instalação e Uso
 
@@ -85,9 +84,8 @@ docker compose logs ollama-init -f
 3. Faça login
 4. Clique em "⚙️ Configurações" para configurar a IA
 5. Escolha seu provedor:
-   - **Regex**: Já funciona (padrão)
-   - **Llama**: Já funciona (incluído no Docker)
-   - **GPT-4**: Insira sua API key da OpenAI
+    - **Llama**: Já funciona (incluído no Docker)
+    - **GPT-4**: Insira sua API key da OpenAI
 
 ### Testando Tarefas Recorrentes
 
@@ -136,7 +134,7 @@ backend/
 - `EnhancedGPTService`: Orquestra múltiplos provedores
 - `OpenAIAdapter`: Integração GPT-4
 - `LlamaAdapter`: Integração Ollama/Llama
-- `RegexParser`: Fallback pattern matching
+
 
 **Recurring Tasks:**
 - Detecção automática de padrões de recorrência

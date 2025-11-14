@@ -5,7 +5,6 @@ from uuid import UUID
 from application.services.gpt_service import GPTService
 from infrastructure.gpt.openai_adapter import OpenAIAdapter
 from infrastructure.llm.llama_adapter import LlamaAdapter
-from infrastructure.llm.regex_parser import RegexParser
 
 logger = logging.getLogger("taskmaster")
 
@@ -17,14 +16,12 @@ class EnhancedGPTService(GPTService):
         self,
         openai_adapter: Optional[OpenAIAdapter] = None,
         llama_adapter: Optional[LlamaAdapter] = None,
-        regex_parser: Optional[RegexParser] = None,
         cache_repository=None,
     ):
         # Initialize parent with openai_adapter for backward compatibility
         super().__init__(openai_adapter, cache_repository)
         self.llama_adapter = llama_adapter or LlamaAdapter()
-        self.regex_parser = regex_parser or RegexParser()
-        self.current_provider = "regex"  # Default to regex (always works)
+        self.current_provider = "llama"
     
     def set_provider(self, provider: str, api_key: Optional[str] = None, endpoint: Optional[str] = None):
         """Set the LLM provider to use"""
@@ -47,8 +44,12 @@ class EnhancedGPTService(GPTService):
                 logger.info(f"Parsing task with Llama: {text[:50]}...")
                 result = await self.llama_adapter.parse_task(text)
             else:
-                logger.info(f"Parsing task with Regex: {text[:50]}...")
-                result = await self.regex_parser.parse_task(text)
+                # If provider unknown, attempt Llama then GPT
+                logger.info(f"Parsing task with fallback chain: {text[:50]}...")
+                try:
+                    result = await self.llama_adapter.parse_task(text)
+                except Exception:
+                    result = await self._parse_with_gpt(text)
             
             parsed_data = result["parsed_data"]
             gpt_response = {
@@ -65,23 +66,33 @@ class EnhancedGPTService(GPTService):
             
         except Exception as e:
             logger.warning(
-                f"Primary parser ({self.current_provider}) failed, falling back to regex",
+                f"Primary parser ({self.current_provider}) failed, attempting alternate providers",
                 extra={"error": str(e), "provider": self.current_provider}
             )
-            # Fallback to regex parser
-            result = await self.regex_parser.parse_task(text)
-            parsed_data = result["parsed_data"]
-            gpt_response = {
-                "tokens_used": 0,
-                "model": "regex_fallback",
-                "cost": 0.0,
-                "fallback_reason": str(e),
-            }
-            
-            from application.services.gpt_service import ParsedTask
-            parsed_task = ParsedTask(**parsed_data)
-            
-            return parsed_task, gpt_response
+            # Try alternate provider(s)
+            try:
+                if self.current_provider == "gpt4" and self.llama_adapter:
+                    result = await self.llama_adapter.parse_task(text)
+                elif self.current_provider == "llama" and self.gpt_adapter:
+                    result = await self._parse_with_gpt(text)
+                else:
+                    # last-resort: try GPT adapter if available
+                    result = await self._parse_with_gpt(text)
+
+                parsed_data = result["parsed_data"]
+                gpt_response = {
+                    "tokens_used": result.get("tokens_used", 0),
+                    "model": result.get("model", self.current_provider),
+                    "cost": result.get("cost", 0.0),
+                    "fallback_reason": str(e),
+                }
+
+                from application.services.gpt_service import ParsedTask
+                parsed_task = ParsedTask(**parsed_data)
+                return parsed_task, gpt_response
+            except Exception as final_e:
+                logger.error("All parsers failed", extra={"error": str(final_e)})
+                raise final_e
     
     async def _parse_with_gpt(self, text: str) -> dict[str, Any]:
         """Parse with GPT using cache"""
@@ -117,8 +128,13 @@ class EnhancedGPTService(GPTService):
             elif self.current_provider == "llama":
                 return await self.llama_adapter.suggest_subtasks(task_title, task_description)
             else:
-                # Regex parser doesn't support subtasks
-                return []
+                # Unknown provider: try Llama then GPT
+                try:
+                    return await self.llama_adapter.suggest_subtasks(task_title, task_description)
+                except Exception:
+                    if self.gpt_adapter:
+                        return await self.gpt_adapter.suggest_subtasks(task_title, task_description)
+                    return []
         except Exception as e:
             logger.error(f"Subtask suggestion failed: {e}")
             return []

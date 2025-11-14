@@ -3,6 +3,7 @@ import { useTaskStore, Task } from '../store/taskStore';
 import TaskCard from './TaskCard';
 import AIInsightsPanel from './AIInsightsPanel';
 import TaskEditModal from './TaskEditModal';
+import ConfirmModal from './ConfirmModal';
 
 const ListView: React.FC = () => {
   const { tasks, fetchTasks, updateTask, deleteTask, isLoading } = useTaskStore();
@@ -10,6 +11,8 @@ const ListView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTaskForAI, setSelectedTaskForAI] = useState<Task | null>(null);
   const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<Task | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTasks({ status: statusFilter || undefined });
@@ -24,13 +27,25 @@ const ListView: React.FC = () => {
   };
 
   const handleDelete = async (taskId: string) => {
-    if (window.confirm('Tem certeza que deseja deletar esta tarefa?')) {
-      try {
-        await deleteTask(taskId);
-      } catch (error) {
-        console.error('Failed to delete task:', error);
-      }
+    setTaskToDelete(taskId);
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!taskToDelete) return;
+    try {
+      await deleteTask(taskToDelete);
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+    } finally {
+      setShowConfirm(false);
+      setTaskToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirm(false);
+    setTaskToDelete(null);
   };
 
   const filteredTasks = tasks.filter((task) => {
@@ -152,6 +167,16 @@ const ListView: React.FC = () => {
           task={selectedTaskForEdit}
           onClose={() => setSelectedTaskForEdit(null)}
           onSaved={() => fetchTasks({})}
+        />
+      )}
+      {showConfirm && (
+        <ConfirmModal
+          title="Deletar Tarefa"
+          message="Tem certeza que deseja deletar esta tarefa?"
+          confirmLabel="Deletar"
+          cancelLabel="Cancelar"
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
         />
       )}
     </div>
