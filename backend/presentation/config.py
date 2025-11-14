@@ -1,5 +1,7 @@
 from functools import lru_cache
+from typing import Any
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,6 +20,32 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: Any) -> list[str]:
+        """Parse CORS origins from various formats, handling empty strings gracefully"""
+        if v is None or v == "":
+            return ["http://localhost:3000", "http://localhost:5173"]
+        
+        if isinstance(v, list):
+            return v
+        
+        if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                return ["http://localhost:3000", "http://localhost:5173"]
+            
+            if v.startswith("["):
+                import json
+                try:
+                    return json.loads(v)
+                except json.JSONDecodeError:
+                    return ["http://localhost:3000", "http://localhost:5173"]
+            
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        
+        return ["http://localhost:3000", "http://localhost:5173"]
 
 
 @lru_cache()
