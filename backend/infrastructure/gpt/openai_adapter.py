@@ -107,7 +107,7 @@ Only return valid JSON matching the schema, no additional text."""
         prompt = f"Task: {task_title}"
         if task_description:
             prompt += f"\nDescription: {task_description}"
-        prompt += "\n\nSuggest 3-5 subtasks to complete this task. Return as JSON array with objects containing 'title' and 'estimated_duration' (in minutes)."
+        prompt += "\n\nSuggest 3-5 subtasks to complete this task. Return as JSON array with objects containing 'title', 'description', and 'estimated_duration' (in minutes)."
 
         try:
             response = await self.client.chat.completions.create(
@@ -118,16 +118,50 @@ Only return valid JSON matching the schema, no additional text."""
                 ],
                 temperature=0.5,
                 max_tokens=400,
+                response_format={"type": "json_object"},
             )
 
             content = response.choices[0].message.content
             if not content:
                 return []
 
-            return json.loads(content)
+            result = json.loads(content)
+            return result if isinstance(result, list) else result.get("subtasks", [])
 
         except Exception:
             return []
+
+    async def generate_completion(
+        self, 
+        prompt: str, 
+        response_format: Optional[dict] = None
+    ) -> dict[str, Any]:
+        """Generate a general completion from GPT"""
+        try:
+            kwargs = {
+                "model": self.model,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.7,
+                "max_tokens": 500,
+            }
+            
+            if response_format:
+                kwargs["response_format"] = response_format
+            
+            response = await self.client.chat.completions.create(**kwargs)
+            
+            content = response.choices[0].message.content
+            tokens_used = response.usage.total_tokens if response.usage else 0
+            
+            return {
+                "content": content,
+                "tokens_used": tokens_used,
+                "model": self.model,
+                "cost": self._calculate_cost(tokens_used),
+            }
+        except Exception as e:
+            logger.error(f"GPT completion failed: {e}")
+            raise
 
     def _calculate_cost(self, tokens: int) -> float:
         cost_per_1k_tokens = 0.03 if self.model == "gpt-4" else 0.002
