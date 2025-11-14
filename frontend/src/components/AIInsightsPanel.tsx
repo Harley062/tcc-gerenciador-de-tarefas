@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { aiApi, SubtaskSuggestion, Dependency, SchedulingSuggestion } from '../services/aiApi';
-import { Task } from '../types';
+import { Task } from '../store/taskStore';
 
 interface AIInsightsPanelProps {
   task: Task;
