@@ -86,7 +86,7 @@ class UserSettingsModel(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
     llm_provider = Column(String(20), default="llama", nullable=False)
     openai_api_key = Column(Text)
-    llama_endpoint = Column(String(255), default="http://taskmaster-ollama:11434")
+    llama_endpoint = Column(String(255), default="http://localhost:11434")
     default_task_duration = Column(Integer, default=60)
     enable_auto_subtasks = Column(Boolean, default=False)
     enable_auto_priority = Column(Boolean, default=True)

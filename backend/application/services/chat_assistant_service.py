@@ -4,7 +4,6 @@ Chat Assistant Service - Natural language interface for task management
 import logging
 from typing import Any, Optional, List, Dict
 from datetime import datetime, timedelta
-import re
 
 from domain.entities.task import Task
 from infrastructure.gpt.openai_adapter import OpenAIAdapter
@@ -165,18 +164,29 @@ class ChatAssistantService:
         }
     
     async def _handle_create_task(
-        self, 
-        message: str, 
+        self,
+        message: str,
         tasks: List[Task]
     ) -> Dict[str, Any]:
         """Handle request to create a task"""
-        
+
         task_text = message
-        for prefix in ["criar", "adicionar", "nova tarefa", "create", "add", "new task"]:
-            if prefix in message.lower():
-                task_text = re.sub(rf"{prefix}:?\s*", "", message, flags=re.IGNORECASE)
+        message_lower = message.lower()
+
+        for prefix in ["nova tarefa", "new task", "criar", "adicionar", "create", "add"]:
+            prefix_with_colon = prefix + ":"
+            prefix_with_space = prefix + " "
+
+            if message_lower.startswith(prefix_with_colon):
+                task_text = message[len(prefix_with_colon):].strip()
                 break
-        
+            elif message_lower.startswith(prefix_with_space):
+                task_text = message[len(prefix_with_space):].strip()
+                break
+            elif message_lower.startswith(prefix):
+                task_text = message[len(prefix):].strip()
+                break
+
         return {
             "message": f"Vou criar a tarefa: '{task_text}'. Use o parser de linguagem natural para extrair os detalhes.",
             "action": "create",

@@ -9,7 +9,7 @@ class UserSettings:
     user_id: UUID
     llm_provider: str = "llama"  # gpt4 or llama
     openai_api_key: Optional[str] = None
-    llama_endpoint: str = "http://ollama:11434"  # Default Ollama endpoint (container network name)
+    llama_endpoint: str = "http://localhost:11434"  # Default Ollama endpoint (container network name)
     default_task_duration: int = 60
     enable_auto_subtasks: bool = False
     enable_auto_priority: bool = True

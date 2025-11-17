@@ -30,7 +30,7 @@ class SubtaskSchema(BaseModel):
 class LlamaAdapter:
     def __init__(self, endpoint: str | None = None, model: str = "llama2"):
         # Prefer explicit endpoint, then env var set by docker-compose, then sensible container default
-        resolved = endpoint or os.getenv("OLLAMA_ENDPOINT") or "http://ollama:11434"
+        resolved = endpoint or os.getenv("OLLAMA_ENDPOINT") or "http://localhost:11434"
         self.endpoint = resolved.rstrip("/")
         self.model = model
         self.max_tokens = 1500 # Mantido, mas num_predict é usado por método
@@ -63,14 +63,14 @@ Exemplo de Output Esperado (não inclua no seu output): {{"title": "Reunião com
         prompt = f"{system_prompt}\n\nInput do usuário: {text}\nJSON Output:"
 
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
                     f"{self.endpoint}/api/generate",
                     json={
                         "model": self.model,
                         "prompt": prompt,
                         "stream": False,
-                        "format": "json", 
+                        "format": "json",
                         "options": {
                             "temperature": 0.6,
                             "num_predict": self.max_tokens,
@@ -162,16 +162,16 @@ Exemplo de Output JSON (NÃO inclua isso na sua resposta):
         prompt += "\n\nJSON Array de Subtarefas:"
 
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
                     f"{self.endpoint}/api/generate",
                     json={
                         "model": self.model,
                         "prompt": prompt,
                         "stream": False,
-                        "format": "json", 
+                        "format": "json",
                         "options": {
-                            "temperature": 0.6,  
+                            "temperature": 0.6,
                             "num_predict": 1600,
                         },
                     },

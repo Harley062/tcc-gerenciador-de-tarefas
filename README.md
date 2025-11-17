@@ -159,7 +159,7 @@ REDIS_URL=redis://redis:6379
 OPENAI_API_KEY=sk-...
 
 # Ollama
-OLLAMA_ENDPOINT=http://ollama:11434
+OLLAMA_ENDPOINT=http://localhost:11434
 
 # JWT
 JWT_SECRET_KEY=your-secret-key-here

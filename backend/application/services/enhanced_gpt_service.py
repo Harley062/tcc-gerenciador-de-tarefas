@@ -26,18 +26,18 @@ class EnhancedGPTService(GPTService):
     def set_provider(self, provider: str, api_key: Optional[str] = None, endpoint: Optional[str] = None):
         """Set the LLM provider to use"""
         self.current_provider = provider
-        
+
         if provider == "gpt4" and api_key:
-            self.gpt_adapter = OpenAIAdapter(api_key=api_key)
+            self.openai_adapter = OpenAIAdapter(api_key=api_key)
         elif provider == "llama" and endpoint:
             self.llama_adapter = LlamaAdapter(endpoint=endpoint)
-    
+
     async def parse_task(self, text: str) -> tuple[Any, dict[str, Any]]:
         """Parse task using the configured LLM provider with fallback"""
-        
+
         # Try the configured provider first
         try:
-            if self.current_provider == "gpt4" and self.gpt_adapter:
+            if self.current_provider == "gpt4" and self.openai_adapter:
                 logger.info(f"Parsing task with GPT-4: {text[:50]}...")
                 result = await self._parse_with_gpt(text)
             elif self.current_provider == "llama":
@@ -73,11 +73,19 @@ class EnhancedGPTService(GPTService):
             try:
                 if self.current_provider == "gpt4" and self.llama_adapter:
                     result = await self.llama_adapter.parse_task(text)
-                elif self.current_provider == "llama" and self.gpt_adapter:
+                elif self.current_provider == "llama" and self.openai_adapter:
                     result = await self._parse_with_gpt(text)
-                else:
+                elif self.openai_adapter:
                     # last-resort: try GPT adapter if available
                     result = await self._parse_with_gpt(text)
+                else:
+                    # No fallback available, re-raise the original error
+                    logger.error(
+                        f"No fallback provider available. Provider: {self.current_provider}, "
+                        f"OpenAI available: {self.openai_adapter is not None}, "
+                        f"Llama available: {self.llama_adapter is not None}"
+                    )
+                    raise e
 
                 parsed_data = result["parsed_data"]
                 gpt_response = {
@@ -96,35 +104,26 @@ class EnhancedGPTService(GPTService):
     
     async def _parse_with_gpt(self, text: str) -> dict[str, Any]:
         """Parse with GPT using cache"""
-        if self.cache_repository:
-            cached = await self.cache_repository.get_cached_response(text)
+        cache_key = f"gpt_parse:{text[:50]}"
+
+        if self.cache:
+            cached = await self.cache.get(cache_key)
             if cached:
                 logger.info("Cache hit for GPT parsing")
-                return {
-                    "parsed_data": cached["output"]["parsed_data"],
-                    "tokens_used": cached.get("tokens_used", 0),
-                    "model": cached.get("model", "gpt-4"),
-                    "cost": float(cached.get("cost", 0.0)),
-                }
-        
-        result = await self.gpt_adapter.parse_task(text)
-        
-        if self.cache_repository:
-            await self.cache_repository.cache_response(
-                input_text=text,
-                output=result,
-                model=result.get("model", "gpt-4"),
-                tokens_used=result.get("tokens_used", 0),
-                cost=result.get("cost", 0.0),
-            )
-        
+                return cached
+
+        result = await self.openai_adapter.parse_task(text)
+
+        if self.cache:
+            await self.cache.set(cache_key, result)
+
         return result
     
     async def suggest_subtasks(self, task_title: str, task_description: Optional[str] = None) -> list[dict[str, Any]]:
         """Suggest subtasks using the configured provider"""
         try:
-            if self.current_provider == "gpt4" and self.gpt_adapter:
-                return await self.gpt_adapter.suggest_subtasks(task_title, task_description)
+            if self.current_provider == "gpt4" and self.openai_adapter:
+                return await self.openai_adapter.suggest_subtasks(task_title, task_description)
             elif self.current_provider == "llama":
                 return await self.llama_adapter.suggest_subtasks(task_title, task_description)
             else:
@@ -132,8 +131,8 @@ class EnhancedGPTService(GPTService):
                 try:
                     return await self.llama_adapter.suggest_subtasks(task_title, task_description)
                 except Exception:
-                    if self.gpt_adapter:
-                        return await self.gpt_adapter.suggest_subtasks(task_title, task_description)
+                    if self.openai_adapter:
+                        return await self.openai_adapter.suggest_subtasks(task_title, task_description)
                     return []
         except Exception as e:
             logger.error(f"Subtask suggestion failed: {e}")
