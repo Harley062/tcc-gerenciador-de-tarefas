@@ -207,7 +207,7 @@ const SettingsView: React.FC = () => {
       </form>
 
       {/* Info Box */}
-      <div className="mt-6 bg-blue-50 p-4 rounded-lg">
+      {/* <div className="mt-6 bg-blue-50 p-4 rounded-lg">
         <h3 className="font-semibold mb-2">💡 Dica: Tarefas Recorrentes</h3>
         <p className="text-sm text-gray-700">
           O sistema agora detecta tarefas recorrentes automaticamente! Experimente:
@@ -217,7 +217,7 @@ const SettingsView: React.FC = () => {
           <li>• "backup diário" - Cria 8 tarefas diárias</li>
           <li>• "reunião mensal" - Cria 8 tarefas mensais</li>
         </ul>
-      </div>
+      </div> */}
     </div>
   );
 };

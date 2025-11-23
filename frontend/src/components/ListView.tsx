@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTaskStore, Task } from '../store/taskStore';
 import TaskCard from './TaskCard';
 import AIInsightsPanel from './AIInsightsPanel';
@@ -6,10 +6,18 @@ import TaskEditModal from './TaskEditModal';
 import ConfirmModal from './ConfirmModal';
 import TaskCreateModal from './TaskCreateModal';
 
+type SortOption = 'created_desc' | 'created_asc' | 'priority_desc' | 'priority_asc' | 'due_date_asc' | 'due_date_desc' | 'title_asc' | 'title_desc';
+type DueDateFilter = 'all' | 'overdue' | 'today' | 'this_week' | 'this_month' | 'no_date';
+
 const ListView: React.FC = () => {
   const { tasks, fetchTasks, updateTask, deleteTask, isLoading } = useTaskStore();
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [priorityFilter, setPriorityFilter] = useState<string>('');
+  const [dueDateFilter, setDueDateFilter] = useState<DueDateFilter>('all');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('created_desc');
+  const [showFilters, setShowFilters] = useState(false);
   const [selectedTaskForAI, setSelectedTaskForAI] = useState<Task | null>(null);
   const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<Task | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -50,11 +58,144 @@ const ListView: React.FC = () => {
     setTaskToDelete(null);
   };
 
-  const filteredTasks = tasks.filter((task) => {
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  // Extrair todas as tags únicas das tarefas
+  const allTags = useMemo(() => {
+    const tagsSet = new Set<string>();
+    tasks.forEach(task => {
+      task.tags?.forEach(tag => tagsSet.add(tag));
+    });
+    return Array.from(tagsSet).sort();
+  }, [tasks]);
+
+  // Verificar se uma data está atrasada
+  const isOverdue = (dueDate: string | undefined): boolean => {
+    if (!dueDate) return false;
+    return new Date(dueDate) < new Date(new Date().setHours(0, 0, 0, 0));
+  };
+
+  // Verificar se uma data é hoje
+  const isToday = (dueDate: string | undefined): boolean => {
+    if (!dueDate) return false;
+    const today = new Date();
+    const due = new Date(dueDate);
+    return today.toDateString() === due.toDateString();
+  };
+
+  // Verificar se uma data está nesta semana
+  const isThisWeek = (dueDate: string | undefined): boolean => {
+    if (!dueDate) return false;
+    const today = new Date();
+    const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const due = new Date(dueDate);
+    return due >= today && due <= weekFromNow;
+  };
+
+  // Verificar se uma data está neste mês
+  const isThisMonth = (dueDate: string | undefined): boolean => {
+    if (!dueDate) return false;
+    const today = new Date();
+    const due = new Date(dueDate);
+    return today.getMonth() === due.getMonth() && today.getFullYear() === due.getFullYear();
+  };
+
+  // Mapear prioridade para valor numérico (para ordenação)
+  const priorityValue = (priority: string): number => {
+    const map: { [key: string]: number } = { urgent: 4, high: 3, medium: 2, low: 1 };
+    return map[priority] || 0;
+  };
+
+  // Filtrar e ordenar tarefas
+  const filteredTasks = useMemo(() => {
+    let filtered = tasks.filter((task) => {
+      // Filtro de busca (título, descrição e tags)
+      const matchesSearch = !searchQuery ||
+        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      // Filtro de prioridade
+      const matchesPriority = !priorityFilter || task.priority === priorityFilter;
+
+      // Filtro de tags
+      const matchesTags = selectedTags.length === 0 ||
+        selectedTags.every(tag => task.tags?.includes(tag));
+
+      // Filtro de data de vencimento
+      let matchesDueDate = true;
+      if (dueDateFilter === 'overdue') {
+        matchesDueDate = isOverdue(task.due_date);
+      } else if (dueDateFilter === 'today') {
+        matchesDueDate = isToday(task.due_date);
+      } else if (dueDateFilter === 'this_week') {
+        matchesDueDate = isThisWeek(task.due_date);
+      } else if (dueDateFilter === 'this_month') {
+        matchesDueDate = isThisMonth(task.due_date);
+      } else if (dueDateFilter === 'no_date') {
+        matchesDueDate = !task.due_date;
+      }
+
+      return matchesSearch && matchesPriority && matchesTags && matchesDueDate;
+    });
+
+    // Ordenação
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'created_desc':
+          return new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime();
+        case 'created_asc':
+          return new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime();
+        case 'priority_desc':
+          return priorityValue(b.priority) - priorityValue(a.priority);
+        case 'priority_asc':
+          return priorityValue(a.priority) - priorityValue(b.priority);
+        case 'due_date_asc':
+          if (!a.due_date) return 1;
+          if (!b.due_date) return -1;
+          return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+        case 'due_date_desc':
+          if (!a.due_date) return 1;
+          if (!b.due_date) return -1;
+          return new Date(b.due_date).getTime() - new Date(a.due_date).getTime();
+        case 'title_asc':
+          return a.title.localeCompare(b.title);
+        case 'title_desc':
+          return b.title.localeCompare(a.title);
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [tasks, searchQuery, priorityFilter, selectedTags, dueDateFilter, sortBy]);
+
+  // Contador de tarefas atrasadas
+  const overdueCount = useMemo(() =>
+    tasks.filter(t => isOverdue(t.due_date) && t.status !== 'done' && t.status !== 'cancelled').length
+  , [tasks]);
+
+  // Contador de tarefas de alta prioridade
+  const highPriorityCount = useMemo(() =>
+    tasks.filter(t => (t.priority === 'high' || t.priority === 'urgent') &&
+      t.status !== 'done' && t.status !== 'cancelled').length
+  , [tasks]);
+
+  // Toggle de tag
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
+
+  // Limpar todos os filtros
+  const clearFilters = () => {
+    setSearchQuery('');
+    setPriorityFilter('');
+    setDueDateFilter('all');
+    setSelectedTags([]);
+  };
+
+  // Verificar se há filtros ativos
+  const hasActiveFilters = searchQuery || priorityFilter || dueDateFilter !== 'all' || selectedTags.length > 0;
 
   return (
     <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 animate-fade-in">
@@ -70,11 +211,12 @@ const ListView: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        {/* Barra de busca e controles principais */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <div className="relative flex-1">
             <input
               type="text"
-              placeholder="Buscar tarefas..."
+              placeholder="Buscar por título, descrição ou tags..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-3 input shadow-sm"
@@ -84,17 +226,174 @@ const ListView: React.FC = () => {
             </svg>
           </div>
 
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`px-4 py-3 rounded-lg font-medium shadow-sm flex items-center gap-2 transition-colors ${
+              showFilters || hasActiveFilters
+                ? 'bg-primary-500 text-white hover:bg-primary-600'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span>Filtros</span>
+            {hasActiveFilters && (
+              <span className="bg-white text-primary-600 text-xs px-2 py-0.5 rounded-full font-bold">
+                {[searchQuery ? 1 : 0, priorityFilter ? 1 : 0, dueDateFilter !== 'all' ? 1 : 0, selectedTags.length].reduce((a, b) => a + b, 0)}
+              </span>
+            )}
+          </button>
+
           <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
             className="px-4 py-3 input shadow-sm min-w-[200px]"
           >
-            <option value="">Todos os Status</option>
-            <option value="todo">A Fazer</option>
-            <option value="in_progress">Em Progresso</option>
-            <option value="done">Concluído</option>
-            <option value="cancelled">Cancelado</option>
+            <option value="created_desc">Mais Recentes</option>
+            <option value="created_asc">Mais Antigas</option>
+            <option value="priority_desc">Maior Prioridade</option>
+            <option value="priority_asc">Menor Prioridade</option>
+            <option value="due_date_asc">Vencimento: Próximo</option>
+            <option value="due_date_desc">Vencimento: Distante</option>
+            <option value="title_asc">Título: A-Z</option>
+            <option value="title_desc">Título: Z-A</option>
           </select>
+        </div>
+
+        {/* Painel de Filtros Avançados */}
+        {showFilters && (
+          <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4 animate-slide-down">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-gray-700 dark:text-gray-300">Filtros Avançados</h3>
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
+                >
+                  Limpar Filtros
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Filtro de Status */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full px-3 py-2 input shadow-sm text-sm"
+                >
+                  <option value="">Todos os Status</option>
+                  <option value="todo">A Fazer</option>
+                  <option value="in_progress">Em Progresso</option>
+                  <option value="done">Concluído</option>
+                  <option value="cancelled">Cancelado</option>
+                </select>
+              </div>
+
+              {/* Filtro de Prioridade */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prioridade</label>
+                <select
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value)}
+                  className="w-full px-3 py-2 input shadow-sm text-sm"
+                >
+                  <option value="">Todas as Prioridades</option>
+                  <option value="urgent">🔴 Urgente</option>
+                  <option value="high">🟠 Alta</option>
+                  <option value="medium">🟡 Média</option>
+                  <option value="low">🟢 Baixa</option>
+                </select>
+              </div>
+
+              {/* Filtro de Data de Vencimento */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Vencimento</label>
+                <select
+                  value={dueDateFilter}
+                  onChange={(e) => setDueDateFilter(e.target.value as DueDateFilter)}
+                  className="w-full px-3 py-2 input shadow-sm text-sm"
+                >
+                  <option value="all">Todas as Datas</option>
+                  <option value="overdue">⏰ Atrasadas</option>
+                  <option value="today">📅 Hoje</option>
+                  <option value="this_week">📆 Esta Semana</option>
+                  <option value="this_month">🗓️ Este Mês</option>
+                  <option value="no_date">➖ Sem Data</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Filtro de Tags */}
+            {allTags.length > 0 && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Tags {selectedTags.length > 0 && `(${selectedTags.length} selecionada${selectedTags.length > 1 ? 's' : ''})`}
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {allTags.map(tag => (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                        selectedTags.includes(tag)
+                          ? 'bg-primary-500 text-white shadow-md'
+                          : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Filtros Rápidos */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {overdueCount > 0 && (
+            <button
+              onClick={() => setDueDateFilter(dueDateFilter === 'overdue' ? 'all' : 'overdue')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                dueDateFilter === 'overdue'
+                  ? 'bg-red-500 text-white shadow-md'
+                  : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30'
+              }`}
+            >
+              <span>⏰</span>
+              <span>{overdueCount} Atrasada{overdueCount > 1 ? 's' : ''}</span>
+            </button>
+          )}
+          {highPriorityCount > 0 && (
+            <button
+              onClick={() => {
+                if (priorityFilter === 'urgent' || priorityFilter === 'high') {
+                  setPriorityFilter('');
+                } else {
+                  setPriorityFilter('urgent');
+                }
+              }}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                priorityFilter === 'urgent' || priorityFilter === 'high'
+                  ? 'bg-orange-500 text-white shadow-md'
+                  : 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/30'
+              }`}
+            >
+              <span>🔥</span>
+              <span>{highPriorityCount} Alta Prioridade</span>
+            </button>
+          )}
+          <div className="flex-1"></div>
+          <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+            <span className="font-medium">{filteredTasks.length}</span>
+            <span>de</span>
+            <span className="font-medium">{tasks.length}</span>
+            <span>tarefa{tasks.length !== 1 ? 's' : ''}</span>
+          </div>
         </div>
 
         {/* Status Summary */}
