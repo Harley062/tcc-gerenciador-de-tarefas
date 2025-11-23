@@ -38,23 +38,26 @@ class AIInsightsService:
             raise ValueError(f"GPT-4 provider not configured. Current provider: {self.provider}")
     
     async def _suggest_subtasks_gpt(
-        self, 
-        task_title: str, 
+        self,
+        task_title: str,
         task_description: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Use GPT-4 to suggest subtasks"""
-        prompt = f"""Given this task, suggest 3-5 logical subtasks to break it down:
+        prompt = f"""Dada esta tarefa, sugira 3-5 subtarefas lógicas para dividi-la:
 
-Task: {task_title}
-{f'Description: {task_description}' if task_description else ''}
+Tarefa: {task_title}
+{f'Descrição: {task_description}' if task_description else ''}
 
-Return a JSON array of subtasks with this format:
+Retorne um array JSON de subtarefas com este formato:
 [
-  {{"title": "Subtask 1", "description": "Details", "estimated_duration": 30}},
-  {{"title": "Subtask 2", "description": "Details", "estimated_duration": 45}}
+  {{"title": "Subtarefa 1", "description": "Detalhes", "estimated_duration": 30}},
+  {{"title": "Subtarefa 2", "description": "Detalhes", "estimated_duration": 45}}
 ]
 
-Keep subtasks specific, actionable, and in logical order."""
+IMPORTANTE:
+- Todas as subtarefas devem ser em PORTUGUÊS BRASILEIRO
+- Mantenha as subtarefas específicas, acionáveis e em ordem lógica
+- Use linguagem clara e profissional em português"""
         
         result = await self.openai_adapter.generate_completion(
             prompt=prompt,
