@@ -8,22 +8,20 @@ from uuid import UUID
 
 from domain.entities.task import Task
 from infrastructure.gpt.openai_adapter import OpenAIAdapter
-from infrastructure.llm.llama_adapter import LlamaAdapter
 
 logger = logging.getLogger("taskmaster")
 
 
 class AIInsightsService:
-    """Service for AI-powered insights and analysis"""
+    """Service for AI-powered insights and analysis using GPT-4 only"""
     
     def __init__(
         self,
-        openai_adapter: Optional[OpenAIAdapter] = None,
-        llama_adapter: Optional[LlamaAdapter] = None,
-        provider: str = "llama"
+        openai_adapter: OpenAIAdapter,
+        llama_adapter: Optional[Any] = None,
+        provider: str = "gpt4"
     ):
         self.openai_adapter = openai_adapter
-        self.llama_adapter = llama_adapter
         self.provider = provider
     
     async def suggest_subtasks(
@@ -66,129 +64,6 @@ Keep subtasks specific, actionable, and in logical order."""
         import json
         subtasks = json.loads(result.get("content", "[]"))
         return subtasks if isinstance(subtasks, list) else subtasks.get("subtasks", [])
-    
-    async def _suggest_subtasks_llama(
-        self, 
-        task_title: str, 
-        task_description: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
-        """Use Llama to suggest subtasks"""
-        return await self.llama_adapter.suggest_subtasks(task_title, task_description)
-    
-    async def _suggest_subtasks_heuristic(
-        self, 
-        task_title: str, 
-        task_description: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
-        """Use intelligent heuristic rules to suggest contextual subtasks"""
-        subtasks = []
-        title_lower = task_title.lower()
-        
-        if any(word in title_lower for word in ["vistoria", "inspeção", "carro", "veículo", "detran"]):
-            subtasks.extend([
-                {"title": "Confirmar local e horário da vistoria", "description": "Verificar endereço, horário de funcionamento e taxa", "estimated_duration": 10},
-                {"title": "Separar documentos necessários", "description": "CNH, CRLV, comprovante de residência e pagamento", "estimated_duration": 10},
-                {"title": "Verificar itens obrigatórios do veículo", "description": "Estepe, triângulo, macaco, luzes, cintos, buzina", "estimated_duration": 15},
-                {"title": "Planejar deslocamento", "description": "Verificar rota e tempo de viagem", "estimated_duration": 5},
-                {"title": "Realizar vistoria", "description": "Comparecer ao local e fazer a vistoria", "estimated_duration": 40},
-            ])
-        elif any(word in title_lower for word in ["desenvolver", "criar", "implementar", "build", "develop", "api", "feature"]):
-            subtasks.extend([
-                {"title": "Planejar arquitetura", "description": "Definir estrutura e componentes necessários", "estimated_duration": 30},
-                {"title": "Configurar ambiente", "description": "Preparar dependências e ferramentas", "estimated_duration": 20},
-                {"title": "Implementar funcionalidade", "description": "Escrever código principal", "estimated_duration": 120},
-                {"title": "Criar testes", "description": "Desenvolver testes unitários e integração", "estimated_duration": 45},
-                {"title": "Revisar e documentar", "description": "Code review e documentação técnica", "estimated_duration": 30},
-            ])
-        elif any(word in title_lower for word in ["bug", "erro", "corrigir", "fix", "problema"]):
-            subtasks.extend([
-                {"title": "Reproduzir o bug", "description": "Identificar passos para reproduzir o problema", "estimated_duration": 15},
-                {"title": "Investigar causa raiz", "description": "Analisar código, logs e stack trace", "estimated_duration": 30},
-                {"title": "Implementar correção", "description": "Corrigir o problema identificado", "estimated_duration": 45},
-                {"title": "Testar correção", "description": "Verificar que o bug foi resolvido", "estimated_duration": 20},
-                {"title": "Validar em produção", "description": "Confirmar fix em ambiente real", "estimated_duration": 15},
-            ])
-        elif any(word in title_lower for word in ["reunião", "meeting", "apresentação", "presentation", "call"]):
-            subtasks.extend([
-                {"title": "Definir pauta", "description": "Listar tópicos e objetivos da reunião", "estimated_duration": 15},
-                {"title": "Confirmar participantes", "description": "Verificar disponibilidade e enviar convite", "estimated_duration": 10},
-                {"title": "Preparar materiais", "description": "Criar slides, documentos ou demos", "estimated_duration": 60},
-                {"title": "Realizar reunião", "description": "Conduzir a reunião conforme pauta", "estimated_duration": 60},
-                {"title": "Registrar decisões e ações", "description": "Documentar conclusões e próximos passos", "estimated_duration": 15},
-            ])
-        elif any(word in title_lower for word in ["comprar", "shopping", "mercado", "farmácia", "correios"]):
-            subtasks.extend([
-                {"title": "Fazer lista de itens", "description": "Listar tudo que precisa comprar", "estimated_duration": 10},
-                {"title": "Verificar preços e locais", "description": "Pesquisar melhores opções", "estimated_duration": 15},
-                {"title": "Planejar rota", "description": "Definir ordem de visita aos locais", "estimated_duration": 5},
-                {"title": "Realizar compras", "description": "Ir aos locais e comprar itens", "estimated_duration": 60},
-                {"title": "Organizar e guardar", "description": "Armazenar itens comprados", "estimated_duration": 15},
-            ])
-        elif any(word in title_lower for word in ["pagar", "boleto", "fatura", "conta", "taxa"]):
-            subtasks.extend([
-                {"title": "Verificar valor e vencimento", "description": "Confirmar dados do pagamento", "estimated_duration": 5},
-                {"title": "Separar forma de pagamento", "description": "Preparar cartão, dinheiro ou app", "estimated_duration": 5},
-                {"title": "Realizar pagamento", "description": "Efetuar o pagamento", "estimated_duration": 10},
-                {"title": "Guardar comprovante", "description": "Salvar recibo ou confirmação", "estimated_duration": 5},
-            ])
-        elif any(word in title_lower for word in ["estudar", "pesquisar", "aprender", "revisar", "prova"]):
-            subtasks.extend([
-                {"title": "Definir tópicos", "description": "Listar assuntos a estudar", "estimated_duration": 15},
-                {"title": "Reunir materiais", "description": "Separar livros, anotações e recursos", "estimated_duration": 20},
-                {"title": "Estudar conteúdo", "description": "Ler e fazer anotações", "estimated_duration": 90},
-                {"title": "Fazer exercícios", "description": "Praticar com questões", "estimated_duration": 60},
-                {"title": "Revisar pontos principais", "description": "Resumir e fixar conteúdo", "estimated_duration": 30},
-            ])
-        elif any(word in title_lower for word in ["relatório", "report", "documentar", "escrever"]):
-            subtasks.extend([
-                {"title": "Coletar informações", "description": "Reunir dados e fontes necessárias", "estimated_duration": 30},
-                {"title": "Estruturar documento", "description": "Definir seções e organização", "estimated_duration": 20},
-                {"title": "Escrever conteúdo", "description": "Redigir texto principal", "estimated_duration": 90},
-                {"title": "Revisar e formatar", "description": "Corrigir erros e ajustar layout", "estimated_duration": 30},
-                {"title": "Enviar ou publicar", "description": "Compartilhar documento final", "estimated_duration": 10},
-            ])
-        else:
-            # Try to create more tailored generic subtasks based on title and description
-            # Extract meaningful words from title to create context-aware step names
-            def meaningful_words(text: str):
-                stopwords = {"de", "da", "do", "e", "o", "a", "com", "para", "por", "em", "um", "uma"}
-                words = [w.strip().lower() for w in text.split() if len(w) > 3]
-                return [w for w in words if w not in stopwords]
-
-            context_words = meaningful_words(task_title or "")
-            ctx = context_words[:3]
-
-            if ctx:
-                subtasks.append({
-                    "title": f"Planejar: definir passos para {' '.join(ctx)}",
-                    "description": f"Definir o que precisa ser feito para {' '.join(ctx)}",
-                    "estimated_duration": 20,
-                })
-                subtasks.append({
-                    "title": f"Preparar recursos para {' '.join(ctx)}",
-                    "description": "Reunir materiais, acessos e informações necessárias",
-                    "estimated_duration": 30,
-                })
-                subtasks.append({
-                    "title": f"Executar ação principal relacionada a {' '.join(ctx)}",
-                    "description": "Realizar a atividade principal descrita na tarefa",
-                    "estimated_duration": 60,
-                })
-                subtasks.append({
-                    "title": "Verificar resultado e ajustar",
-                    "description": "Conferir se o resultado atende aos critérios e ajustar se necessário",
-                    "estimated_duration": 20,
-                })
-            else:
-                subtasks.extend([
-                    {"title": "Planejar execução", "description": "Definir passos e recursos necessários", "estimated_duration": 20},
-                    {"title": "Preparar materiais", "description": "Reunir tudo que será necessário", "estimated_duration": 30},
-                    {"title": "Executar tarefa principal", "description": "Realizar o trabalho central", "estimated_duration": 60},
-                    {"title": "Verificar resultado", "description": "Conferir se foi feito corretamente", "estimated_duration": 15},
-                    {"title": "Finalizar e documentar", "description": "Concluir e registrar o que foi feito", "estimated_duration": 15},
-                ])
-        
-        return subtasks[:5]
     
     async def analyze_sentiment_urgency(self, text: str) -> Dict[str, Any]:
         """Analyze sentiment and urgency from task text"""
