@@ -3,6 +3,7 @@ import { aiApi, SubtaskSuggestion, Dependency, SchedulingSuggestion } from '../s
 import api from '../services/api';
 import { Task } from '../store/taskStore';
 import ApplyAISuggestionsModal from './ApplyAISuggestionsModal';
+import { useToast } from './ToastContainer';
 
 interface AIInsightsPanelProps {
   task: Task;
@@ -20,6 +21,8 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ task, onClose, onCrea
   const [scheduling, setScheduling] = useState<SchedulingSuggestion | null>(null);
   const [dependencies, setDependencies] = useState<Dependency[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [applyingSchedule, setApplyingSchedule] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   const loadSubtasks = async () => {
     setLoading(true);
@@ -60,6 +63,32 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ task, onClose, onCrea
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApplyScheduling = async () => {
+    if (!scheduling) return;
+
+    setApplyingSchedule(true);
+    try {
+      await api.updateTask(task.id, {
+        due_date: scheduling.suggested_time
+      });
+
+      if (onTaskUpdated) {
+        onTaskUpdated();
+      }
+
+      // Show success feedback
+      showSuccess('Agendamento aplicado com sucesso!');
+
+      // Close modal after success
+      onClose();
+    } catch (err) {
+      console.error('Failed to apply scheduling:', err);
+      showError('Falha ao aplicar agendamento');
+    } finally {
+      setApplyingSchedule(false);
     }
   };
 
@@ -207,6 +236,25 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ task, onClose, onCrea
                   Confiança: {(scheduling.confidence * 100).toFixed(0)}%
                 </p>
               </div>
+              <button
+                onClick={handleApplyScheduling}
+                disabled={applyingSchedule}
+                className="mt-4 w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              >
+                {applyingSchedule ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Aplicando...
+                  </>
+                ) : (
+                  <>
+                    ✅ Aceitar Sugestão
+                  </>
+                )}
+              </button>
             </div>
           )}
 
