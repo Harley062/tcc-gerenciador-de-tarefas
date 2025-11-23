@@ -266,42 +266,94 @@ Keep subtasks specific, actionable, and in logical order."""
         task: Task,
         existing_tasks: List[Task]
     ) -> Dict[str, Any]:
-        """Suggest best time to schedule a task"""
-        now = datetime.utcnow()
-        days_until_due = None
-        
-        if task.due_date:
-            days_until_due = (task.due_date - now).days
-            if days_until_due <= 1:
-                suggestion = "hoje"
-                suggested_time = now.replace(hour=9, minute=0)
-            elif days_until_due <= 3:
-                suggestion = "amanhã"
-                suggested_time = (now + timedelta(days=1)).replace(hour=9, minute=0)
-            else:
-                suggestion = f"em {days_until_due - 1} dias"
-                suggested_time = (now + timedelta(days=days_until_due - 1)).replace(hour=9, minute=0)
+        """Suggest best time to schedule a task using GPT-4"""
+        if self.provider == "gpt4" and self.openai_adapter:
+            logger.info(f"Using GPT-4 for scheduling suggestion")
+            return await self._suggest_scheduling_gpt(task, existing_tasks)
         else:
-            if task.priority == "high":
-                suggestion = "hoje"
-                suggested_time = now.replace(hour=9, minute=0)
-            elif task.priority == "medium":
-                suggestion = "esta semana"
-                suggested_time = (now + timedelta(days=2)).replace(hour=10, minute=0)
-            else:
-                suggestion = "próxima semana"
-                suggested_time = (now + timedelta(days=7)).replace(hour=14, minute=0)
+            raise ValueError(f"GPT-4 provider not configured. Current provider: {self.provider}")
+    
+    async def _suggest_scheduling_gpt(
+        self,
+        task: Task,
+        existing_tasks: List[Task]
+    ) -> Dict[str, Any]:
+        """Use GPT-4 to suggest optimal scheduling for a task"""
+        now = datetime.utcnow()
         
-        reason = f"Baseado na prioridade {task.priority}"
-        if days_until_due is not None:
-            reason += f" e prazo em {days_until_due} dias"
+        task_context = f"""
+Task to schedule:
+- Title: {task.title}
+- Description: {task.description or 'N/A'}
+- Priority: {task.priority}
+- Due Date: {task.due_date.isoformat() if task.due_date else 'Not set'}
+- Estimated Duration: {task.estimated_duration or 'Unknown'} minutes
+
+Current date/time: {now.isoformat()}
+
+Existing tasks (for context):
+"""
         
-        return {
-            "suggestion": suggestion,
-            "suggested_time": suggested_time.isoformat(),
-            "reason": reason,
-            "confidence": 0.8
-        }
+        for t in existing_tasks[:10]:  # Limit to 10 tasks for context
+            task_context += f"- {t.title} (Priority: {t.priority}, Status: {t.status}"
+            if t.due_date:
+                task_context += f", Due: {t.due_date.isoformat()}"
+            task_context += ")\n"
+        
+        prompt = f"""{task_context}
+
+Based on the task details and existing workload, suggest the optimal time to schedule this task.
+
+Return a JSON object with this exact structure:
+{{
+  "suggestion": "string (e.g., 'hoje', 'amanhã', 'em 3 dias')",
+  "suggested_time": "ISO datetime string",
+  "reason": "string explaining the reasoning",
+  "confidence": number between 0 and 1
+}}
+
+Consider:
+1. Task priority and urgency
+2. Due date constraints
+3. Existing workload and task distribution
+4. Optimal time of day for this type of task
+5. Buffer time before deadline
+
+Return ONLY the JSON object, no additional text."""
+        
+        try:
+            result = await self.openai_adapter.generate_completion(
+                prompt=prompt,
+                response_format={"type": "json_object"}
+            )
+            
+            import json
+            scheduling_data = json.loads(result.get("content", "{}"))
+            
+            required_fields = ["suggestion", "suggested_time", "reason", "confidence"]
+            if not all(field in scheduling_data for field in required_fields):
+                raise ValueError(f"GPT-4 response missing required fields. Got: {scheduling_data.keys()}")
+            
+            logger.info(
+                "GPT-4 scheduling suggestion completed",
+                extra={
+                    "task_id": str(task.id),
+                    "suggestion": scheduling_data.get("suggestion"),
+                    "confidence": scheduling_data.get("confidence")
+                }
+            )
+            
+            return scheduling_data
+            
+        except Exception as e:
+            logger.error(
+                "GPT-4 scheduling suggestion failed",
+                extra={
+                    "error": str(e),
+                    "task_id": str(task.id)
+                }
+            )
+            raise Exception(f"Failed to generate scheduling suggestion with GPT-4: {str(e)}")
     
     async def detect_dependencies(
         self, 
