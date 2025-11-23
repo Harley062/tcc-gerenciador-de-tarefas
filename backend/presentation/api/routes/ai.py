@@ -142,7 +142,7 @@ async def get_gpt_service(
             detail="Configure sua chave OpenAI em Configurações para usar recursos de IA"
         )
     
-    openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4")
+    openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4o-mini")
     redis_cache = RedisCache(redis_url=get_settings().redis_url)
     
     return GPTService(openai_adapter=openai_adapter, cache=redis_cache)
@@ -165,12 +165,11 @@ async def get_ai_insights_service(
             detail="Configure sua chave OpenAI em Configurações para usar recursos de IA"
         )
     
-    openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4")
+    openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4o-mini")
     
     return AIInsightsService(
-        provider="gpt4",
         openai_adapter=openai_adapter,
-        llama_adapter=None
+        provider="gpt4"
     )
 
 
@@ -191,12 +190,10 @@ async def get_chat_assistant_service(
             detail="Configure sua chave OpenAI em Configurações para usar recursos de IA"
         )
     
-    openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4")
+    openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4o-mini")
     
     return ChatAssistantService(
-        provider="gpt4",
-        openai_adapter=openai_adapter,
-        llama_adapter=None
+        openai_adapter=openai_adapter
     )
 
 

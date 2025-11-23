@@ -92,7 +92,7 @@ async def get_gpt_service(
             detail="Configure sua chave OpenAI em Configurações para usar recursos de IA"
         )
     
-    openai_adapter = OpenAIAdapter(api_key=api_key, model="gpt-4")
+    openai_adapter = OpenAIAdapter(api_key=api_key, model="gpt-4o-mini")
     
     return GPTService(
         openai_adapter=openai_adapter,
