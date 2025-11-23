@@ -87,7 +87,7 @@ const SubtaskSuggestionsModal: React.FC<SubtaskSuggestionsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4 animate-fade-in">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-[60] p-4 animate-fade-in">
       <div className="card max-w-3xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
         <div className="sticky top-0 glass border-b border-gray-200 dark:border-gray-700 p-6 -m-6 mb-6">
           <div className="flex items-center justify-between">
