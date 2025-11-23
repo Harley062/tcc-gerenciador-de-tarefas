@@ -31,31 +31,13 @@ class AIInsightsService:
         task_title: str,
         task_description: Optional[str] = None
     ) -> List[Dict[str, Any]]:
-        """Suggest subtasks for a given task using AI with fallback to heuristics"""
-        subtasks = []
-
-        try:
-            # Try AI providers first
-            if self.provider == "gpt4" and self.openai_adapter:
-                logger.info(f"Using GPT-4 for subtask suggestions")
-                subtasks = await self._suggest_subtasks_gpt(task_title, task_description)
-            elif self.provider == "llama" and self.llama_adapter:
-                logger.info(f"Using Llama for subtask suggestions")
-                subtasks = await self._suggest_subtasks_llama(task_title, task_description)
-            elif self.provider == "llama":
-                logger.info(f"Using heuristic rules for subtask suggestions (provider: {self.provider})")
-                subtasks = await self._suggest_subtasks_heuristic(task_title, task_description)
-
-            # If AI didn't return anything, use heuristics as fallback
-            if not subtasks:
-                logger.info(f"Using heuristic fallback for subtask suggestions (provider: {self.provider})")
-                subtasks = await self._suggest_subtasks_heuristic(task_title, task_description)
-
-        except Exception as e:
-            logger.error(f"Subtask suggestion failed, using heuristic fallback: {e}")
-            subtasks = await self._suggest_subtasks_heuristic(task_title, task_description)
-
-        return subtasks
+        """Suggest subtasks for a given task using GPT-4 only"""
+        if self.provider == "gpt4" and self.openai_adapter:
+            logger.info(f"Using GPT-4 for subtask suggestions")
+            subtasks = await self._suggest_subtasks_gpt(task_title, task_description)
+            return subtasks
+        else:
+            raise ValueError(f"GPT-4 provider not configured. Current provider: {self.provider}")
     
     async def _suggest_subtasks_gpt(
         self, 
@@ -286,6 +268,7 @@ Keep subtasks specific, actionable, and in logical order."""
     ) -> Dict[str, Any]:
         """Suggest best time to schedule a task"""
         now = datetime.utcnow()
+        days_until_due = None
         
         if task.due_date:
             days_until_due = (task.due_date - now).days
@@ -309,10 +292,14 @@ Keep subtasks specific, actionable, and in logical order."""
                 suggestion = "próxima semana"
                 suggested_time = (now + timedelta(days=7)).replace(hour=14, minute=0)
         
+        reason = f"Baseado na prioridade {task.priority}"
+        if days_until_due is not None:
+            reason += f" e prazo em {days_until_due} dias"
+        
         return {
             "suggestion": suggestion,
             "suggested_time": suggested_time.isoformat(),
-            "reason": f"Baseado na prioridade {task.priority}" + (f" e prazo em {days_until_due} dias" if task.due_date else ""),
+            "reason": reason,
             "confidence": 0.8
         }
     
