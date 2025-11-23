@@ -48,25 +48,54 @@ class AIInsightsService:
 Tarefa: {task_title}
 {f'Descrição: {task_description}' if task_description else ''}
 
-Retorne um array JSON de subtarefas com este formato:
-[
-  {{"title": "Subtarefa 1", "description": "Detalhes", "estimated_duration": 30}},
-  {{"title": "Subtarefa 2", "description": "Detalhes", "estimated_duration": 45}}
-]
+Retorne um objeto JSON com um campo "subtasks" contendo um array de subtarefas no seguinte formato EXATO:
 
-IMPORTANTE:
-- Todas as subtarefas devem ser em PORTUGUÊS BRASILEIRO
+{{
+  "subtasks": [
+    {{
+      "title": "Nome da subtarefa 1",
+      "description": "Descrição detalhada da subtarefa 1",
+      "estimated_duration": 30
+    }},
+    {{
+      "title": "Nome da subtarefa 2",
+      "description": "Descrição detalhada da subtarefa 2",
+      "estimated_duration": 45
+    }}
+  ]
+}}
+
+REGRAS OBRIGATÓRIAS:
+- Todas as subtarefas DEVEM estar em PORTUGUÊS BRASILEIRO
 - Mantenha as subtarefas específicas, acionáveis e em ordem lógica
-- Use linguagem clara e profissional em português"""
+- Use linguagem clara e profissional em português
+- Retorne APENAS o objeto JSON, sem texto adicional
+- O campo "subtasks" deve conter um array com 3-5 subtarefas"""
         
         result = await self.openai_adapter.generate_completion(
             prompt=prompt,
             response_format={"type": "json_object"}
         )
-        
+
         import json
-        subtasks = json.loads(result.get("content", "[]"))
-        return subtasks if isinstance(subtasks, list) else subtasks.get("subtasks", [])
+        logger.info(f"GPT-4 raw response: {result}")
+
+        content = result.get("content", "{}")
+        logger.info(f"GPT-4 content: {content}")
+
+        parsed = json.loads(content)
+        logger.info(f"Parsed JSON: {parsed}")
+
+        # Handle both array and object responses
+        if isinstance(parsed, list):
+            subtasks = parsed
+        elif isinstance(parsed, dict):
+            subtasks = parsed.get("subtasks", parsed.get("array", []))
+        else:
+            subtasks = []
+
+        logger.info(f"Final subtasks: {subtasks}")
+        return subtasks
     
     async def analyze_sentiment_urgency(self, text: str) -> Dict[str, Any]:
         """Analyze sentiment and urgency from task text"""
