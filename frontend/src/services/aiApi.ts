@@ -73,7 +73,21 @@ export interface ChatMessage {
   data: any;
 }
 
+export interface ParsedTask {
+  title: string;
+  description: string | null;
+  priority: string;
+  due_date: string | null;
+  estimated_duration: number | null;
+  tags: string[];
+  cache_hit: boolean;
+}
+
 export const aiApi = {
+  parseTask: async (text: string): Promise<ParsedTask> => {
+    const response = await apiClient.post('/ai/tasks/parse', { text });
+    return response.data;
+  },
   suggestSubtasks: async (taskTitle: string, taskDescription?: string): Promise<{ subtasks: SubtaskSuggestion[], provider: string }> => {
     const response = await apiClient.post('/ai/subtasks/suggest', {
       task_title: taskTitle,
