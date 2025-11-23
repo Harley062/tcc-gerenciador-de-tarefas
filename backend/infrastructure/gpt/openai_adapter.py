@@ -113,7 +113,7 @@ Only return valid JSON matching the schema, no additional text."""
             response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "You are a task breakdown assistant. Suggest practical subtasks."},
+                    {"role": "system", "content": "You are a task breakdown assistant. Suggest practical subtasks. Return ONLY valid JSON, no additional text."},
                     {"role": "user", "content": prompt},
                 ],
                 temperature=0.5,
@@ -123,13 +123,35 @@ Only return valid JSON matching the schema, no additional text."""
 
             content = response.choices[0].message.content
             if not content:
-                return []
+                raise ValueError("Empty response from GPT-4")
+
+            logger.info(
+                "GPT subtask suggestion completed",
+                extra={
+                    "model": self.model,
+                    "response_preview": content[:200],
+                    "task_title": task_title[:50],
+                }
+            )
 
             result = json.loads(content)
-            return result if isinstance(result, list) else result.get("subtasks", [])
+            subtasks = result if isinstance(result, list) else result.get("subtasks", [])
+            
+            if not subtasks:
+                raise ValueError("GPT-4 returned empty subtasks list")
+            
+            return subtasks
 
-        except Exception:
-            return []
+        except (OpenAIError, json.JSONDecodeError) as e:
+            logger.error(
+                "GPT subtask suggestion failed",
+                extra={
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                    "task_title": task_title[:50],
+                }
+            )
+            raise Exception(f"Failed to generate subtasks with GPT-4: {str(e)}")
 
     async def generate_completion(
         self, 
