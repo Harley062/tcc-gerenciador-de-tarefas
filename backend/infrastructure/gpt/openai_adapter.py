@@ -107,13 +107,13 @@ Only return valid JSON matching the schema, no additional text."""
         prompt = f"Task: {task_title}"
         if task_description:
             prompt += f"\nDescription: {task_description}"
-        prompt += "\n\nSuggest 3-5 subtasks to complete this task. Return as JSON array with objects containing 'title', 'description', and 'estimated_duration' (in minutes)."
+        prompt += '\n\nSuggest 3-5 subtasks to complete this task. Return a JSON object with a "subtasks" array. Each subtask should have "title" (string), "description" (string), and "estimated_duration" (integer in minutes).'
 
         try:
             response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "You are a task breakdown assistant. Suggest practical subtasks. Return ONLY valid JSON, no additional text."},
+                    {"role": "system", "content": 'You are a task breakdown assistant. Suggest practical subtasks. Return ONLY valid JSON in this format: {"subtasks": [{"title": "...", "description": "...", "estimated_duration": 30}]}'},
                     {"role": "user", "content": prompt},
                 ],
                 temperature=0.5,
@@ -135,10 +135,23 @@ Only return valid JSON matching the schema, no additional text."""
             )
 
             result = json.loads(content)
-            subtasks = result if isinstance(result, list) else result.get("subtasks", [])
+            subtasks = result.get("subtasks", [])
             
             if not subtasks:
                 raise ValueError("GPT-4 returned empty subtasks list")
+            
+            if not isinstance(subtasks, list):
+                raise ValueError(f"GPT-4 returned invalid subtasks format: expected list, got {type(subtasks).__name__}")
+            
+            for idx, subtask in enumerate(subtasks):
+                if not isinstance(subtask.get("estimated_duration"), int):
+                    try:
+                        subtasks[idx]["estimated_duration"] = int(subtask.get("estimated_duration", 30))
+                    except (ValueError, TypeError):
+                        subtasks[idx]["estimated_duration"] = 30
+                
+                if subtasks[idx]["estimated_duration"] <= 0:
+                    subtasks[idx]["estimated_duration"] = 30
             
             return subtasks
 
