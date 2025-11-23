@@ -11,14 +11,14 @@ const SettingsView: React.FC = () => {
   const { showSuccess, showError, showInfo } = useToast();
 
   const [formData, setFormData] = useState<UpdateSettingsRequest>({
-    llm_provider: 'llama',
     openai_api_key: '',
-    llama_endpoint: 'http://localhost:11434',
     default_task_duration: 60,
     enable_auto_subtasks: false,
     enable_auto_priority: true,
     enable_auto_tags: true,
   });
+  
+  const [hasApiKey, setHasApiKey] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -27,10 +27,9 @@ const SettingsView: React.FC = () => {
   const loadSettings = async () => {
     try {
       const data = await settingsApi.getSettings();
+      setHasApiKey(data.has_openai_api_key);
       setFormData({
-        llm_provider: data.llm_provider,
-        openai_api_key: data.openai_api_key || '',
-        llama_endpoint: data.llama_endpoint,
+        openai_api_key: '',
         default_task_duration: data.default_task_duration,
         enable_auto_subtasks: data.enable_auto_subtasks,
         enable_auto_priority: data.enable_auto_priority,
@@ -62,16 +61,16 @@ const SettingsView: React.FC = () => {
     }
   };
 
-  const testProvider = async (provider: 'gpt4' | 'llama') => {
-    setTestingProvider(provider);
+  const testProvider = async () => {
+    setTestingProvider('gpt4');
     try {
-      showInfo(`Testando ${provider === 'gpt4' ? 'OpenAI' : 'Llama'}...`);
+      showInfo('Testando OpenAI GPT-4...');
       await aiApi.analyzeSentiment('teste');
-      showSuccess(`${provider === 'gpt4' ? 'OpenAI' : 'Llama'} está funcionando corretamente!`);
+      showSuccess('OpenAI GPT-4 está funcionando corretamente!');
     } catch (error: any) {
-      console.error(`Failed to test ${provider}:`, error);
+      console.error('Failed to test GPT-4:', error);
       const errorMessage = error.response?.data?.detail || error.message || 'Erro desconhecido';
-      showError(`Falha ao testar ${provider === 'gpt4' ? 'OpenAI' : 'Llama'}: ${errorMessage}`);
+      showError(`Falha ao testar OpenAI GPT-4: ${errorMessage}`);
     } finally {
       setTestingProvider(null);
     }
@@ -98,97 +97,47 @@ const SettingsView: React.FC = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* LLM Provider */}
+        {/* OpenAI Configuration */}
         <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Provedor de IA</h2>
+          <h2 className="text-xl font-semibold mb-4">Configuração OpenAI GPT-4</h2>
           
-          <div className="space-y-2">
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="llm_provider"
-                value="llama"
-                checked={formData.llm_provider === 'llama'}
-                onChange={(e) => setFormData({ ...formData, llm_provider: e.target.value as any })}
-                className="form-radio"
-              />
-              <span>
-                <strong>Llama (Ollama)</strong> - IA local gratuita
-              </span>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">
+              OpenAI API Key
             </label>
-
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="llm_provider"
-                value="gpt4"
-                checked={formData.llm_provider === 'gpt4'}
-                onChange={(e) => setFormData({ ...formData, llm_provider: e.target.value as any })}
-                className="form-radio"
-              />
-              <span>
-                <strong>GPT-4</strong> - IA mais avançada (requer API key da OpenAI)
-              </span>
-            </label>
+            {hasApiKey && !formData.openai_api_key && (
+              <div className="mb-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+                ✓ Chave configurada
+              </div>
+            )}
+            <input
+              type="password"
+              value={formData.openai_api_key}
+              onChange={(e) => setFormData({ ...formData, openai_api_key: e.target.value })}
+              placeholder={hasApiKey ? "Digite uma nova chave para atualizar" : "sk-..."}
+              className="w-full px-3 py-2 border rounded-lg"
+            />
+            <p className="text-sm text-gray-600 mt-1">
+              Obtenha sua chave em{' '}
+              <a
+                href="https://platform.openai.com/api-keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                platform.openai.com
+              </a>
+            </p>
           </div>
-
-          {formData.llm_provider === 'gpt4' && (
-            <div className="mt-4">
-              <label className="block text-sm font-medium mb-2">
-                OpenAI API Key
-              </label>
-              <input
-                type="password"
-                value={formData.openai_api_key}
-                onChange={(e) => setFormData({ ...formData, openai_api_key: e.target.value })}
-                placeholder="sk-..."
-                className="w-full px-3 py-2 border rounded-lg"
-              />
-              <p className="text-sm text-gray-600 mt-1">
-                Obtenha sua chave em{' '}
-                <a
-                  href="https://platform.openai.com/api-keys"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  platform.openai.com
-                </a>
-              </p>
-              <button
-                type="button"
-                onClick={() => testProvider('gpt4')}
-                disabled={testingProvider === 'gpt4' || !formData.openai_api_key}
-                className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {testingProvider === 'gpt4' ? 'Testando...' : '🧪 Testar OpenAI'}
-              </button>
-            </div>
-          )}
-
-          {formData.llm_provider === 'llama' && (
-            <div className="mt-4">
-              <label className="block text-sm font-medium mb-2">
-                Llama Endpoint
-              </label>
-              <input
-                type="text"
-                value={formData.llama_endpoint}
-                onChange={(e) => setFormData({ ...formData, llama_endpoint: e.target.value })}
-                placeholder="http://localhost:11434"
-                className="w-full px-3 py-2 border rounded-lg"
-              />
-              <button
-                type="button"
-                onClick={() => testProvider('llama')}
-                disabled={testingProvider === 'llama'}
-                className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {testingProvider === 'llama' ? 'Testando...' : '🧪 Testar Llama'}
-              </button>
-              {/* Opção de fallback removida */}
-            </div>
-          )}
+          
+          <button
+            type="button"
+            onClick={testProvider}
+            disabled={testingProvider === 'gpt4' || (!hasApiKey && !formData.openai_api_key)}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {testingProvider === 'gpt4' ? 'Testando...' : '🧪 Testar GPT-4'}
+          </button>
         </div>
 
         {/* AI Features */}

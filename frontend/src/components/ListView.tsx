@@ -4,6 +4,7 @@ import TaskCard from './TaskCard';
 import AIInsightsPanel from './AIInsightsPanel';
 import TaskEditModal from './TaskEditModal';
 import ConfirmModal from './ConfirmModal';
+import TaskCreateModal from './TaskCreateModal';
 
 const ListView: React.FC = () => {
   const { tasks, fetchTasks, updateTask, deleteTask, isLoading } = useTaskStore();
@@ -13,6 +14,7 @@ const ListView: React.FC = () => {
   const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<Task | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     fetchTasks({ status: statusFilter || undefined });
@@ -57,7 +59,16 @@ const ListView: React.FC = () => {
   return (
     <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 animate-fade-in">
       <div className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-display font-bold text-gradient-primary mb-6">Minhas Tarefas</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl sm:text-4xl font-display font-bold text-gradient-primary">Minhas Tarefas</h1>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium shadow-md flex items-center gap-2"
+          >
+            <span className="text-xl">➕</span>
+            <span>Criar Tarefa</span>
+          </button>
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
@@ -177,6 +188,17 @@ const ListView: React.FC = () => {
           cancelLabel="Cancelar"
           onConfirm={confirmDelete}
           onCancel={cancelDelete}
+        />
+      )}
+
+      {/* Task Create Modal */}
+      {showCreateModal && (
+        <TaskCreateModal
+          onClose={() => setShowCreateModal(false)}
+          onCreated={() => {
+            setShowCreateModal(false);
+            fetchTasks({});
+          }}
         />
       )}
     </div>

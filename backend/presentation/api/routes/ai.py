@@ -116,34 +116,22 @@ async def get_ai_insights_service(
     """Get AI insights service with user's settings"""
     from infrastructure.database.user_settings_repository import UserSettingsRepository
     from infrastructure.gpt.openai_adapter import OpenAIAdapter
-    from infrastructure.llm.llama_adapter import LlamaAdapter
-    import os
-    from presentation.config import get_settings
     
     settings_repo = UserSettingsRepository(session)
     settings = await settings_repo.get_or_create(current_user.id)
     
-    openai_adapter = None
-    llama_adapter = None
-    
-    if settings.llm_provider == "gpt4" and settings.openai_api_key:
-        openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4")
-    elif settings.llm_provider == "llama":
-        # Resolve endpoint: prefer user setting, then env var, then global settings default
-        resolved_endpoint = (
-            settings.llama_endpoint
-            or os.getenv("OLLAMA_ENDPOINT")
-            or get_settings().ollama_endpoint
+    if not settings.openai_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Configure sua chave OpenAI em Configurações para usar recursos de IA"
         )
-        # Normalize localhost values to compose service name when running in docker
-        if "localhost" in (resolved_endpoint or ""):
-            resolved_endpoint = os.getenv("OLLAMA_ENDPOINT") or get_settings().ollama_endpoint
-        llama_adapter = LlamaAdapter(endpoint=resolved_endpoint, model="llama2")
+    
+    openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4")
     
     return AIInsightsService(
-        provider=settings.llm_provider,
+        provider="gpt4",
         openai_adapter=openai_adapter,
-        llama_adapter=llama_adapter
+        llama_adapter=None
     )
 
 
@@ -154,30 +142,22 @@ async def get_chat_assistant_service(
     """Get chat assistant service with user's settings"""
     from infrastructure.database.user_settings_repository import UserSettingsRepository
     from infrastructure.gpt.openai_adapter import OpenAIAdapter
-    from infrastructure.llm.llama_adapter import LlamaAdapter
     
     settings_repo = UserSettingsRepository(session)
     settings = await settings_repo.get_or_create(current_user.id)
     
-    openai_adapter = None
-    llama_adapter = None
-    
-    if settings.llm_provider == "gpt4" and settings.openai_api_key:
-        openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4")
-    elif settings.llm_provider == "llama":
-        resolved_endpoint = (
-            settings.llama_endpoint
-            or os.getenv("OLLAMA_ENDPOINT")
-            or get_settings().ollama_endpoint
+    if not settings.openai_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Configure sua chave OpenAI em Configurações para usar recursos de IA"
         )
-        if "localhost" in (resolved_endpoint or ""):
-            resolved_endpoint = os.getenv("OLLAMA_ENDPOINT") or get_settings().ollama_endpoint
-        llama_adapter = LlamaAdapter(endpoint=resolved_endpoint, model="llama2")
+    
+    openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4")
     
     return ChatAssistantService(
-        provider=settings.llm_provider,
+        provider="gpt4",
         openai_adapter=openai_adapter,
-        llama_adapter=llama_adapter
+        llama_adapter=None
     )
 
 
