@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.services.auth_service import AuthService
 from application.services.gpt_service import GPTService
-from application.services.enhanced_gpt_service import EnhancedGPTService
 from application.use_cases.create_task import CreateTaskUseCase
 from application.use_cases.manage_projects import (
     CreateProjectUseCase,
@@ -32,7 +31,6 @@ from infrastructure.database.postgresql_repository import (
 )
 from infrastructure.database.user_settings_repository import UserSettingsRepository
 from infrastructure.gpt.openai_adapter import OpenAIAdapter
-from infrastructure.llm.llama_adapter import LlamaAdapter
 from presentation.config import get_settings
 from presentation.websocket.connection_manager import connection_manager
 import os
@@ -81,45 +79,30 @@ async def get_gpt_service(
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
 ) -> GPTService:
-    """Get GPT service with user's settings for provider selection"""
+    """Get GPT service with user's OpenAI API key - GPT-4 only"""
     settings_repo = UserSettingsRepository(session)
     user_settings = await settings_repo.get_or_create(current_user.id)
 
-    openai_adp = None
-    llama_adp = None
-
-    if user_settings.llm_provider == "gpt4":
-        # Use user's API key if available, otherwise use global settings
-        api_key = user_settings.openai_api_key or settings.openai_api_key
-        if api_key:
-            openai_adp = OpenAIAdapter(api_key=api_key, model="gpt-4")
-
-    if user_settings.llm_provider == "llama" or not openai_adp:
-        # Resolve endpoint: prefer user setting, then env var, then global settings default
-        resolved_endpoint = (
-            user_settings.llama_endpoint
-            or os.getenv("OLLAMA_ENDPOINT")
-            or settings.ollama_endpoint
+    # Use user's API key if available, otherwise use global settings
+    api_key = user_settings.openai_api_key or settings.openai_api_key
+    
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Configure sua chave OpenAI em Configurações para usar recursos de IA"
         )
-        # Normalize localhost values to compose service name when running in docker
-        if "localhost" in (resolved_endpoint or ""):
-            resolved_endpoint = os.getenv("OLLAMA_ENDPOINT") or settings.ollama_endpoint
-        llama_adp = LlamaAdapter(endpoint=resolved_endpoint, model="llama2")
-
-    # Use EnhancedGPTService for multi-provider support
-    service = EnhancedGPTService(
-        openai_adapter=openai_adp,
-        llama_adapter=llama_adp,
-        cache_repository=redis_cache
+    
+    openai_adapter = OpenAIAdapter(api_key=api_key, model="gpt-4o-mini")
+    
+    return GPTService(
+        openai_adapter=openai_adapter,
+        cache=redis_cache
     )
-    service.current_provider = user_settings.llm_provider
-
-    return service
 
 
 async def get_create_task_use_case(
     session: AsyncSession = Depends(get_db_session),
-    gpt_service: EnhancedGPTService = Depends(get_gpt_service),
+    gpt_service: GPTService = Depends(get_gpt_service),
 ) -> CreateTaskUseCase:
     task_repository = PostgreSQLTaskRepository(session)
     use_case = CreateTaskUseCase(task_repository, gpt_service)

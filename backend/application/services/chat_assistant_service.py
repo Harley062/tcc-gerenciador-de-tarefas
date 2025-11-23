@@ -7,23 +7,18 @@ from datetime import datetime, timedelta
 
 from domain.entities.task import Task
 from infrastructure.gpt.openai_adapter import OpenAIAdapter
-from infrastructure.llm.llama_adapter import LlamaAdapter
 
 logger = logging.getLogger("taskmaster")
 
 
 class ChatAssistantService:
-    """AI-powered chat assistant for natural language task management"""
+    """AI-powered chat assistant for natural language task management - GPT-4 only"""
     
     def __init__(
         self,
-        openai_adapter: Optional[OpenAIAdapter] = None,
-        llama_adapter: Optional[LlamaAdapter] = None,
-        provider: str = "llama"
+        openai_adapter: OpenAIAdapter,
     ):
         self.openai_adapter = openai_adapter
-        self.llama_adapter = llama_adapter
-        self.provider = provider
         self.conversation_history = []
     
     async def process_message(
@@ -376,18 +371,8 @@ Total: {total} tarefas
         message: str, 
         tasks: List[Task]
     ) -> Dict[str, Any]:
-        """Handle general queries using AI if available"""
-        
-        if self.provider == "gpt4" and self.openai_adapter:
-            return await self._handle_with_gpt(message, tasks)
-        elif self.provider == "llama" and self.llama_adapter:
-            return await self._handle_with_llama(message, tasks)
-        else:
-            return {
-                "message": "Desculpe, não entendi. Digite 'ajuda' para ver os comandos disponíveis.",
-                "action": None,
-                "data": None
-            }
+        """Handle general queries using GPT-4"""
+        return await self._handle_with_gpt(message, tasks)
     
     async def _handle_with_gpt(
         self, 
@@ -423,19 +408,6 @@ Provide a helpful response in Portuguese. Be concise and actionable."""
                 "action": None,
                 "data": None
             }
-    
-    async def _handle_with_llama(
-        self, 
-        message: str, 
-        tasks: List[Task]
-    ) -> Dict[str, Any]:
-        """Handle query using Llama"""
-        
-        return {
-            "message": "Desculpe, não entendi. Digite 'ajuda' para ver os comandos disponíveis.",
-            "action": None,
-            "data": None
-        }
     
     def clear_history(self):
         """Clear conversation history"""
