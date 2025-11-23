@@ -9,9 +9,7 @@ import CalendarView from './components/CalendarView';
 import SettingsView from './components/SettingsView';
 import DashboardView from './components/DashboardView';
 import ChatAssistant from './components/ChatAssistant';
-import SubtaskSuggestionsModal from './components/SubtaskSuggestionsModal';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import api from './services/api';
 
 type ViewType = 'dashboard' | 'list' | 'kanban' | 'calendar' | 'settings';
 
@@ -24,9 +22,6 @@ const App: React.FC = () => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
   });
-  const [showQuickAddSubtaskModal, setShowQuickAddSubtaskModal] = useState(false);
-  const [quickAddCreatedTask, setQuickAddCreatedTask] = useState<any>(null);
-  const quickAddInputRef = useRef<HTMLInputElement>(null);
   const listViewSearchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -50,7 +45,6 @@ const App: React.FC = () => {
   }, [isAuthenticated, setupWebSocket, fetchTasks]);
 
   useKeyboardShortcuts([
-    { key: 'n', callback: () => quickAddInputRef.current?.focus() },
     { key: '1', callback: () => setCurrentView('dashboard') },
     { key: '2', callback: () => setCurrentView('list') },
     { key: '3', callback: () => setCurrentView('kanban') },
@@ -79,63 +73,6 @@ const App: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
               <h1 className="text-2xl font-display font-bold text-gradient-primary">TaskMaster</h1>
-
-              {/* Persistent Quick-Add Input */}
-              <div className="hidden lg:block">
-                <div className="relative flex items-center">
-                  <input
-                  ref={quickAddInputRef}
-                  type="text"
-                  placeholder="Adicionar tarefa rápida..."
-                  className="w-72 pl-10 pr-4 py-2 text-sm input shadow-sm"
-                  onKeyDown={async (e) => {
-                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                    const input = e.currentTarget.value;
-                    e.currentTarget.value = '';
-                    try {
-                      const task = await api.createTaskNaturalLanguage(input);
-                      setQuickAddCreatedTask(task);
-                      setShowQuickAddSubtaskModal(true);
-                      fetchTasks({});
-                    } catch (error) {
-                      console.error('Failed to create task:', error);
-                      fetchTasks({});
-                    }
-                    }
-                  }}
-                  />
-                  <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-
-                  <button
-                  type="button"
-                  onClick={async () => {
-                    const inputEl = quickAddInputRef.current;
-                    if (!inputEl) return;
-                    const value = inputEl.value.trim();
-                    if (!value) return;
-                    inputEl.value = '';
-                    try {
-                    const task = await api.createTaskNaturalLanguage(value);
-                    setQuickAddCreatedTask(task);
-                    setShowQuickAddSubtaskModal(true);
-                    fetchTasks({});
-                    } catch (error) {
-                    console.error('Failed to create task:', error);
-                    fetchTasks({});
-                    }
-                  }}
-                  className="ml-2 btn btn-primary px-3 py-1 rounded text-sm flex items-center gap-2"
-                  title="Adicionar tarefa"
-                  >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Adicionar
-                  </button>
-                </div>
-              </div>
             </div>
 
             <div className="flex items-center gap-3">
@@ -271,25 +208,6 @@ const App: React.FC = () => {
 
       {/* AI Chat Assistant - Always available */}
       <ChatAssistant />
-
-      {/* Quick Add Subtask Suggestions Modal */}
-      {showQuickAddSubtaskModal && quickAddCreatedTask && (
-        <SubtaskSuggestionsModal
-          taskId={quickAddCreatedTask.id}
-          taskTitle={quickAddCreatedTask.title}
-          taskDescription={quickAddCreatedTask.description}
-          onClose={() => {
-            setShowQuickAddSubtaskModal(false);
-            setQuickAddCreatedTask(null);
-            fetchTasks({});
-          }}
-          onSubtasksCreated={() => {
-            setShowQuickAddSubtaskModal(false);
-            setQuickAddCreatedTask(null);
-            fetchTasks({});
-          }}
-        />
-      )}
     </div>
   );
 };
