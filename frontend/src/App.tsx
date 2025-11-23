@@ -82,31 +82,58 @@ const App: React.FC = () => {
 
               {/* Persistent Quick-Add Input */}
               <div className="hidden lg:block">
-                <div className="relative">
+                <div className="relative flex items-center">
                   <input
-                    ref={quickAddInputRef}
-                    type="text"
-                    placeholder="Adicionar tarefa rápida... (N)"
-                    className="w-72 pl-10 pr-4 py-2 text-sm input shadow-sm"
-                    onKeyDown={async (e) => {
-                      if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                        const input = e.currentTarget.value;
-                        e.currentTarget.value = '';
-                        try {
-                          const task = await api.createTaskNaturalLanguage(input);
-                          setQuickAddCreatedTask(task);
-                          setShowQuickAddSubtaskModal(true);
-                          fetchTasks({});
-                        } catch (error) {
-                          console.error('Failed to create task:', error);
-                          fetchTasks({});
-                        }
-                      }
-                    }}
+                  ref={quickAddInputRef}
+                  type="text"
+                  placeholder="Adicionar tarefa rápida..."
+                  className="w-72 pl-10 pr-4 py-2 text-sm input shadow-sm"
+                  onKeyDown={async (e) => {
+                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                    const input = e.currentTarget.value;
+                    e.currentTarget.value = '';
+                    try {
+                      const task = await api.createTaskNaturalLanguage(input);
+                      setQuickAddCreatedTask(task);
+                      setShowQuickAddSubtaskModal(true);
+                      fetchTasks({});
+                    } catch (error) {
+                      console.error('Failed to create task:', error);
+                      fetchTasks({});
+                    }
+                    }
+                  }}
                   />
                   <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+
+                  <button
+                  type="button"
+                  onClick={async () => {
+                    const inputEl = quickAddInputRef.current;
+                    if (!inputEl) return;
+                    const value = inputEl.value.trim();
+                    if (!value) return;
+                    inputEl.value = '';
+                    try {
+                    const task = await api.createTaskNaturalLanguage(value);
+                    setQuickAddCreatedTask(task);
+                    setShowQuickAddSubtaskModal(true);
+                    fetchTasks({});
+                    } catch (error) {
+                    console.error('Failed to create task:', error);
+                    fetchTasks({});
+                    }
+                  }}
+                  className="ml-2 btn btn-primary px-3 py-1 rounded text-sm flex items-center gap-2"
+                  title="Adicionar tarefa"
+                  >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
+                  Adicionar
+                  </button>
                 </div>
               </div>
             </div>
