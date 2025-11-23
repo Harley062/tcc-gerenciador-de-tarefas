@@ -109,6 +109,45 @@ class ChatMessageResponse(BaseModel):
     data: Optional[dict]
 
 
+class TaskParseRequest(BaseModel):
+    text: str
+
+
+class TaskParseResponse(BaseModel):
+    title: str
+    description: Optional[str]
+    priority: str
+    due_date: Optional[str]
+    estimated_duration: Optional[int]
+    tags: List[str]
+    cache_hit: bool
+
+
+async def get_gpt_service(
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
+):
+    """Get GPT service with user's settings and Redis cache"""
+    from infrastructure.database.user_settings_repository import UserSettingsRepository
+    from infrastructure.gpt.openai_adapter import OpenAIAdapter
+    from application.services.gpt_service import GPTService
+    from infrastructure.cache.redis_cache import RedisCache
+    
+    settings_repo = UserSettingsRepository(session)
+    settings = await settings_repo.get_or_create(current_user.id)
+    
+    if not settings.openai_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Configure sua chave OpenAI em Configurações para usar recursos de IA"
+        )
+    
+    openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4")
+    redis_cache = RedisCache(redis_url=get_settings().redis_url)
+    
+    return GPTService(openai_adapter=openai_adapter, cache=redis_cache)
+
+
 async def get_ai_insights_service(
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
@@ -384,3 +423,46 @@ async def clear_chat_history(
     """Clear chat conversation history"""
     chat_service.clear_history()
     return {"message": "Chat history cleared"}
+
+
+@router.post("/tasks/parse", response_model=TaskParseResponse)
+async def parse_task(
+    request: TaskParseRequest,
+    current_user: User = Depends(get_current_user),
+    gpt_service = Depends(get_gpt_service),
+):
+    """Parse natural language text into structured task data using GPT-4"""
+    try:
+        logger.info(
+            f"Task parse request",
+            extra={
+                "text_length": len(request.text),
+                "user_id": str(current_user.id),
+            }
+        )
+
+        parsed_task, metadata = await gpt_service.parse_task(request.text)
+        
+        logger.info(
+            f"Task parse completed",
+            extra={
+                "cache_hit": metadata.get("cache_hit", False),
+                "title": parsed_task.title[:50],
+            }
+        )
+
+        return TaskParseResponse(
+            title=parsed_task.title,
+            description=parsed_task.description,
+            priority=parsed_task.priority,
+            due_date=parsed_task.due_date.isoformat() if parsed_task.due_date else None,
+            estimated_duration=parsed_task.estimated_duration,
+            tags=parsed_task.tags,
+            cache_hit=metadata.get("cache_hit", False)
+        )
+    except Exception as e:
+        logger.error("Task parse failed", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to parse task from natural language"
+        )

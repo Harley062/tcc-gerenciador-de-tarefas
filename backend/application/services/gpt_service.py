@@ -37,9 +37,11 @@ class GPTService:
 
         cached_result = await self.cache.get(cache_key)
         if cached_result:
+            cached_result["cache_hit"] = True
             return self._create_parsed_task(cached_result["parsed_data"]), cached_result
 
         result = await self.openai_adapter.parse_task(text)
+        result["cache_hit"] = False
         await self.cache.set(cache_key, result)
         return self._create_parsed_task(result["parsed_data"]), result
 
