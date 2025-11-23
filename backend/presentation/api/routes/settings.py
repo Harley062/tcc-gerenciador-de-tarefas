@@ -15,7 +15,7 @@ class UserSettingsResponse(BaseModel):
     id: str
     user_id: str
     llm_provider: str
-    openai_api_key: Optional[str]
+    has_openai_api_key: bool
     llama_endpoint: str
     default_task_duration: int
     enable_auto_subtasks: bool
@@ -43,7 +43,10 @@ async def get_settings(
     """Get current user's settings"""
     repo = UserSettingsRepository(session)
     settings = await repo.get_or_create(current_user.id)
-    return UserSettingsResponse(**settings.to_dict())
+    settings_dict = settings.to_dict()
+    settings_dict['has_openai_api_key'] = bool(settings.openai_api_key)
+    settings_dict.pop('openai_api_key', None)
+    return UserSettingsResponse(**settings_dict)
 
 
 @router.put("", response_model=UserSettingsResponse)
@@ -57,10 +60,7 @@ async def update_settings(
     settings = await repo.get_or_create(current_user.id)
     
     # Update only provided fields
-    if request.llm_provider is not None:
-        if request.llm_provider not in ["gpt4", "llama"]:
-            raise HTTPException(status_code=400, detail="Invalid LLM provider. Must be 'gpt4' or 'llama'")
-        settings.llm_provider = request.llm_provider
+    settings.llm_provider = "gpt4"
     
     if request.openai_api_key is not None:
         settings.openai_api_key = request.openai_api_key if request.openai_api_key else None
@@ -81,4 +81,7 @@ async def update_settings(
         settings.enable_auto_tags = request.enable_auto_tags
     
     updated_settings = await repo.update(settings)
-    return UserSettingsResponse(**updated_settings.to_dict())
+    updated_dict = updated_settings.to_dict()
+    updated_dict['has_openai_api_key'] = bool(updated_settings.openai_api_key)
+    updated_dict.pop('openai_api_key', None)
+    return UserSettingsResponse(**updated_dict)
