@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { aiApi, TaskSummary } from '../services/aiApi';
+import TaskCreateModal from './TaskCreateModal';
 
 const DashboardView: React.FC = () => {
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [summary, setSummary] = useState<TaskSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const loadSummary = async () => {
     setLoading(true);
@@ -56,37 +58,46 @@ const DashboardView: React.FC = () => {
         <h1 className="text-3xl sm:text-4xl font-display font-bold text-gradient-primary">
           Dashboard
         </h1>
-        <div className="flex gap-2 bg-white dark:bg-gray-800 p-1 rounded-lg shadow-soft">
+        <div className="flex gap-3">
           <button
-            onClick={() => setPeriod('daily')}
-            className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
-              period === 'daily'
-                ? 'gradient-primary text-white shadow-md'
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium shadow-md flex items-center gap-2"
           >
-            Hoje
+            <span className="text-xl">➕</span>
+            <span>Criar Tarefa</span>
           </button>
-          <button
-            onClick={() => setPeriod('weekly')}
-            className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
-              period === 'weekly'
-                ? 'gradient-primary text-white shadow-md'
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            Semana
-          </button>
-          <button
-            onClick={() => setPeriod('monthly')}
-            className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
-              period === 'monthly'
-                ? 'gradient-primary text-white shadow-md'
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            Mês
-          </button>
+          <div className="flex gap-2 bg-white dark:bg-gray-800 p-1 rounded-lg shadow-soft">
+            <button
+              onClick={() => setPeriod('daily')}
+              className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
+                period === 'daily'
+                  ? 'gradient-primary text-white shadow-md'
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              Hoje
+            </button>
+            <button
+              onClick={() => setPeriod('weekly')}
+              className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
+                period === 'weekly'
+                  ? 'gradient-primary text-white shadow-md'
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              Semana
+            </button>
+            <button
+              onClick={() => setPeriod('monthly')}
+              className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
+                period === 'monthly'
+                  ? 'gradient-primary text-white shadow-md'
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              Mês
+            </button>
+          </div>
         </div>
       </div>
 
@@ -287,6 +298,17 @@ const DashboardView: React.FC = () => {
             ))}
           </ul>
         </div>
+      )}
+
+      {/* Task Create Modal */}
+      {showCreateModal && (
+        <TaskCreateModal
+          onClose={() => setShowCreateModal(false)}
+          onCreated={() => {
+            setShowCreateModal(false);
+            loadSummary();
+          }}
+        />
       )}
     </div>
   );

@@ -19,6 +19,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useTaskStore, Task } from '../store/taskStore';
 import TaskCard from './TaskCard';
 import TaskEditModal from './TaskEditModal';
+import TaskCreateModal from './TaskCreateModal';
 
 interface SortableTaskProps {
   task: Task;
@@ -170,6 +171,7 @@ const KanbanView: React.FC = () => {
   });
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<Task | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -313,8 +315,19 @@ const KanbanView: React.FC = () => {
   return (
     <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 animate-fade-in">
       <div className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-display font-bold text-gradient-primary mb-2">Quadro Kanban</h1>
-        <p className="text-gray-600 dark:text-gray-400">Arraste e solte as tarefas para alterar o status</p>
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-display font-bold text-gradient-primary mb-2">Quadro Kanban</h1>
+            <p className="text-gray-600 dark:text-gray-400">Arraste e solte as tarefas para alterar o status</p>
+          </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium shadow-md flex items-center gap-2"
+          >
+            <span className="text-xl">➕</span>
+            <span>Criar Tarefa</span>
+          </button>
+        </div>
       </div>
 
       <DndContext
@@ -352,6 +365,17 @@ const KanbanView: React.FC = () => {
           task={selectedTaskForEdit}
           onClose={() => setSelectedTaskForEdit(null)}
           onSaved={() => fetchTasks({})}
+        />
+      )}
+
+      {/* Task Create Modal */}
+      {showCreateModal && (
+        <TaskCreateModal
+          onClose={() => setShowCreateModal(false)}
+          onCreated={() => {
+            setShowCreateModal(false);
+            fetchTasks({});
+          }}
         />
       )}
     </div>
