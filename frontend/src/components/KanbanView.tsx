@@ -79,6 +79,12 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
 
   const getColumnIcon = () => {
     switch(id) {
+      case 'pending':
+        return (
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+          </svg>
+        );
       case 'todo':
         return (
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -105,6 +111,8 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
 
   const getHeaderColor = () => {
     switch(id) {
+      case 'pending':
+        return 'text-gray-700 dark:text-gray-300';
       case 'todo':
         return 'text-warning-700 dark:text-warning-300';
       case 'in_progress':
@@ -119,7 +127,7 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`rounded-xl p-4 ${colorClass} ${
+      className={`min-w-[280px] flex-shrink-0 rounded-xl p-4 ${colorClass} ${
         isOver ? 'ring-4 ring-primary-400 dark:ring-primary-600 scale-105' : ''
       } transition-all duration-200 shadow-soft`}
     >
@@ -165,6 +173,7 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
 const KanbanView: React.FC = () => {
   const { tasks, fetchTasks, updateTask, deleteTask, isLoading } = useTaskStore();
   const [columns, setColumns] = useState<Record<string, Task[]>>({
+    pending: [],
     todo: [],
     in_progress: [],
     done: [],
@@ -187,6 +196,7 @@ const KanbanView: React.FC = () => {
 
   useEffect(() => {
     const newColumns = {
+      pending: tasks.filter((t) => t.status === 'pending'),
       todo: tasks.filter((t) => t.status === 'todo'),
       in_progress: tasks.filter((t) => t.status === 'in_progress'),
       done: tasks.filter((t) => t.status === 'done'),
@@ -212,7 +222,7 @@ const KanbanView: React.FC = () => {
     let newStatus: Task['status'] | null = null;
 
     // Check if dropped directly on a column or on another task
-    if (overId === 'todo' || overId === 'in_progress' || overId === 'done') {
+    if (overId === 'pending' || overId === 'todo' || overId === 'in_progress' || overId === 'done') {
       newStatus = overId as Task['status'];
     } else {
       // Find the status of the task we're dropping on
@@ -290,12 +300,14 @@ const KanbanView: React.FC = () => {
   };
 
   const columnTitles = {
+    pending: 'Pendente',
     todo: 'A Fazer',
     in_progress: 'Em Progresso',
     done: 'Concluído',
   };
 
   const columnColors = {
+    pending: 'bg-gradient-to-b from-gray-50 to-gray-100/50 dark:from-gray-900/10 dark:to-gray-800/5 border-2 border-gray-200 dark:border-gray-800',
     todo: 'bg-gradient-to-b from-warning-50 to-warning-100/50 dark:from-warning-900/10 dark:to-warning-800/5 border-2 border-warning-200 dark:border-warning-800',
     in_progress: 'bg-gradient-to-b from-primary-50 to-primary-100/50 dark:from-primary-900/10 dark:to-primary-800/5 border-2 border-primary-200 dark:border-primary-800',
     done: 'bg-gradient-to-b from-success-50 to-success-100/50 dark:from-success-900/10 dark:to-success-800/5 border-2 border-success-200 dark:border-success-800',
@@ -337,7 +349,7 @@ const KanbanView: React.FC = () => {
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="flex flex-wrap gap-6 items-start pb-4">
           {Object.entries(columns).map(([columnId, columnTasks]) => (
             <DroppableColumn
               key={columnId}

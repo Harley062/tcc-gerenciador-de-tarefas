@@ -10,6 +10,7 @@ import SettingsView from './components/SettingsView';
 import DashboardView from './components/DashboardView';
 import ChatAssistant from './components/ChatAssistant';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { GlobalStyles } from './styles/GlobalStyles';
 
 type ViewType = 'dashboard' | 'list' | 'kanban' | 'calendar' | 'settings';
 
@@ -67,8 +68,10 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      <nav className="glass border-b border-gray-200 dark:border-gray-700 shadow-soft sticky top-0 z-50 backdrop-blur-lg">
+    <>
+      <GlobalStyles />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+        <nav className="glass border-b border-gray-200 dark:border-gray-700 shadow-soft sticky top-0 z-50 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
@@ -208,7 +211,8 @@ const App: React.FC = () => {
 
       {/* AI Chat Assistant - Always available */}
       <ChatAssistant />
-    </div>
+      </div>
+    </>
   );
 };
 

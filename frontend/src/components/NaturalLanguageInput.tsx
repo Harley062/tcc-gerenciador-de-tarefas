@@ -45,9 +45,11 @@ const NaturalLanguageInput: React.FC<NaturalLanguageInputProps> = ({ onTaskCreat
 
   const examples = [
     'Reunião com cliente amanhã às 14h',
-    'Urgent: Fix production bug by end of day',
-    'Review pull request #123 - high priority',
+    'Urgente: Corrigir bug em produção até o fim do dia',
+    'Revisar pull request #123 - alta prioridade',
     'Comprar mantimentos para a semana',
+    'Preparar apresentação do TCC para segunda-feira',
+    'Ligar para médico e marcar consulta - importante',
   ];
 
   return (

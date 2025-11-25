@@ -439,7 +439,7 @@ const ListView: React.FC = () => {
           <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">Tente ajustar os filtros ou adicionar uma nova tarefa</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredTasks.map((task, index) => (
             <div key={task.id} className="relative animate-slide-up" style={{ animationDelay: `${index * 0.05}s` }}>
               <TaskCard

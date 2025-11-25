@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { aiApi, TaskSummary } from '../services/aiApi';
 import TaskCreateModal from './TaskCreateModal';
+import AnalyticsDashboard from './Dashboard/AnalyticsDashboard';
+import StatsCard from './Dashboard/StatsCard';
+import NotificationPanel from './Notifications/NotificationPanel';
 
 const DashboardView: React.FC = () => {
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
@@ -101,88 +104,18 @@ const DashboardView: React.FC = () => {
         </div>
       </div>
 
+      {/* Notification Panel */}
+      <NotificationPanel />
+
+      {/* Analytics Dashboard */}
+      <AnalyticsDashboard />
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card p-6 animate-slide-up hover:scale-105 transition-transform duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Concluídas</p>
-              <p className="text-3xl font-bold text-success-600 dark:text-success-400">
-                {summary.summary.completed}
-              </p>
-            </div>
-            <div className="text-5xl opacity-80">✅</div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center text-sm text-success-600 dark:text-success-400">
-              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
-              </svg>
-              <span className="font-medium">Tarefas finalizadas</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="card p-6 animate-slide-up hover:scale-105 transition-transform duration-200" style={{ animationDelay: '0.1s' }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Em Progresso</p>
-              <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
-                {summary.summary.in_progress}
-              </p>
-            </div>
-            <div className="text-5xl opacity-80">🔄</div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center text-sm text-primary-600 dark:text-primary-400">
-              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-              </svg>
-              <span className="font-medium">Em andamento</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="card p-6 animate-slide-up hover:scale-105 transition-transform duration-200" style={{ animationDelay: '0.2s' }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">A Fazer</p>
-              <p className="text-3xl font-bold text-warning-600 dark:text-warning-400">
-                {summary.summary.todo}
-              </p>
-            </div>
-            <div className="text-5xl opacity-80">📝</div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center text-sm text-warning-600 dark:text-warning-400">
-              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-              </svg>
-              <span className="font-medium">Pendentes</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="card p-6 animate-slide-up hover:scale-105 transition-transform duration-200" style={{ animationDelay: '0.3s' }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Tempo Total</p>
-              <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-                {Math.round(summary.summary.total_time_minutes / 60)}h
-              </p>
-            </div>
-            <div className="text-5xl opacity-80">⏱️</div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center text-sm text-purple-600 dark:text-purple-400">
-              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-              </svg>
-              <span className="font-medium">Investido</span>
-            </div>
-          </div>
-        </div>
+        <StatsCard title="Concluídas" value={summary.summary.completed} subtitle="Tarefas finalizadas" icon={<span style={{fontSize:24}}>✅</span>} color="success" />
+        <StatsCard title="Em Progresso" value={summary.summary.in_progress} subtitle="Em andamento" icon={<span style={{fontSize:24}}>🔄</span>} color="primary" />
+        <StatsCard title="A Fazer" value={summary.summary.todo} subtitle="Pendentes" icon={<span style={{fontSize:24}}>📝</span>} color="warning" />
+        <StatsCard title="Tempo Total" value={`${Math.round(summary.summary.total_time_minutes / 60)}h`} subtitle="Investido" icon={<span style={{fontSize:24}}>⏱️</span>} color="gray" />
       </div>
 
       {/* Completion Rate */}

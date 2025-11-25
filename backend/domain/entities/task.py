@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 
 from domain.value_objects.priority import Priority
 from domain.value_objects.task_status import TaskStatus
+from domain.utils.datetime_utils import now_brazil
 
 
 class Task:
@@ -12,8 +13,8 @@ class Task:
         user_id: UUID,
         title: str,
         description: Optional[str] = None,
-        status: TaskStatus = TaskStatus.TODO,
-        priority: Priority = Priority.MEDIUM,
+        status: TaskStatus = TaskStatus.PENDING,
+        priority: Priority = Priority.MEDIA,
         due_date: Optional[datetime] = None,
         estimated_duration: Optional[int] = None,
         actual_duration: Optional[int] = None,
@@ -44,13 +45,13 @@ class Task:
         self.metadata = metadata or {}
         self.natural_language_input = natural_language_input
         self.gpt_response = gpt_response
-        self.created_at = created_at or datetime.utcnow()
-        self.updated_at = updated_at or datetime.utcnow()
+        self.created_at = created_at or now_brazil()
+        self.updated_at = updated_at or now_brazil()
 
     def mark_completed(self) -> None:
         self.status = TaskStatus.DONE
-        self.completed_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
+        self.completed_at = now_brazil()
+        self.updated_at = now_brazil()
 
     def to_dict(self) -> dict:
         return {

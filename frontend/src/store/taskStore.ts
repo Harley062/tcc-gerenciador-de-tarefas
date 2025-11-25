@@ -9,7 +9,7 @@ export interface Task {
   parent_task_id?: string;
   title: string;
   description?: string;
-  status: 'todo' | 'in_progress' | 'done' | 'cancelled';
+  status: 'todo' | 'in_progress' | 'done' | 'cancelled' | 'pending';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   due_date?: string;
   estimated_duration?: number;

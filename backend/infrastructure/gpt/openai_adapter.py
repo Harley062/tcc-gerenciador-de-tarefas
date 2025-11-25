@@ -167,27 +167,36 @@ Only return valid JSON matching the schema, no additional text."""
             raise Exception(f"Failed to generate subtasks with GPT-4: {str(e)}")
 
     async def generate_completion(
-        self, 
-        prompt: str, 
-        response_format: Optional[dict] = None
+        self,
+        prompt: str,
+        system_prompt: Optional[str] = None,
+        response_format: Optional[dict] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 500
     ) -> dict[str, Any]:
-        """Generate a general completion from GPT"""
+        """Generate a general completion from GPT with configurable parameters"""
         try:
+            # Build messages array
+            messages = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            messages.append({"role": "user", "content": prompt})
+
             kwargs = {
                 "model": self.model,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.7,
-                "max_tokens": 500,
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
             }
-            
+
             if response_format:
                 kwargs["response_format"] = response_format
-            
+
             response = await self.client.chat.completions.create(**kwargs)
-            
+
             content = response.choices[0].message.content
             tokens_used = response.usage.total_tokens if response.usage else 0
-            
+
             return {
                 "content": content,
                 "tokens_used": tokens_used,

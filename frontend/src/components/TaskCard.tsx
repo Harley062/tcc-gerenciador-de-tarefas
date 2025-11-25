@@ -21,6 +21,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
     in_progress: 'bg-yellow-100 text-yellow-800',
     done: 'bg-green-100 text-green-800',
     cancelled: 'bg-red-100 text-red-800',
+    pending: 'bg-purple-100 text-purple-800',
   };
 
   const formatDate = (dateString?: string) => {
