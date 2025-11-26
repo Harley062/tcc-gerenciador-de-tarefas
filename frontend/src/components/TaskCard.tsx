@@ -86,7 +86,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
     >
       {/* Cabeçalho */}
       <div className="flex justify-between items-start mb-3 gap-3">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex-1 leading-tight">
+        <h3
+          className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex-1 leading-tight line-clamp-2"
+          title={task.title}
+        >
           {task.title}
         </h3>
         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -119,7 +122,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
 
       {/* Descrição */}
       {task.description && (
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 leading-relaxed">
+        <p
+          className="text-gray-600 dark:text-gray-400 text-sm mb-4 leading-relaxed line-clamp-3"
+          title={task.description}
+        >
           {task.description}
         </p>
       )}
