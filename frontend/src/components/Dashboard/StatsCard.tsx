@@ -1,5 +1,4 @@
 import React from 'react';
-import styled from 'styled-components';
 
 interface StatsCardProps {
   title: string;
@@ -21,117 +20,92 @@ const StatsCard: React.FC<StatsCardProps> = ({
   trend,
   color = 'primary',
 }) => {
+  // Mapeamento de cores usando o design system
+  const colorConfig = {
+    primary: {
+      bg: 'bg-primary-100 dark:bg-primary-900/30',
+      text: 'text-primary-600 dark:text-primary-400',
+      icon: 'bg-primary-50 dark:bg-primary-900/50'
+    },
+    success: {
+      bg: 'bg-success-100 dark:bg-success-900/30',
+      text: 'text-success-600 dark:text-success-400',
+      icon: 'bg-success-50 dark:bg-success-900/50'
+    },
+    warning: {
+      bg: 'bg-warning-100 dark:bg-warning-900/30',
+      text: 'text-warning-600 dark:text-warning-400',
+      icon: 'bg-warning-50 dark:bg-warning-900/50'
+    },
+    error: {
+      bg: 'bg-danger-100 dark:bg-danger-900/30',
+      text: 'text-danger-600 dark:text-danger-400',
+      icon: 'bg-danger-50 dark:bg-danger-900/50'
+    },
+    gray: {
+      bg: 'bg-gray-100 dark:bg-gray-700',
+      text: 'text-gray-600 dark:text-gray-400',
+      icon: 'bg-gray-50 dark:bg-gray-800'
+    }
+  };
+
+  const config = colorConfig[color];
+
   return (
-    <Card className="animate-fade-in">
-      <CardHeader>
-        <Title>{title}</Title>
-        {icon && <IconWrapper color={color}>{icon}</IconWrapper>}
-      </CardHeader>
+    <article
+      className="card p-6 border border-gray-200 dark:border-gray-700 animate-fade-in hover:scale-[1.02] transition-all duration-300"
+      role="region"
+      aria-label={`Estatística: ${title}`}
+    >
+      {/* Cabeçalho com título e ícone */}
+      <div className="flex justify-between items-start mb-4">
+        <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          {title}
+        </h3>
+        {icon && (
+          <div
+            className={`w-10 h-10 ${config.icon} ${config.text} rounded-lg flex items-center justify-center text-xl transition-all duration-200`}
+            aria-hidden="true"
+          >
+            {icon}
+          </div>
+        )}
+      </div>
 
-      <Value>{value}</Value>
+      {/* Valor principal */}
+      <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2 leading-none font-display">
+        {value}
+      </div>
 
-      {subtitle && <Subtitle>{subtitle}</Subtitle>}
-
-      {trend && (
-        <Trend isPositive={trend.isPositive}>
-          <TrendIcon isPositive={trend.isPositive}>
-            {trend.isPositive ? '↑' : '↓'}
-          </TrendIcon>
-          {Math.abs(trend.value)}%
-          <TrendText>vs período anterior</TrendText>
-        </Trend>
+      {/* Subtítulo */}
+      {subtitle && (
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+          {subtitle}
+        </p>
       )}
-    </Card>
+
+      {/* Indicador de tendência */}
+      {trend && (
+        <div
+          className={`flex items-center gap-1 text-sm font-medium ${
+            trend.isPositive
+              ? 'text-success-600 dark:text-success-400'
+              : 'text-danger-600 dark:text-danger-400'
+          }`}
+          role="status"
+          aria-label={`Tendência: ${trend.isPositive ? 'Aumento' : 'Diminuição'} de ${Math.abs(trend.value)}%`}
+        >
+          <span className="text-base font-bold" aria-hidden="true">
+            {trend.isPositive ? '↑' : '↓'}
+          </span>
+          <span>{Math.abs(trend.value)}%</span>
+          <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">
+            vs período anterior
+          </span>
+        </div>
+      )}
+    </article>
   );
 };
 
 export default StatsCard;
-
-const Card = styled.div`
-  background: white;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  transition: all 0.2s ease-in-out;
-  border: 1px solid #f3f4f6;
-
-  &:hover {
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-    transform: translateY(-2px);
-  }
-`;
-
-const CardHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-`;
-
-const Title = styled.h3`
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #6b7280;
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-`;
-
-const IconWrapper = styled.div<{ color: string }>`
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-
-  ${({ color }) => {
-    switch (color) {
-      case 'primary':
-        return 'background-color: #dbeafe; color: #2563eb;';
-      case 'success':
-        return 'background-color: #dcfce7; color: #16a34a;';
-      case 'warning':
-        return 'background-color: #fef3c7; color: #d97706;';
-      case 'error':
-        return 'background-color: #fee2e2; color: #dc2626;';
-      default:
-        return 'background-color: #f3f4f6; color: #4b5563;';
-    }
-  }}
-`;
-
-const Value = styled.div`
-  font-size: 2rem;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 0.5rem;
-  line-height: 1;
-`;
-
-const Subtitle = styled.div`
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-bottom: 0.75rem;
-`;
-
-const Trend = styled.div<{ isPositive: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: ${({ isPositive }) => (isPositive ? '#16a34a' : '#dc2626')};
-`;
-
-const TrendIcon = styled.span<{ isPositive: boolean }>`
-  font-size: 1rem;
-  font-weight: 700;
-`;
-
-const TrendText = styled.span`
-  margin-left: 0.25rem;
-  color: #9ca3af;
-  font-weight: 400;
-`;

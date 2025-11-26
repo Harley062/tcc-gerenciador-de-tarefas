@@ -128,9 +128,9 @@ const ApplyAISuggestionsModal: React.FC<ApplyAISuggestionsModalProps> = ({ task,
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[85vh] overflow-hidden">
-        <div className="p-4 border-b flex justify-between items-center bg-gradient-to-r from-purple-500 to-blue-500">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[85vh] overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gradient-to-r from-purple-500 to-blue-500 dark:from-purple-600 dark:to-blue-600">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold text-white">✨ Aplicar Sugestões de IA</h2>
             {provider && (
@@ -153,17 +153,17 @@ const ApplyAISuggestionsModal: React.FC<ApplyAISuggestionsModalProps> = ({ task,
         <div className="p-6 overflow-y-auto max-h-[calc(85vh-140px)]">
           {loading && (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Analisando tarefa com IA...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 dark:border-purple-400 mx-auto"></div>
+              <p className="mt-4 text-gray-600 dark:text-gray-400">Analisando tarefa com IA...</p>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded p-4 text-red-700">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-4 text-red-700 dark:text-red-300">
               {error}
               <button
                 onClick={loadSuggestions}
-                className="ml-4 text-red-600 hover:text-red-800 underline"
+                className="ml-4 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 underline"
               >
                 Tentar novamente
               </button>
@@ -172,30 +172,30 @@ const ApplyAISuggestionsModal: React.FC<ApplyAISuggestionsModalProps> = ({ task,
 
           {!loading && !error && (
             <div className="space-y-6">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-2">Tarefa: {task.title}</h3>
+              <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Tarefa: {task.title}</h3>
                 {task.description && (
-                  <p className="text-sm text-gray-600">{task.description}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{task.description}</p>
                 )}
               </div>
 
               {suggestions.sentiment && (
-                <div className="border rounded-lg p-4">
-                  <label className="flex items-start gap-3">
+                <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-700/30">
+                  <label className="flex items-start gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={selected.priority}
                       onChange={(e) => setSelected({ ...selected, priority: e.target.checked })}
-                      className="mt-1"
+                      className="mt-1 w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
                     />
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-800">Prioridade Sugerida</div>
-                      <div className="text-sm text-gray-600 mt-1">
+                      <div className="font-semibold text-gray-800 dark:text-gray-200">Prioridade Sugerida</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                         <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                          suggestions.sentiment.priority === 'urgent' ? 'bg-red-100 text-red-800' :
-                          suggestions.sentiment.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                          suggestions.sentiment.priority === 'medium' ? 'bg-blue-100 text-blue-800' :
-                          'bg-green-100 text-green-800'
+                          suggestions.sentiment.priority === 'urgent' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
+                          suggestions.sentiment.priority === 'high' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300' :
+                          suggestions.sentiment.priority === 'medium' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
+                          'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
                         }`}>
                           {suggestions.sentiment.priority}
                         </span>
@@ -203,7 +203,7 @@ const ApplyAISuggestionsModal: React.FC<ApplyAISuggestionsModalProps> = ({ task,
                           (Confiança: {(suggestions.sentiment.confidence * 100).toFixed(0)}%)
                         </span>
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Sentimento: {suggestions.sentiment.sentiment} | Urgência: {suggestions.sentiment.urgency_score.toFixed(1)}
                       </div>
                     </div>
@@ -212,19 +212,19 @@ const ApplyAISuggestionsModal: React.FC<ApplyAISuggestionsModalProps> = ({ task,
               )}
 
               {suggestions.duration && (
-                <div className="border rounded-lg p-4">
-                  <label className="flex items-start gap-3">
+                <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-700/30">
+                  <label className="flex items-start gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={selected.estimatedDuration}
                       onChange={(e) => setSelected({ ...selected, estimatedDuration: e.target.checked })}
-                      className="mt-1"
+                      className="mt-1 w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
                     />
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-800">Duração Estimada</div>
-                      <div className="text-sm text-gray-600 mt-1">
+                      <div className="font-semibold text-gray-800 dark:text-gray-200">Duração Estimada</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                         ⏱️ {suggestions.duration.estimated_duration} minutos
-                        <span className="ml-2 text-xs text-gray-500">
+                        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
                           (Confiança: {(suggestions.duration.confidence * 100).toFixed(0)}%)
                         </span>
                       </div>
@@ -233,12 +233,12 @@ const ApplyAISuggestionsModal: React.FC<ApplyAISuggestionsModalProps> = ({ task,
                 </div>
               )}
 
-              <div className="border rounded-lg p-4">
-                <div className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+              <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-700/30">
+                <div className="font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
                   <span>📋</span>
                   <span>Subtarefas Sugeridas</span>
                   {suggestions.subtasks.length > 0 && (
-                    <span className="text-sm font-normal text-gray-500">
+                    <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
                       ({suggestions.subtasks.length})
                     </span>
                   )}
@@ -246,19 +246,19 @@ const ApplyAISuggestionsModal: React.FC<ApplyAISuggestionsModalProps> = ({ task,
                 {suggestions.subtasks.length > 0 ? (
                   <div className="space-y-2">
                     {suggestions.subtasks.map((subtask, index) => (
-                      <label key={index} className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded border border-gray-200 cursor-pointer transition-colors">
+                      <label key={index} className="flex items-start gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-600/30 rounded border border-gray-200 dark:border-gray-600 cursor-pointer transition-colors">
                         <input
                           type="checkbox"
                           checked={selected.subtasks[index]}
                           onChange={() => toggleSubtask(index)}
-                          className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                          className="mt-1 w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
                         />
                         <div className="flex-1">
-                          <div className="font-medium text-sm text-gray-800">{subtask.title}</div>
+                          <div className="font-medium text-sm text-gray-800 dark:text-gray-200">{subtask.title}</div>
                           {subtask.description && (
-                            <div className="text-xs text-gray-600 mt-1">{subtask.description}</div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">{subtask.description}</div>
                           )}
-                          <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
                             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                             </svg>
@@ -269,12 +269,12 @@ const ApplyAISuggestionsModal: React.FC<ApplyAISuggestionsModalProps> = ({ task,
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-6 text-gray-500">
-                    <svg className="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                    <svg className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                     <p className="text-sm">Nenhuma subtarefa sugerida pela IA.</p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                       Configure um provedor LLM nas configurações para receber sugestões.
                     </p>
                   </div>
@@ -282,7 +282,7 @@ const ApplyAISuggestionsModal: React.FC<ApplyAISuggestionsModalProps> = ({ task,
               </div>
 
               {!suggestions.sentiment && !suggestions.duration && suggestions.subtasks.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                   Nenhuma sugestão disponível para esta tarefa.
                 </div>
               )}
@@ -290,10 +290,10 @@ const ApplyAISuggestionsModal: React.FC<ApplyAISuggestionsModalProps> = ({ task,
           )}
         </div>
 
-        <div className="p-4 border-t bg-gray-50 flex justify-end gap-3">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
             disabled={applying}
           >
             Cancelar
@@ -301,7 +301,7 @@ const ApplyAISuggestionsModal: React.FC<ApplyAISuggestionsModalProps> = ({ task,
           <button
             onClick={handleApply}
             disabled={loading || applying || (!selected.priority && !selected.estimatedDuration && !selected.subtasks.some(Boolean))}
-            className="px-6 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-gradient-to-r from-purple-500 to-blue-500 dark:from-purple-600 dark:to-blue-600 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 dark:hover:from-purple-700 dark:hover:to-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {applying ? 'Aplicando...' : 'Aplicar Selecionadas'}
           </button>

@@ -3,12 +3,12 @@ import { aiApi, TaskSummary } from '../services/aiApi';
 import TaskCreateModal from './TaskCreateModal';
 import AnalyticsDashboard from './Dashboard/AnalyticsDashboard';
 import StatsCard from './Dashboard/StatsCard';
-import NotificationPanel from './Notifications/NotificationPanel';
+import LoadingSpinner from './LoadingSpinner';
 
 const DashboardView: React.FC = () => {
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [summary, setSummary] = useState<TaskSummary | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -17,10 +17,30 @@ const DashboardView: React.FC = () => {
     setError(null);
     try {
       const data = await aiApi.generateSummary(period);
-      setSummary(data);
-    } catch (err) {
-      setError('Falha ao carregar resumo');
-      console.error(err);
+      if (data && typeof data === 'object') {
+        setSummary(data);
+        setError(null);
+      } else {
+        throw new Error('Dados inválidos recebidos da API');
+      }
+    } catch (err: any) {
+      console.error('Erro ao carregar resumo:', err);
+      const errorMessage = err?.response?.data?.detail || err?.message || 'Não foi possível carregar o resumo';
+      setError(errorMessage);
+      // Define um summary vazio como fallback
+      setSummary({
+        period: period,
+        summary: {
+          completed: 0,
+          in_progress: 0,
+          todo: 0,
+          total_time_minutes: 0
+        },
+        insights: [],
+        top_completed: [],
+        high_priority_pending: [],
+        recommendations: []
+      });
     } finally {
       setLoading(false);
     }
@@ -32,30 +52,43 @@ const DashboardView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LoadingSpinner size="lg" color="primary" text="Carregando dashboard..." />
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded p-4 text-red-700">
-        {error}
-      </div>
-    );
-  }
-
-  if (!summary) {
-    return null;
-  }
-
-  const completionRate = summary.summary.completed + summary.summary.in_progress + summary.summary.todo > 0
+  const completionRate = summary && summary.summary.completed + summary.summary.in_progress + summary.summary.todo > 0
     ? (summary.summary.completed / (summary.summary.completed + summary.summary.in_progress + summary.summary.todo)) * 100
     : 0;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
+      {/* Error Banner - não bloqueia a visualização */}
+      {error && (
+        <div className="card border-l-4 border-warning-500 bg-warning-50 dark:bg-warning-900/20 p-4 animate-slide-down">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-warning-600 dark:text-warning-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-warning-800 dark:text-warning-200">
+                Aviso
+              </h3>
+              <p className="text-sm text-warning-700 dark:text-warning-300 mt-1">
+                {error}. Exibindo dados em cache ou valores padrão.
+              </p>
+              <button
+                onClick={loadSummary}
+                className="mt-2 text-xs font-medium text-warning-600 dark:text-warning-400 hover:text-warning-800 dark:hover:text-warning-200 underline"
+              >
+                Tentar novamente
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl sm:text-4xl font-display font-bold text-gradient-primary">
@@ -104,18 +137,15 @@ const DashboardView: React.FC = () => {
         </div>
       </div>
 
-      {/* Notification Panel */}
-      <NotificationPanel />
-
       {/* Analytics Dashboard */}
       <AnalyticsDashboard />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard title="Concluídas" value={summary.summary.completed} subtitle="Tarefas finalizadas" icon={<span style={{fontSize:24}}>✅</span>} color="success" />
-        <StatsCard title="Em Progresso" value={summary.summary.in_progress} subtitle="Em andamento" icon={<span style={{fontSize:24}}>🔄</span>} color="primary" />
-        <StatsCard title="A Fazer" value={summary.summary.todo} subtitle="Pendentes" icon={<span style={{fontSize:24}}>📝</span>} color="warning" />
-        <StatsCard title="Tempo Total" value={`${Math.round(summary.summary.total_time_minutes / 60)}h`} subtitle="Investido" icon={<span style={{fontSize:24}}>⏱️</span>} color="gray" />
+        <StatsCard title="Concluídas" value={summary?.summary.completed || 0} subtitle="Tarefas finalizadas" icon={<span style={{fontSize:24}}>✅</span>} color="success" />
+        <StatsCard title="Em Progresso" value={summary?.summary.in_progress || 0} subtitle="Em andamento" icon={<span style={{fontSize:24}}>🔄</span>} color="primary" />
+        <StatsCard title="A Fazer" value={summary?.summary.todo || 0} subtitle="Pendentes" icon={<span style={{fontSize:24}}>📝</span>} color="warning" />
+        <StatsCard title="Tempo Total" value={`${Math.round((summary?.summary.total_time_minutes || 0) / 60)}h`} subtitle="Investido" icon={<span style={{fontSize:24}}>⏱️</span>} color="gray" />
       </div>
 
       {/* Completion Rate */}
@@ -141,14 +171,14 @@ const DashboardView: React.FC = () => {
             ></div>
           </div>
           <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-            <span>{summary.summary.completed} concluídas</span>
-            <span>{summary.summary.completed + summary.summary.in_progress + summary.summary.todo} total</span>
+            <span>{summary?.summary.completed || 0} concluídas</span>
+            <span>{(summary?.summary.completed || 0) + (summary?.summary.in_progress || 0) + (summary?.summary.todo || 0)} total</span>
           </div>
         </div>
       </div>
 
       {/* AI Insights */}
-      {summary.insights.length > 0 && (
+      {summary && summary.insights && summary.insights.length > 0 && (
         <div className="card bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-purple-900/20 dark:via-blue-900/20 dark:to-indigo-900/20 p-6 animate-slide-up" style={{ animationDelay: '0.5s' }}>
           <h2 className="text-xl font-bold mb-6 flex items-center dark:text-white">
             <span className="text-3xl mr-3">🤖</span>
@@ -165,7 +195,7 @@ const DashboardView: React.FC = () => {
       )}
 
       {/* Top Completed Tasks */}
-      {summary.top_completed.length > 0 && (
+      {summary && summary.top_completed && summary.top_completed.length > 0 && (
         <div className="card p-6 animate-slide-up" style={{ animationDelay: '0.6s' }}>
           <h2 className="text-xl font-bold mb-6 flex items-center dark:text-white">
             <span className="text-3xl mr-3">🏆</span>
@@ -189,7 +219,7 @@ const DashboardView: React.FC = () => {
       )}
 
       {/* High Priority Pending */}
-      {summary.high_priority_pending.length > 0 && (
+      {summary && summary.high_priority_pending && summary.high_priority_pending.length > 0 && (
         <div className="card bg-danger-50 dark:bg-danger-900/20 border-2 border-danger-200 dark:border-danger-800 p-6 animate-bounce-soft" style={{ animationDelay: '0.7s' }}>
           <h2 className="text-xl font-bold mb-6 flex items-center text-danger-800 dark:text-danger-200">
             <span className="text-3xl mr-3">⚠️</span>
@@ -214,7 +244,7 @@ const DashboardView: React.FC = () => {
       )}
 
       {/* Recommendations */}
-      {summary.recommendations.length > 0 && (
+      {summary && summary.recommendations && summary.recommendations.length > 0 && (
         <div className="card bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 p-6 animate-slide-up" style={{ animationDelay: '0.8s' }}>
           <h2 className="text-xl font-bold mb-6 flex items-center text-primary-800 dark:text-primary-200">
             <span className="text-3xl mr-3">💡</span>

@@ -189,44 +189,45 @@ REGRAS OBRIGATÓRIAS:
         now = datetime.utcnow()
         
         task_context = f"""
-Task to schedule:
-- Title: {task.title}
-- Description: {task.description or 'N/A'}
-- Priority: {task.priority}
-- Due Date: {task.due_date.isoformat() if task.due_date else 'Not set'}
-- Estimated Duration: {task.estimated_duration or 'Unknown'} minutes
+Tarefa para agendar:
+- Título: {task.title}
+- Descrição: {task.description or 'N/A'}
+- Prioridade: {task.priority}
+- Data de Vencimento: {task.due_date.isoformat() if task.due_date else 'Não definida'}
+- Duração Estimada: {task.estimated_duration or 'Desconhecida'} minutos
 
-Current date/time: {now.isoformat()}
+Data/hora atual: {now.isoformat()}
 
-Existing tasks (for context):
+Tarefas existentes (para contexto):
 """
-        
+
         for t in existing_tasks[:10]:  # Limit to 10 tasks for context
-            task_context += f"- {t.title} (Priority: {t.priority}, Status: {t.status}"
+            task_context += f"- {t.title} (Prioridade: {t.priority}, Status: {t.status}"
             if t.due_date:
-                task_context += f", Due: {t.due_date.isoformat()}"
+                task_context += f", Vencimento: {t.due_date.isoformat()}"
             task_context += ")\n"
-        
+
         prompt = f"""{task_context}
 
-Based on the task details and existing workload, suggest the optimal time to schedule this task.
+Com base nos detalhes da tarefa e na carga de trabalho existente, sugira o momento ideal para agendar esta tarefa.
 
-Return a JSON object with this exact structure:
+Retorne um objeto JSON com esta estrutura exata:
 {{
-  "suggestion": "string (e.g., 'hoje', 'amanhã', 'em 3 dias')",
-  "suggested_time": "ISO datetime string",
-  "reason": "string explaining the reasoning",
-  "confidence": number between 0 and 1
+  "suggestion": "string (ex: 'hoje', 'amanhã', 'em 3 dias')",
+  "suggested_time": "string ISO datetime",
+  "reason": "string explicando o raciocínio em português brasileiro",
+  "confidence": número entre 0 e 1
 }}
 
-Consider:
-1. Task priority and urgency
-2. Due date constraints
-3. Existing workload and task distribution
-4. Optimal time of day for this type of task
-5. Buffer time before deadline
+Considere:
+1. Prioridade e urgência da tarefa
+2. Restrições de prazo de vencimento
+3. Carga de trabalho existente e distribuição de tarefas
+4. Horário ideal do dia para este tipo de tarefa
+5. Tempo de buffer antes do prazo
 
-Return ONLY the JSON object, no additional text."""
+IMPORTANTE: Todos os textos devem estar em PORTUGUÊS BRASILEIRO.
+Retorne APENAS o objeto JSON, sem texto adicional."""
         
         try:
             result = await self.openai_adapter.generate_completion(

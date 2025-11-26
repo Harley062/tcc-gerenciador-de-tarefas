@@ -28,30 +28,30 @@ class OpenAIAdapter:
     async def parse_task(self, text: str) -> dict[str, Any]:
         current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         
-        system_prompt = f"""You are a task parsing assistant. Extract structured information from natural language task descriptions.
-        
-Current date: {current_date}
+        system_prompt = f"""Você é um assistente de análise de tarefas. Extraia informações estruturadas de descrições de tarefas em linguagem natural.
 
-Return a JSON object with these fields:
-- title: string (concise task title, required)
-- description: string (detailed description, optional)
-- priority: string (must be one of: low, medium, high, urgent)
-- due_date: string (ISO format datetime with timezone, null if not mentioned)
-- estimated_duration: integer (minutes, null if not mentioned)
-- tags: array of strings (relevant tags extracted from context)
-- recurrence: object (if task repeats: {{"frequency": "daily|weekly|monthly", "interval": 1}}, null otherwise)
+Data atual: {current_date}
 
-Examples:
-Input: "Reunião com cliente amanhã às 14h"
-Output: {{"title": "Reunião com cliente", "description": "Reunião agendada com cliente", "priority": "medium", "due_date": "{current_date}T14:00:00+00:00", "estimated_duration": 60, "tags": ["reunião", "cliente"], "recurrence": null}}
+Retorne um objeto JSON com os seguintes campos:
+- title: string (título conciso da tarefa, obrigatório)
+- description: string (descrição detalhada, opcional)
+- priority: string (deve ser: low, medium, high ou urgent)
+- due_date: string (formato ISO datetime com timezone, null se não mencionado)
+- estimated_duration: integer (minutos, null se não mencionado)
+- tags: array de strings (tags relevantes extraídas do contexto)
+- recurrence: object (se a tarefa se repete: {{"frequency": "daily|weekly|monthly", "interval": 1}}, null caso contrário)
 
-Input: "planning toda semana"
-Output: {{"title": "Planning semanal", "description": "Reunião de planning recorrente", "priority": "medium", "due_date": null, "estimated_duration": 60, "tags": ["planning", "reunião"], "recurrence": {{"frequency": "weekly", "interval": 1}}}}
+Exemplos:
+Entrada: "Reunião com cliente amanhã às 14h"
+Saída: {{"title": "Reunião com cliente", "description": "Reunião agendada com cliente", "priority": "medium", "due_date": "{current_date}T14:00:00+00:00", "estimated_duration": 60, "tags": ["reunião", "cliente"], "recurrence": null}}
 
-Input: "Urgent: Fix production bug in payment system by end of day"
-Output: {{"title": "Fix production bug in payment system", "description": "Critical bug fix needed in payment system", "priority": "urgent", "due_date": "{current_date}T23:59:59+00:00", "estimated_duration": null, "tags": ["bug", "production", "payment"], "recurrence": null}}
+Entrada: "planning toda semana"
+Saída: {{"title": "Planning semanal", "description": "Reunião de planning recorrente", "priority": "medium", "due_date": null, "estimated_duration": 60, "tags": ["planning", "reunião"], "recurrence": {{"frequency": "weekly", "interval": 1}}}}
 
-Only return valid JSON matching the schema, no additional text."""
+Entrada: "Urgente: Corrigir bug em produção no sistema de pagamento até o fim do dia"
+Saída: {{"title": "Corrigir bug em produção no sistema de pagamento", "description": "Correção crítica de bug necessária no sistema de pagamento", "priority": "urgent", "due_date": "{current_date}T23:59:59+00:00", "estimated_duration": null, "tags": ["bug", "produção", "pagamento"], "recurrence": null}}
+
+Retorne apenas JSON válido seguindo o schema, sem texto adicional."""
 
         try:
             response = await self.client.chat.completions.create(
@@ -104,16 +104,16 @@ Only return valid JSON matching the schema, no additional text."""
             raise Exception(f"GPT parsing failed: {str(e)}")
 
     async def suggest_subtasks(self, task_title: str, task_description: Optional[str] = None) -> list[dict[str, Any]]:
-        prompt = f"Task: {task_title}"
+        prompt = f"Tarefa: {task_title}"
         if task_description:
-            prompt += f"\nDescription: {task_description}"
-        prompt += '\n\nSuggest 3-5 subtasks to complete this task. Return a JSON object with a "subtasks" array. Each subtask should have "title" (string), "description" (string), and "estimated_duration" (integer in minutes).'
+            prompt += f"\nDescrição: {task_description}"
+        prompt += '\n\nSugira 3-5 subtarefas para completar esta tarefa. Retorne um objeto JSON com um array "subtasks". Cada subtarefa deve ter "title" (string), "description" (string) e "estimated_duration" (inteiro em minutos). IMPORTANTE: Todas as subtarefas devem estar em PORTUGUÊS BRASILEIRO.'
 
         try:
             response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": 'You are a task breakdown assistant. Suggest practical subtasks. Return ONLY valid JSON in this format: {"subtasks": [{"title": "...", "description": "...", "estimated_duration": 30}]}'},
+                    {"role": "system", "content": 'Você é um assistente de divisão de tarefas. Sugira subtarefas práticas em PORTUGUÊS BRASILEIRO. Retorne APENAS JSON válido neste formato: {"subtasks": [{"title": "...", "description": "...", "estimated_duration": 30}]}'},
                     {"role": "user", "content": prompt},
                 ],
                 temperature=0.5,

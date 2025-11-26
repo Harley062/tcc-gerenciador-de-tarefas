@@ -9,6 +9,7 @@ import CalendarView from './components/CalendarView';
 import SettingsView from './components/SettingsView';
 import DashboardView from './components/DashboardView';
 import ChatAssistant from './components/ChatAssistant';
+import NotificationBell from './components/NotificationBell';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { GlobalStyles } from './styles/GlobalStyles';
 
@@ -71,18 +72,37 @@ const App: React.FC = () => {
     <>
       <GlobalStyles />
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-        <nav className="glass border-b border-gray-200 dark:border-gray-700 shadow-soft sticky top-0 z-50 backdrop-blur-lg">
+        {/* Skip to main content - Acessibilidade */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[60] btn btn-primary"
+        >
+          Pular para o conteúdo principal
+        </a>
+
+        <nav
+          className="glass border-b border-gray-200 dark:border-gray-700 shadow-soft sticky top-0 z-50 backdrop-blur-lg"
+          role="navigation"
+          aria-label="Navegação principal"
+        >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-display font-bold text-gradient-primary">TaskMaster</h1>
+              <h1 className="text-xl sm:text-2xl font-display font-bold text-gradient-primary">
+                SGTI
+              </h1>
+              <span className="hidden md:inline text-xs text-gray-500 dark:text-gray-400 font-medium">
+                Sistema de Gerenciamento de Tarefas Inteligente
+              </span>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               {/* Mobile Quick Add Button */}
               <button
                 onClick={() => setShowInput(!showInput)}
-                className="lg:hidden btn btn-primary"
+                className="lg:hidden btn btn-primary p-2"
+                aria-label="Adicionar nova tarefa"
+                title="Adicionar tarefa"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -90,7 +110,11 @@ const App: React.FC = () => {
               </button>
 
               {/* View Navigation */}
-              <div className="hidden md:flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+              <div
+                className="hidden md:flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg"
+                role="tablist"
+                aria-label="Seleção de visualização"
+              >
                 <button
                   onClick={() => setCurrentView('dashboard')}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
@@ -98,9 +122,13 @@ const App: React.FC = () => {
                       ? 'gradient-primary text-white shadow-md'
                       : 'text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700'
                   }`}
-                  title="Dashboard (1)"
+                  title="Dashboard (Atalho: 1)"
+                  aria-label="Visualização Dashboard"
+                  aria-current={currentView === 'dashboard' ? 'page' : undefined}
+                  role="tab"
+                  aria-selected={currentView === 'dashboard'}
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                   </svg>
                   <span className="hidden xl:inline">Dashboard</span>
@@ -112,9 +140,13 @@ const App: React.FC = () => {
                       ? 'gradient-primary text-white shadow-md'
                       : 'text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700'
                   }`}
-                  title="Lista (2)"
+                  title="Lista (Atalho: 2)"
+                  aria-label="Visualização em Lista"
+                  aria-current={currentView === 'list' ? 'page' : undefined}
+                  role="tab"
+                  aria-selected={currentView === 'list'}
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                   </svg>
                   <span className="hidden xl:inline">Lista</span>
@@ -126,9 +158,13 @@ const App: React.FC = () => {
                       ? 'gradient-primary text-white shadow-md'
                       : 'text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700'
                   }`}
-                  title="Kanban (3)"
+                  title="Kanban (Atalho: 3)"
+                  aria-label="Visualização Kanban"
+                  aria-current={currentView === 'kanban' ? 'page' : undefined}
+                  role="tab"
+                  aria-selected={currentView === 'kanban'}
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path d="M2 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM8 4a1 1 0 011-1h2a1 1 0 011 1v8a1 1 0 01-1 1H9a1 1 0 01-1-1V4zM15 3a1 1 0 00-1 1v4a1 1 0 001 1h2a1 1 0 001-1V4a1 1 0 00-1-1h-2z" />
                   </svg>
                   <span className="hidden xl:inline">Kanban</span>
@@ -140,9 +176,13 @@ const App: React.FC = () => {
                       ? 'gradient-primary text-white shadow-md'
                       : 'text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700'
                   }`}
-                  title="Calendário (4)"
+                  title="Calendário (Atalho: 4)"
+                  aria-label="Visualização em Calendário"
+                  aria-current={currentView === 'calendar' ? 'page' : undefined}
+                  role="tab"
+                  aria-selected={currentView === 'calendar'}
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                   </svg>
                   <span className="hidden xl:inline">Calendário</span>
@@ -154,20 +194,28 @@ const App: React.FC = () => {
                       ? 'gradient-primary text-white shadow-md'
                       : 'text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700'
                   }`}
-                  title="Configurações (5)"
+                  title="Configurações (Atalho: 5)"
+                  aria-label="Configurações"
+                  aria-current={currentView === 'settings' ? 'page' : undefined}
+                  role="tab"
+                  aria-selected={currentView === 'settings'}
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
                   </svg>
                   <span className="hidden xl:inline">Configurações</span>
                 </button>
               </div>
 
+              {/* Notification Bell */}
+              <NotificationBell />
+
               {/* Dark Mode Toggle */}
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
-                title="Alternar modo escuro"
+                aria-label={darkMode ? 'Ativar modo claro' : 'Ativar modo escuro'}
+                title={darkMode ? 'Modo claro' : 'Modo escuro'}
               >
                 {darkMode ? (
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -181,11 +229,14 @@ const App: React.FC = () => {
               </button>
 
               {/* User Menu */}
-              <div className="flex items-center gap-3 border-l border-gray-300 dark:border-gray-700 pl-3 ml-1">
-                <span className="text-sm text-gray-700 dark:text-gray-300 hidden sm:inline">{user?.email}</span>
+              <div className="flex items-center gap-2 sm:gap-3 border-l border-gray-300 dark:border-gray-700 pl-2 sm:pl-3 ml-1">
+                <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 hidden sm:inline truncate max-w-[150px]">
+                  {user?.email}
+                </span>
                 <button
                   onClick={logout}
-                  className="px-3 py-2 text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors font-medium text-sm"
+                  className="px-2 sm:px-3 py-1.5 sm:py-2 text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors font-medium text-xs sm:text-sm"
+                  aria-label="Sair da aplicação"
                 >
                   Sair
                 </button>
@@ -195,18 +246,25 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      <main className="py-6">
+      <main
+        id="main-content"
+        className="py-4 sm:py-6 px-2 sm:px-4"
+        role="main"
+        aria-label="Conteúdo principal"
+      >
         {showInput && (
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6 max-w-7xl mx-auto">
             <NaturalLanguageInput onTaskCreated={() => fetchTasks({})} />
           </div>
         )}
 
-        {currentView === 'dashboard' && <DashboardView />}
-        {currentView === 'list' && <ListView />}
-        {currentView === 'kanban' && <KanbanView />}
-        {currentView === 'calendar' && <CalendarView />}
-        {currentView === 'settings' && <SettingsView />}
+        <div className="max-w-7xl mx-auto">
+          {currentView === 'dashboard' && <DashboardView />}
+          {currentView === 'list' && <ListView />}
+          {currentView === 'kanban' && <KanbanView />}
+          {currentView === 'calendar' && <CalendarView />}
+          {currentView === 'settings' && <SettingsView />}
+        </div>
       </main>
 
       {/* AI Chat Assistant - Always available */}

@@ -79,17 +79,17 @@ const SettingsView: React.FC = () => {
   
 
   if (loading) {
-    return <div className="p-4">Carregando configurações...</div>;
+    return <div className="p-4 text-gray-600 dark:text-gray-400">Carregando configurações...</div>;
   }
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">
-      <h1 className="text-3xl font-bold mb-6">Configurações</h1>
+      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-gray-100">Configurações</h1>
 
       {message && (
         <div
           className={`mb-4 p-4 rounded ${
-            message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            message.type === 'success' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800' : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800'
           }`}
         >
           {message.text}
@@ -98,15 +98,15 @@ const SettingsView: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* OpenAI Configuration */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Configuração OpenAI GPT-4</h2>
-          
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Configuração OpenAI GPT-4</h2>
+
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
               OpenAI API Key
             </label>
             {hasApiKey && !formData.openai_api_key && (
-              <div className="mb-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+              <div className="mb-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-sm text-green-700 dark:text-green-300">
                 ✓ Chave configurada
               </div>
             )}
@@ -115,74 +115,74 @@ const SettingsView: React.FC = () => {
               value={formData.openai_api_key}
               onChange={(e) => setFormData({ ...formData, openai_api_key: e.target.value })}
               placeholder={hasApiKey ? "Digite uma nova chave para atualizar" : "sk-..."}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
             />
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Obtenha sua chave em{' '}
               <a
                 href="https://platform.openai.com/api-keys"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
+                className="text-blue-600 dark:text-blue-400 hover:underline"
               >
                 platform.openai.com
               </a>
             </p>
           </div>
-          
+
           <button
             type="button"
             onClick={testProvider}
             disabled={testingProvider === 'gpt4' || (!hasApiKey && !formData.openai_api_key)}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-green-500 dark:bg-green-600 text-white rounded hover:bg-green-600 dark:hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {testingProvider === 'gpt4' ? 'Testando...' : '🧪 Testar GPT-4'}
           </button>
         </div>
 
         {/* AI Features */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Funcionalidades de IA</h2>
-          
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Funcionalidades de IA</h2>
+
           <div className="space-y-3">
-            <label className="flex items-center space-x-2">
+            <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.enable_auto_subtasks}
                 onChange={(e) => setFormData({ ...formData, enable_auto_subtasks: e.target.checked })}
-                className="form-checkbox"
+                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
               />
-              <span>Sugerir subtarefas automaticamente</span>
+              <span className="text-gray-700 dark:text-gray-300">Sugerir subtarefas automaticamente</span>
             </label>
 
-            <label className="flex items-center space-x-2">
+            <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.enable_auto_priority}
                 onChange={(e) => setFormData({ ...formData, enable_auto_priority: e.target.checked })}
-                className="form-checkbox"
+                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
               />
-              <span>Detectar prioridade automaticamente</span>
+              <span className="text-gray-700 dark:text-gray-300">Detectar prioridade automaticamente</span>
             </label>
 
-            <label className="flex items-center space-x-2">
+            <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.enable_auto_tags}
                 onChange={(e) => setFormData({ ...formData, enable_auto_tags: e.target.checked })}
-                className="form-checkbox"
+                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
               />
-              <span>Sugerir tags automaticamente</span>
+              <span className="text-gray-700 dark:text-gray-300">Sugerir tags automaticamente</span>
             </label>
           </div>
         </div>
 
         {/* Task Defaults */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Padrões de Tarefas</h2>
-          
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Padrões de Tarefas</h2>
+
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
               Duração padrão (minutos)
             </label>
             <input
@@ -192,7 +192,7 @@ const SettingsView: React.FC = () => {
               min="15"
               max="480"
               step="15"
-              className="w-full px-3 py-2 border rounded-lg"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             />
           </div>
         </div>
@@ -200,7 +200,7 @@ const SettingsView: React.FC = () => {
         <button
           type="submit"
           disabled={saving}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+          className="w-full bg-blue-600 dark:bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
         >
           {saving ? 'Salvando...' : 'Salvar Configurações'}
         </button>

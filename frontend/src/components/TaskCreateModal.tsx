@@ -96,9 +96,9 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ onClose, onCreated })
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-        <div className="p-4 border-b flex justify-between items-center bg-green-500">
+    <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-green-500 dark:bg-green-600">
           <h2 className="text-xl font-bold text-white">
             {createdTaskId ? '✨ Tarefa Criada!' : '➕ Nova Tarefa'}
           </h2>
@@ -111,7 +111,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ onClose, onCreated })
           <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Título *
                 </label>
                 <input
@@ -120,12 +120,12 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ onClose, onCreated })
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
                   placeholder="Ex: Desenvolver nova funcionalidade"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Descrição
                 </label>
                 <textarea
@@ -133,19 +133,19 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ onClose, onCreated })
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={4}
                   placeholder="Descreva os detalhes da tarefa..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Status
                   </label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
                     <option value="todo">A Fazer</option>
                     <option value="in_progress">Em Progresso</option>
@@ -155,13 +155,13 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ onClose, onCreated })
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Prioridade
                   </label>
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
                     <option value="low">Baixa</option>
                     <option value="medium">Média</option>
@@ -173,19 +173,19 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ onClose, onCreated })
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Data de Realização
                   </label>
                   <input
                     type="datetime-local"
                     value={formData.due_date}
                     onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Duração Estimada (minutos)
                   </label>
                   <input
@@ -195,13 +195,13 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ onClose, onCreated })
                     min="15"
                     step="15"
                     placeholder="60"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Tags (separadas por vírgula)
                 </label>
                 <input
@@ -209,27 +209,27 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ onClose, onCreated })
                   value={formData.tags}
                   onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                   placeholder="trabalho, urgente, projeto"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
             </div>
           </form>
         ) : (
           <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-              <h3 className="font-semibold text-green-800 mb-2">✅ Tarefa criada com sucesso!</h3>
-              <p className="text-sm text-green-700">
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+              <h3 className="font-semibold text-green-800 dark:text-green-300 mb-2">✅ Tarefa criada com sucesso!</h3>
+              <p className="text-sm text-green-700 dark:text-green-400">
                 Sua tarefa &quot;{formData.title}&quot; foi criada. Deseja obter sugestões de subtarefas usando IA?
               </p>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-semibold text-blue-800 mb-2">💡 Sugestões de IA</h4>
-              <p className="text-sm text-blue-700 mb-3">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">💡 Sugestões de IA</h4>
+              <p className="text-sm text-blue-700 dark:text-blue-400 mb-3">
                 O GPT-4 pode analisar o título e descrição da sua tarefa para sugerir subtarefas relevantes,
                 ajudando você a organizar melhor o trabalho.
               </p>
-              <ul className="text-sm text-blue-700 space-y-1">
+              <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
                 <li>• Baseado no título: &quot;{formData.title}&quot;</li>
                 {formData.description && <li>• Considerando a descrição fornecida</li>}
                 <li>• Subtarefas serão criadas automaticamente</li>
@@ -238,13 +238,13 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ onClose, onCreated })
           </div>
         )}
 
-        <div className="p-4 border-t bg-gray-50 flex justify-end gap-3">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
           {!createdTaskId ? (
             <>
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 disabled={saving}
               >
                 Cancelar
@@ -252,7 +252,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ onClose, onCreated })
               <button
                 onClick={handleSubmit}
                 disabled={saving || !formData.title.trim()}
-                className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-green-500 dark:bg-green-600 text-white rounded-lg hover:bg-green-600 dark:hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? 'Criando...' : 'Criar Tarefa'}
               </button>
@@ -262,7 +262,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ onClose, onCreated })
               <button
                 type="button"
                 onClick={handleFinishWithoutAI}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 disabled={loadingAISuggestions}
               >
                 Finalizar Sem IA
@@ -270,7 +270,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ onClose, onCreated })
               <button
                 onClick={handleGetAISuggestions}
                 disabled={loadingAISuggestions}
-                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loadingAISuggestions ? 'Gerando...' : '✨ Obter Sugestões de IA'}
               </button>

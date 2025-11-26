@@ -38,11 +38,39 @@ const NotificationPanel: React.FC = () => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await fetch('/api/analytics/notifications?hours_ahead=24');
+      const token = localStorage.getItem('access_token');
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+      const response = await fetch(`${API_URL}/api/analytics/notifications?hours_ahead=24`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
       setNotifications(data);
     } catch (error) {
       console.error('Erro ao buscar notificações:', error);
+      // Define um estado vazio em caso de erro para não quebrar o componente
+      setNotifications({
+        overdue: [],
+        due_today: [],
+        due_tomorrow: [],
+        due_soon: [],
+        high_priority_pending: [],
+        summary: {
+          total_notifications: 0,
+          has_urgent: false,
+          overdue_count: 0,
+          due_today_count: 0
+        },
+        message: 'Erro ao carregar notificações'
+      });
     } finally {
       setLoading(false);
     }
