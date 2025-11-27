@@ -182,9 +182,9 @@ const DashboardView: React.FC = () => {
         </div>
 
         {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Completion Rate - Takes 2 columns */}
-          <div className="lg:col-span-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 shadow-lg border border-white/20 dark:border-gray-700/50 rounded-3xl relative overflow-hidden group">
+        <div className="grid grid-cols-1 gap-6 mb-8">
+          {/* Completion Rate - Full width */}
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 shadow-lg border border-white/20 dark:border-gray-700/50 rounded-3xl relative overflow-hidden group">
             {/* Background Decoration */}
             <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl group-hover:bg-primary-500/20 transition-colors duration-500"></div>
             
@@ -229,51 +229,6 @@ const DashboardView: React.FC = () => {
                   <span className="text-gray-600 dark:text-gray-300 font-medium">
                     Total: <span className="font-bold text-gray-900 dark:text-white text-lg ml-1">{(summary?.summary.completed || 0) + (summary?.summary.in_progress || 0) + (summary?.summary.todo || 0)}</span>
                   </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white shadow-2xl rounded-3xl relative overflow-hidden group p-8 flex flex-col justify-between border border-gray-700">
-            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-primary-500/30 rounded-full blur-3xl group-hover:bg-primary-500/40 transition-all duration-500"></div>
-            <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-purple-500/30 rounded-full blur-3xl group-hover:bg-purple-500/40 transition-all duration-500"></div>
-            
-            <h3 className="text-2xl font-bold mb-6 relative z-10 flex items-center gap-2">
-              <span className="p-2 bg-white/10 rounded-lg">⚡</span>
-              Ações Rápidas
-            </h3>
-            
-            <div className="space-y-4 relative z-10">
-              <button
-                onClick={() => setShowCreateModal(true)
-                }
-                className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl p-4 text-left transition-all duration-300 flex items-center gap-4 border border-white/10 hover:scale-[1.02] active:scale-[0.98] shadow-lg group/btn"
-              >
-                <div className="bg-gradient-to-br from-primary-500 to-purple-600 p-3 rounded-xl shadow-lg shadow-primary-500/30 group-hover/btn:scale-110 transition-transform">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                </div>
-                <div>
-                  <span className="font-bold block text-lg">Criar Nova Tarefa</span>
-                  <span className="text-sm opacity-70">Adicione ao seu fluxo</span>
-                </div>
-              </button>
-              
-              <div className="bg-black/30 backdrop-blur-md rounded-2xl p-5 border border-white/5">
-                <div className="flex justify-between items-center mb-3">
-                  <p className="text-sm font-bold opacity-80 uppercase tracking-wider">Produtividade Hoje</p>
-                  <svg className="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <p className="text-4xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">{summary?.summary.completed || 0}</p>
-                  <p className="text-sm opacity-60 font-medium">/ {(summary?.summary.completed || 0) + (summary?.summary.in_progress || 0) + (summary?.summary.todo || 0)} tarefas</p>
-                </div>
-                <div className="w-full bg-white/10 rounded-full h-1.5 mt-3 overflow-hidden">
-                    <div className="bg-white h-full rounded-full" style={{ width: `${completionRate}%` }}></div>
                 </div>
               </div>
             </div>

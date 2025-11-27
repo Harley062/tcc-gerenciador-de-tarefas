@@ -10,7 +10,6 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({ onClose }
       { keys: ['Ctrl', 'N'], description: 'Criar nova tarefa' },
       { keys: ['Ctrl', 'F'], description: 'Focar na busca' },
       { keys: ['/'], description: 'Focar na busca (alternativa)' },
-      { keys: ['Ctrl', 'K'], description: 'Ações rápidas' },
       { keys: ['Ctrl', 'R'], description: 'Recarregar tarefas' },
       { keys: ['?'], description: 'Mostrar esta ajuda' },
       { keys: ['Esc'], description: 'Fechar modais/Cancelar' },

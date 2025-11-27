@@ -37,7 +37,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     },
     {
       title: 'Atalhos de Teclado',
-      description: 'Seja mais produtivo! Use Ctrl+N para criar, Ctrl+F para buscar, Ctrl+K para ações rápidas e muito mais. Pressione ? para ver todos os atalhos.',
+      description: 'Seja mais produtivo! Use Ctrl+N para criar, Ctrl+F para buscar, Ctrl+M para Modo Foco e muito mais. Pressione ? para ver todos os atalhos.',
       icon: '⌨️',
     },
     {
