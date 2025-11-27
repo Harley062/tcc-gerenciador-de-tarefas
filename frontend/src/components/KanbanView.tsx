@@ -327,7 +327,7 @@ const KanbanView: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div className="w-full transition-colors duration-300">
       <div className="w-full max-w-[1800px] mx-auto p-4 sm:p-8 animate-fade-in">
         <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
           <div>

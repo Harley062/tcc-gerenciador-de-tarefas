@@ -166,9 +166,9 @@ const NotificationBell: React.FC = () => {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-4 w-96 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/50 z-50 animate-slide-down max-h-[32rem] overflow-hidden origin-top-right">
+        <div className="absolute right-0 mt-4 w-96 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/50 z-50 animate-slide-down max-h-[32rem] overflow-hidden origin-top-right">
           {/* Header */}
-          <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50 flex justify-between items-center sticky top-0 bg-white/50 dark:bg-gray-800/50 backdrop-blur-md z-10">
+          <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50 flex justify-between items-center sticky top-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl z-10">
             <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               Notificações
             </h3>

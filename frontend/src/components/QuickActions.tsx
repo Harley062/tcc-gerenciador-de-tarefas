@@ -68,7 +68,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onClose, actions }) => {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start justify-center pt-20 p-4 animate-fade-in" onClick={onClose}>
       <div
-        className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden animate-slide-down border border-white/20 dark:border-gray-700/50"
+        className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden animate-slide-down border border-white/20 dark:border-gray-700/50"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input */}
@@ -165,7 +165,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onClose, actions }) => {
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-3 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700/50 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+        <div className="px-4 py-3 bg-gray-50/50 dark:bg-gray-900/50 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700/50 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
               <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-sm font-mono">↑↓</kbd>

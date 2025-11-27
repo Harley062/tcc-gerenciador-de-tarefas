@@ -121,7 +121,7 @@ const ChatAssistant: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl shadow-2xl flex flex-col z-50 border border-white/20 dark:border-gray-700/50 animate-slide-up overflow-hidden">
+    <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-2xl flex flex-col z-50 border border-white/20 dark:border-gray-700/50 animate-slide-up overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-600 to-primary-500 text-white p-4 flex justify-between items-center shadow-lg z-10">
         <div className="flex items-center gap-3">

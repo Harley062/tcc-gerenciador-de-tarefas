@@ -185,8 +185,8 @@ const SettingsView: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              {{
-                key: 'enable_auto_subtasks', label: 'Sugerir subtarefas', desc: 'Quebra tarefas complexas automaticamente' },
+              {[
+                { key: 'enable_auto_subtasks', label: 'Sugerir subtarefas', desc: 'Quebra tarefas complexas automaticamente' },
                 { key: 'enable_auto_priority', label: 'Detectar prioridade', desc: 'Define urgência baseada no contexto' },
                 { key: 'enable_auto_tags', label: 'Sugerir tags', desc: 'Categoriza tarefas automaticamente' },
               ].map((item) => (

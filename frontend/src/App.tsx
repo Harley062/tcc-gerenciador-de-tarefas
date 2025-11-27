@@ -71,7 +71,7 @@ const App: React.FC = () => {
   return (
     <>
       <GlobalStyles />
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200 bg-[url('/grid.svg')] bg-fixed bg-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200 bg-[url('./grid.svg')] bg-fixed bg-center">
         {/* Skip to main content - Acessibilidade */}
         <a
           href="#main-content"
@@ -163,4 +163,112 @@ const App: React.FC = () => {
                   aria-label="Visualização Kanban"
                   aria-current={currentView === 'kanban' ? 'page' : undefined}
                   role="tab"
-                  aria-selected={currentView === 'kanban'
+                  aria-selected={currentView === 'kanban'}
+                >
+                  <span className="text-lg">📋</span>
+                  <span className="hidden xl:inline">Kanban</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('calendar')}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                    currentView === 'calendar'
+                      ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm scale-105'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-200'
+                  }`}
+                  title="Calendário (Atalho: 4)"
+                  aria-label="Visualização Calendário"
+                  aria-current={currentView === 'calendar' ? 'page' : undefined}
+                  role="tab"
+                  aria-selected={currentView === 'calendar'}
+                >
+                  <span className="text-lg">📅</span>
+                  <span className="hidden xl:inline">Calendário</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('settings')}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                    currentView === 'settings'
+                      ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm scale-105'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-200'
+                  }`}
+                  title="Configurações (Atalho: 5)"
+                  aria-label="Configurações"
+                  aria-current={currentView === 'settings' ? 'page' : undefined}
+                  role="tab"
+                  aria-selected={currentView === 'settings'}
+                >
+                  <span className="text-lg">⚙️</span>
+                  <span className="hidden xl:inline">Ajustes</span>
+                </button>
+              </div>
+
+              {/* Theme Toggle & User Profile */}
+              <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+                  aria-label={darkMode ? 'Ativar modo claro' : 'Ativar modo escuro'}
+                  title={darkMode ? 'Modo Claro' : 'Modo Escuro'}
+                >
+                  {darkMode ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                  )}
+                </button>
+
+                <NotificationBell />
+
+                <div className="flex items-center gap-3">
+                  <div className="hidden sm:block text-right">
+                    <p className="text-sm font-bold text-gray-900 dark:text-white leading-none">{user?.username}</p>
+                    <button 
+                      onClick={logout}
+                      className="text-xs text-gray-500 hover:text-red-500 transition-colors mt-1"
+                    >
+                      Sair
+                    </button>
+                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-primary-500/20 ring-2 ring-white dark:ring-gray-800">
+                    {user?.username?.charAt(0).toUpperCase()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-0">
+        {/* Quick Add Input - Always visible on Dashboard/List */}
+        {(currentView === 'dashboard' || currentView === 'list') && (
+          <div className={`mb-8 transition-all duration-300 ${showInput ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 hidden lg:block lg:opacity-100 lg:translate-y-0'}`}>
+            <NaturalLanguageInput 
+              onTaskCreated={() => {
+                fetchTasks({});
+                // Feedback visual ou sonoro poderia ser adicionado aqui
+              }} 
+            />
+          </div>
+        )}
+
+        <div className="animate-fade-in">
+          {currentView === 'dashboard' && <DashboardView />}
+          {currentView === 'list' && <ListView searchRef={listViewSearchRef} />}
+          {currentView === 'kanban' && <KanbanView />}
+          {currentView === 'calendar' && <CalendarView />}
+          {currentView === 'settings' && <SettingsView />}
+        </div>
+      </main>
+
+      <ChatAssistant />
+      </div>
+    </>
+  );
+};
+
+export default App;

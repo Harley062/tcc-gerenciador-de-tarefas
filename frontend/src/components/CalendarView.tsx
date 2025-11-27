@@ -103,7 +103,7 @@ const CalendarView: React.FC = () => {
               tasksOnDay.map((_, i) => (
                  <span key={i} className={`h-1.5 w-1.5 rounded-full ${hasPending ? 'bg-primary-500' : 'bg-emerald-500'}`}></span>
               ))
-            }
+            )}
           </div>
         );
       }
