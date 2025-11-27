@@ -2,6 +2,45 @@ import { create } from 'zustand';
 import apiService from '../services/api';
 import websocketService from '../services/websocket';
 
+// Status em português (preferido) e inglês (compatibilidade)
+export type TaskStatus = 'a_fazer' | 'em_progresso' | 'concluida' | 'cancelada' | 'todo' | 'in_progress' | 'done' | 'cancelled' | 'pending';
+export type TaskPriority = 'baixa' | 'media' | 'alta' | 'urgente' | 'low' | 'medium' | 'high' | 'urgent';
+
+// Helper para normalizar status (inglês -> português)
+export const normalizeStatus = (status: string): TaskStatus => {
+  const mapping: Record<string, TaskStatus> = {
+    'todo': 'a_fazer',
+    'pending': 'a_fazer',
+    'in_progress': 'em_progresso',
+    'done': 'concluida',
+    'cancelled': 'cancelada',
+  };
+  return mapping[status] || status as TaskStatus;
+};
+
+// Helper para normalizar prioridade (inglês -> português)
+export const normalizePriority = (priority: string): TaskPriority => {
+  const mapping: Record<string, TaskPriority> = {
+    'low': 'baixa',
+    'medium': 'media',
+    'high': 'alta',
+    'urgent': 'urgente',
+  };
+  return mapping[priority] || priority as TaskPriority;
+};
+
+// Helper para verificar status (aceita português e inglês)
+export const isStatusDone = (status: string): boolean => status === 'done' || status === 'concluida';
+export const isStatusCancelled = (status: string): boolean => status === 'cancelled' || status === 'cancelada';
+export const isStatusInProgress = (status: string): boolean => status === 'in_progress' || status === 'em_progresso';
+export const isStatusTodo = (status: string): boolean => status === 'todo' || status === 'a_fazer' || status === 'pending';
+
+// Helper para verificar prioridade (aceita português e inglês)
+export const isPriorityHigh = (priority: string): boolean => priority === 'high' || priority === 'alta';
+export const isPriorityUrgent = (priority: string): boolean => priority === 'urgent' || priority === 'urgente';
+export const isPriorityMedium = (priority: string): boolean => priority === 'medium' || priority === 'media';
+export const isPriorityLow = (priority: string): boolean => priority === 'low' || priority === 'baixa';
+
 export interface Task {
   id: string;
   user_id: string;
@@ -9,8 +48,8 @@ export interface Task {
   parent_task_id?: string;
   title: string;
   description?: string;
-  status: 'todo' | 'in_progress' | 'done' | 'cancelled' | 'pending';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: TaskStatus;
+  priority: TaskPriority;
   due_date?: string;
   estimated_duration?: number;
   actual_duration?: number;

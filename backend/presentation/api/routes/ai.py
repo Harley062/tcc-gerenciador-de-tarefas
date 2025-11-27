@@ -596,7 +596,7 @@ async def execute_chat_action(
             
             return {
                 "success": True,
-                "message": f"🗑️ Tarefa '{title}' deletada com sucesso!"
+                "message": f"🗑️ Tarefa {title} deletada com sucesso!"
             }
         
         elif request.action == "update_status":

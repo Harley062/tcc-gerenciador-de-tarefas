@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useTaskStore, Task } from '../store/taskStore';
+import { useTaskStore, Task, isStatusDone, isStatusCancelled, isStatusInProgress, isStatusTodo, isPriorityHigh, isPriorityUrgent } from '../store/taskStore';
 import TaskCard from './TaskCard';
 import AIInsightsPanel from './AIInsightsPanel';
 import TaskEditModal from './TaskEditModal';
@@ -176,13 +176,13 @@ const ListView: React.FC = () => {
 
   // Contador de tarefas atrasadas
   const overdueCount = useMemo(() =>
-    tasks.filter(t => isOverdue(t.due_date) && t.status !== 'done' && t.status !== 'cancelled').length
+    tasks.filter(t => isOverdue(t.due_date) && !isStatusDone(t.status) && !isStatusCancelled(t.status)).length
   , [tasks]);
 
   // Contador de tarefas de alta prioridade
   const highPriorityCount = useMemo(() =>
-    tasks.filter(t => (t.priority === 'high' || t.priority === 'urgent') &&
-      t.status !== 'done' && t.status !== 'cancelled').length
+    tasks.filter(t => (isPriorityHigh(t.priority) || isPriorityUrgent(t.priority)) &&
+      !isStatusDone(t.status) && !isStatusCancelled(t.status)).length
   , [tasks]);
 
   // Toggle de tag
@@ -232,7 +232,7 @@ const ListView: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[{
           label: 'A Fazer',
-          count: tasks.filter(t => t.status === 'todo').length,
+          count: tasks.filter(t => isStatusTodo(t.status)).length,
           color: 'from-blue-500 to-cyan-400',
           bg: 'bg-blue-50/50 dark:bg-blue-900/10',
           text: 'text-blue-700 dark:text-blue-300',
@@ -240,7 +240,7 @@ const ListView: React.FC = () => {
         },
         {
           label: 'Em Progresso',
-          count: tasks.filter(t => t.status === 'in_progress').length,
+          count: tasks.filter(t => isStatusInProgress(t.status)).length,
           color: 'from-amber-500 to-orange-400',
           bg: 'bg-amber-50/50 dark:bg-amber-900/10',
           text: 'text-amber-700 dark:text-amber-300',
@@ -248,7 +248,7 @@ const ListView: React.FC = () => {
         },
         {
           label: 'Concluído',
-          count: tasks.filter(t => t.status === 'done').length,
+          count: tasks.filter(t => isStatusDone(t.status)).length,
           color: 'from-emerald-500 to-green-400',
           bg: 'bg-emerald-50/50 dark:bg-emerald-900/10',
           text: 'text-emerald-700 dark:text-emerald-300',
@@ -256,7 +256,7 @@ const ListView: React.FC = () => {
         },
         {
           label: 'Cancelado',
-          count: tasks.filter(t => t.status === 'cancelled').length,
+          count: tasks.filter(t => isStatusCancelled(t.status)).length,
           color: 'from-gray-500 to-slate-400',
           bg: 'bg-gray-50/50 dark:bg-gray-800/30',
           text: 'text-gray-700 dark:text-gray-300',

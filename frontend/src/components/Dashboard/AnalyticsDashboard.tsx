@@ -24,13 +24,6 @@ interface AnalyticsData {
   };
 }
 
-interface ProductivityScore {
-  score: number;
-  rating: string;
-  completion_rate: number;
-  on_time_rate: number;
-}
-
 interface Insight {
   insights: string[];
   report_summary: {
@@ -41,7 +34,6 @@ interface Insight {
 
 const AnalyticsDashboard: React.FC = () => {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
-  const [productivityScore, setProductivityScore] = useState<ProductivityScore | null>(null);
   const [insights, setInsights] = useState<Insight | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -56,20 +48,17 @@ const AnalyticsDashboard: React.FC = () => {
       // Simulação de dados para desenvolvimento se a API falhar ou não existir
       // Em produção, remover este bloco try/catch interno ou ajustar conforme necessário
       try {
-        const [analyticsRes, scoreRes, insightsRes] = await Promise.all([
+        const [analyticsRes, insightsRes] = await Promise.all([
             fetch('/api/analytics/report?period_days=30'),
-            fetch('/api/analytics/productivity-score?period_days=7'),
             fetch('/api/analytics/insights?period_days=30'),
         ]);
 
-        if (!analyticsRes.ok || !scoreRes.ok || !insightsRes.ok) throw new Error('Falha na API');
+        if (!analyticsRes.ok || !insightsRes.ok) throw new Error('Falha na API');
 
         const analyticsData = await analyticsRes.json();
-        const scoreData = await scoreRes.json();
         const insightsData = await insightsRes.json();
 
         setAnalytics(analyticsData);
-        setProductivityScore(scoreData);
         setInsights(insightsData);
       } catch (e) {
           console.warn("Usando dados mockados para analytics devido a erro na API", e);
@@ -80,7 +69,6 @@ const AnalyticsDashboard: React.FC = () => {
               time_analysis: { overdue_count: 3, due_today_count: 5, due_this_week_count: 12 },
               completion: { on_time_rate: 92, completed_on_time: 30, completed_late: 3 }
           });
-          setProductivityScore({ score: 85, rating: 'Excelente', completion_rate: 73, on_time_rate: 92 });
           setInsights({
               insights: ['Excelente taxa de conclusão esta semana!', 'Você é mais produtivo pela manhã.', '3 tarefas atrasadas precisam de atenção.'],
               report_summary: { total_tasks: 45, completion_rate: 73 }
@@ -103,7 +91,7 @@ const AnalyticsDashboard: React.FC = () => {
     );
   }
 
-  if (!analytics || !productivityScore) {
+  if (!analytics) {
     return <div className="p-8 text-center text-red-500">Erro ao carregar dados</div>;
   }
 
@@ -142,51 +130,6 @@ const AnalyticsDashboard: React.FC = () => {
             Exportar CSV
         </button>
       </header>
-
-      {/* Score de Produtividade */}
-      <section className="mb-8">
-        <div className="bg-gradient-to-br from-primary-600 to-purple-700 rounded-2xl p-8 flex flex-col items-center shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-64 h-64 bg-black/10 rounded-full blur-3xl"></div>
-          
-          <h3 className="text-white/90 font-medium text-lg mb-6 relative z-10">Score de Produtividade</h3>
-          
-          <div className="relative w-40 h-40 flex items-center justify-center mb-6 z-10">
-            {/* Círculo de fundo */}
-            <svg className="w-full h-full transform -rotate-90">
-              <circle
-                cx="80"
-                cy="80"
-                r="70"
-                stroke="currentColor"
-                strokeWidth="12"
-                fill="transparent"
-                className="text-white/20"
-              />
-              <circle
-                cx="80"
-                cy="80"
-                r="70"
-                stroke="currentColor"
-                strokeWidth="12"
-                fill="transparent"
-                strokeDasharray={440}
-                strokeDashoffset={440 - (440 * productivityScore.score) / 100}
-                className="text-white transition-all duration-1000 ease-out"
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-              <span className="text-4xl font-bold">{productivityScore.score}</span>
-              <span className="text-sm opacity-80">/100</span>
-            </div>
-          </div>
-          
-          <div className="text-2xl font-bold text-white relative z-10 bg-white/20 px-6 py-2 rounded-full backdrop-blur-md">
-            {productivityScore.rating}
-          </div>
-        </div>
-      </section>
 
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-2 gap-6 mb-8">

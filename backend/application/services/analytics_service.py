@@ -12,6 +12,23 @@ from domain.utils.datetime_utils import now_brazil
 logger = logging.getLogger("taskmaster")
 
 
+# Helpers para verificar status (suporta português e inglês)
+def get_status_value(status) -> str:
+    """Obtém o valor string do status (suporta Enum e string)"""
+    return status.value if hasattr(status, 'value') else str(status)
+
+def is_done(status) -> bool:
+    s = get_status_value(status)
+    return s in ["done", "concluida"]
+
+def is_cancelled(status) -> bool:
+    s = get_status_value(status)
+    return s in ["cancelled", "cancelada"]
+
+def is_active(status) -> bool:
+    return not is_done(status) and not is_cancelled(status)
+
+
 class AnalyticsService:
     """Serviço para análise de dados e geração de relatórios de tarefas"""
 
@@ -60,9 +77,9 @@ class AnalyticsService:
                 "completion_rate": 0.0
             }
 
-        active = len([t for t in tasks if t.status not in ["done", "cancelled"]])
-        completed = len([t for t in tasks if t.status == "done"])
-        cancelled = len([t for t in tasks if t.status == "cancelled"])
+        active = len([t for t in tasks if is_active(t.status)])
+        completed = len([t for t in tasks if is_done(t.status)])
+        cancelled = len([t for t in tasks if is_cancelled(t.status)])
 
         return {
             "total_tasks": total,
@@ -81,7 +98,7 @@ class AnalyticsService:
         """Estatísticas de conclusão de tarefas"""
         completed_tasks = [
             t for t in tasks
-            if t.status == "done" and t.completed_at and t.completed_at >= period_start
+            if is_done(t.status) and t.completed_at and t.completed_at >= period_start
         ]
 
         if not completed_tasks:
@@ -123,7 +140,7 @@ class AnalyticsService:
 
     def get_priority_distribution(self, tasks: List[Task]) -> Dict[str, int]:
         """Distribuição de tarefas por prioridade"""
-        active_tasks = [t for t in tasks if t.status not in ["done", "cancelled"]]
+        active_tasks = [t for t in tasks if is_active(t.status)]
         priorities = Counter(t.priority for t in active_tasks)
 
         return {
@@ -147,7 +164,7 @@ class AnalyticsService:
 
     def get_time_analysis(self, tasks: List[Task]) -> Dict[str, Any]:
         """Análise de prazos e tempo estimado"""
-        tasks_with_due = [t for t in tasks if t.due_date and t.status not in ["done", "cancelled"]]
+        tasks_with_due = [t for t in tasks if t.due_date and is_active(t.status)]
         tasks_with_estimate = [t for t in tasks if t.estimated_duration]
 
         now = now_brazil()
@@ -162,7 +179,7 @@ class AnalyticsService:
         total_estimated_minutes = sum(t.estimated_duration for t in tasks_with_estimate)
         active_estimated = sum(
             t.estimated_duration for t in tasks_with_estimate
-            if t.status not in ["done", "cancelled"]
+            if is_active(t.status)
         )
 
         return {
@@ -183,7 +200,7 @@ class AnalyticsService:
         period_tasks = [t for t in tasks if t.created_at >= period_start]
         completed_in_period = [
             t for t in period_tasks
-            if t.status == "done" and t.completed_at
+            if is_done(t.status) and t.completed_at
         ]
 
         now = now_brazil()
@@ -212,7 +229,7 @@ class AnalyticsService:
             if task.created_at and task.created_at.date() >= start_date:
                 created_by_day[task.created_at.date()] += 1
 
-            if task.status == "done" and task.completed_at and task.completed_at.date() >= start_date:
+            if is_done(task.status) and task.completed_at and task.completed_at.date() >= start_date:
                 completed_by_day[task.completed_at.date()] += 1
 
         # Criar lista de dias
@@ -261,7 +278,7 @@ class AnalyticsService:
             t for t in tasks
             if t.due_date
             and t.due_date < now
-            and t.status not in ["done", "cancelled"]
+            and is_active(t.status)
         ]
 
         if not overdue_tasks:

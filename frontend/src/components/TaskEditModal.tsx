@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Task } from '../store/taskStore';
+import { Task, TaskStatus, TaskPriority, normalizeStatus, normalizePriority } from '../store/taskStore';
 import apiService from '../services/api';
 import { useToast } from './ToastContainer';
 import SubtaskSuggestionsModal from './SubtaskSuggestionsModal';
@@ -32,8 +32,8 @@ const TaskEditModal: React.FC<TaskEditModalProps> = ({ task, onClose, onSaved })
   const [formData, setFormData] = useState({
     title: task.title,
     description: task.description || '',
-    status: task.status,
-    priority: task.priority,
+    status: normalizeStatus(task.status) as TaskStatus,
+    priority: normalizePriority(task.priority) as TaskPriority,
     due_date: toLocalDatetimeString(task.due_date),
     tags: task.tags.join(', '),
   });
@@ -138,13 +138,13 @@ const TaskEditModal: React.FC<TaskEditModalProps> = ({ task, onClose, onSaved })
                     <div className="relative">
                       <select
                         value={formData.status}
-                        onChange={(e) => setFormData({ ...formData, status: e.target.value as Task['status'] })}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value as TaskStatus })}
                         className="w-full px-4 py-3 bg-white/50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none appearance-none"
                       >
-                        <option value="todo">A Fazer</option>
-                        <option value="in_progress">Em Progresso</option>
-                        <option value="done">Concluído</option>
-                        <option value="cancelled">Cancelado</option>
+                        <option value="a_fazer">A Fazer</option>
+                        <option value="em_progresso">Em Progresso</option>
+                        <option value="concluida">Concluída</option>
+                        <option value="cancelada">Cancelada</option>
                       </select>
                       <div className="absolute right-4 top-3.5 pointer-events-none text-gray-500">▼</div>
                     </div>
@@ -157,13 +157,13 @@ const TaskEditModal: React.FC<TaskEditModalProps> = ({ task, onClose, onSaved })
                     <div className="relative">
                       <select
                         value={formData.priority}
-                        onChange={(e) => setFormData({ ...formData, priority: e.target.value as Task['priority'] })}
+                        onChange={(e) => setFormData({ ...formData, priority: e.target.value as TaskPriority })}
                         className="w-full px-4 py-3 bg-white/50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none appearance-none"
                       >
-                        <option value="low">Baixa</option>
-                        <option value="medium">Média</option>
-                        <option value="high">Alta</option>
-                        <option value="urgent">Urgente</option>
+                        <option value="baixa">Baixa</option>
+                        <option value="media">Média</option>
+                        <option value="alta">Alta</option>
+                        <option value="urgente">Urgente</option>
                       </select>
                       <div className="absolute right-4 top-3.5 pointer-events-none text-gray-500">▼</div>
                     </div>

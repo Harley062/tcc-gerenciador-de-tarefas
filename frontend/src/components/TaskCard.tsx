@@ -1,5 +1,5 @@
 import React from 'react';
-import { Task } from '../store/taskStore';
+import { Task, isStatusDone, isPriorityHigh, isPriorityUrgent, isPriorityMedium, isPriorityLow, isStatusInProgress, isStatusTodo, isStatusCancelled } from '../store/taskStore';
 
 interface TaskCardProps {
   task: Task;
@@ -8,62 +8,90 @@ interface TaskCardProps {
   onStatusChange?: (taskId: string, status: Task['status']) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusChange }) => {
-  // Configuração de cores usando o design system
-  const priorityConfig = {
-    low: {
+// Helper para obter configuração de prioridade (suporta PT e EN)
+const getPriorityConfig = (priority: string) => {
+  if (isPriorityLow(priority)) {
+    return {
       bg: 'bg-success-50 dark:bg-success-900/20',
       text: 'text-success-700 dark:text-success-300',
       border: 'border-success-200 dark:border-success-800',
       label: 'Baixa'
-    },
-    medium: {
+    };
+  }
+  if (isPriorityMedium(priority)) {
+    return {
       bg: 'bg-primary-50 dark:bg-primary-900/20',
       text: 'text-primary-700 dark:text-primary-300',
       border: 'border-primary-200 dark:border-primary-800',
       label: 'Média'
-    },
-    high: {
+    };
+  }
+  if (isPriorityHigh(priority)) {
+    return {
       bg: 'bg-warning-50 dark:bg-warning-900/20',
       text: 'text-warning-700 dark:text-warning-300',
       border: 'border-warning-200 dark:border-warning-800',
       label: 'Alta'
-    },
-    urgent: {
+    };
+  }
+  if (isPriorityUrgent(priority)) {
+    return {
       bg: 'bg-danger-50 dark:bg-danger-900/20',
       text: 'text-danger-700 dark:text-danger-300',
       border: 'border-danger-200 dark:border-danger-800',
       label: 'Urgente'
-    },
+    };
+  }
+  // Default
+  return {
+    bg: 'bg-gray-50 dark:bg-gray-900/20',
+    text: 'text-gray-700 dark:text-gray-300',
+    border: 'border-gray-200 dark:border-gray-800',
+    label: priority
   };
+};
 
-  const statusConfig = {
-    todo: {
+// Helper para obter configuração de status (suporta PT e EN)
+const getStatusConfig = (status: string) => {
+  if (isStatusTodo(status)) {
+    return {
       bg: 'bg-gray-100 dark:bg-gray-700',
       text: 'text-gray-700 dark:text-gray-300',
       label: 'A Fazer'
-    },
-    in_progress: {
+    };
+  }
+  if (isStatusInProgress(status)) {
+    return {
       bg: 'bg-warning-100 dark:bg-warning-900/20',
       text: 'text-warning-700 dark:text-warning-300',
       label: 'Em Progresso'
-    },
-    done: {
+    };
+  }
+  if (isStatusDone(status)) {
+    return {
       bg: 'bg-success-100 dark:bg-success-900/20',
       text: 'text-success-700 dark:text-success-300',
       label: 'Concluída'
-    },
-    cancelled: {
+    };
+  }
+  if (isStatusCancelled(status)) {
+    return {
       bg: 'bg-danger-100 dark:bg-danger-900/20',
       text: 'text-danger-700 dark:text-danger-300',
       label: 'Cancelada'
-    },
-    pending: {
-      bg: 'bg-primary-100 dark:bg-primary-900/20',
-      text: 'text-primary-700 dark:text-primary-300',
-      label: 'Pendente'
-    },
+    };
+  }
+  // Default
+  return {
+    bg: 'bg-gray-100 dark:bg-gray-700',
+    text: 'text-gray-700 dark:text-gray-300',
+    label: status
   };
+};
+
+const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusChange }) => {
+  const priorityConfig = getPriorityConfig(task.priority);
+  const statusConfig = getStatusConfig(task.status);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return null;
@@ -77,14 +105,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
     });
   };
 
-  const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done';
+  const isOverdue = task.due_date && new Date(task.due_date) < new Date() && !isStatusDone(task.status);
 
   return (
     <article
       className="group relative overflow-hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-white/20 dark:border-gray-700/50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-5"
       aria-label={`Tarefa: ${task.title}`}
     >
-      <div className={`absolute top-0 left-0 w-1.5 h-full ${priorityConfig[task.priority].bg.replace('bg-', 'bg-').replace(' dark:bg-', ' dark:bg-').split(' ')[0].replace('50', '500')}`}></div>
+      <div className={`absolute top-0 left-0 w-1.5 h-full ${priorityConfig.bg.replace('bg-', 'bg-').replace(' dark:bg-', ' dark:bg-').split(' ')[0].replace('50', '500')}`}></div>
       
       {/* Cabeçalho */}
       <div className="flex justify-between items-start mb-3 gap-3 pl-3">
@@ -135,16 +163,16 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
       {/* Badges */}
       <div className="flex flex-wrap gap-2 mb-4 pl-3" role="group" aria-label="Informações da tarefa">
         <span
-          className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${priorityConfig[task.priority].bg} ${priorityConfig[task.priority].text} ${priorityConfig[task.priority].border}`}
-          aria-label={`Prioridade: ${priorityConfig[task.priority].label}`}
+          className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${priorityConfig.bg} ${priorityConfig.text} ${priorityConfig.border}`}
+          aria-label={`Prioridade: ${priorityConfig.label}`}
         >
-          {priorityConfig[task.priority].label}
+          {priorityConfig.label}
         </span>
         <span
-          className={`px-2.5 py-1 rounded-lg text-xs font-bold ${statusConfig[task.status].bg} ${statusConfig[task.status].text}`}
-          aria-label={`Status: ${statusConfig[task.status].label}`}
+          className={`px-2.5 py-1 rounded-lg text-xs font-bold ${statusConfig.bg} ${statusConfig.text}`}
+          aria-label={`Status: ${statusConfig.label}`}
         >
-          {statusConfig[task.status].label}
+          {statusConfig.label}
         </span>
         {task.due_date && (
           <span
@@ -183,17 +211,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
       {onStatusChange && (
         <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50 pl-3">
           <button
-            onClick={() => onStatusChange(task.id, 'in_progress')}
+            onClick={() => onStatusChange(task.id, 'em_progresso')}
             className="flex-1 px-4 py-2 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 rounded-lg text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={task.status === 'in_progress'}
+            disabled={isStatusInProgress(task.status)}
             aria-label="Marcar como em progresso"
           >
             Em Progresso
           </button>
           <button
-            onClick={() => onStatusChange(task.id, 'done')}
+            onClick={() => onStatusChange(task.id, 'concluida')}
             className="flex-1 px-4 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-700 dark:text-green-400 rounded-lg text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={task.status === 'done'}
+            disabled={isStatusDone(task.status)}
             aria-label="Marcar como concluída"
           >
             Concluir
