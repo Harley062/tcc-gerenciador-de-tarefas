@@ -161,6 +161,8 @@ class ChatAssistantService:
                 response = await self._handle_greeting(user_tasks)
             elif intent == "thanks":
                 response = self._handle_thanks()
+            elif intent == "about_system":
+                response = self._handle_about_system(user_tasks)
             elif intent == "suggest_next_task":
                 response = await self._handle_suggest_next_task(user_tasks)
             elif intent == "list_tasks":
@@ -236,6 +238,26 @@ class ChatAssistantService:
         thanks = ["obrigado", "obrigada", "valeu", "thanks", "thank you", "vlw", "brigado", "brigada"]
         if any(word in message.lower() for word in thanks):
             return "thanks"
+        
+        # HIGH PRIORITY: Check for questions about the system/app itself
+        # This should be checked BEFORE list_tasks to avoid false positives
+        about_system_patterns = [
+            "entender" in message and ("sistema" in message or "app" in message or "aplicativo" in message or "funciona" in message),
+            "como funciona" in message,
+            "o que é isso" in message or "o que é esse" in message,
+            "sobre o sistema" in message or "sobre o app" in message,
+            "explicar" in message and ("sistema" in message or "app" in message),
+            "o que você faz" in message or "o que voce faz" in message,
+            "quem é você" in message or "quem é voce" in message,
+            "suas funcionalidades" in message or "suas funções" in message,
+            "me explica" in message and ("sistema" in message or "app" in message or "funciona" in message),
+            "conhecer" in message and ("sistema" in message or "funcionalidades" in message),
+            message.strip() == "?",
+            "para que serve" in message,
+            "saber mais sobre" in message and "sistema" in message,
+        ]
+        if any(about_system_patterns):
+            return "about_system"
 
         # Keywords for each intent with priority order
         list_keywords = ["listar", "mostrar", "quais", "ver", "exibir", "list", "show", "what", "display", "me mostre", "me mostra", "tenho", "tem", "há", "minhas"]
@@ -307,16 +329,23 @@ class ChatAssistantService:
 
         # List tasks - EXPANDED detection for better coverage
         # Direct time references (e.g., "tarefas de hoje", "o que tenho hoje")
+        # BUT only if it mentions tasks or activities explicitly
         if any(word in message for word in time_keywords):
-            return "list_tasks"
+            if any(word in message for word in task_keywords) or "tenho" in message:
+                return "list_tasks"
 
         # Status/priority filters (e.g., "tarefas pendentes", "alta prioridade")
         if any(word in message for word in status_filter_keywords + priority_keywords):
             if any(word in message for word in task_keywords) or any(word in message for word in ["minhas", "meus", "tenho", "tem"]):
                 return "list_tasks"
 
-        # Explicit list keywords with task keywords
+        # Explicit list keywords with task keywords - be more specific
         if any(word in message for word in list_keywords):
+            # Only trigger list_tasks if there's explicit task context
+            if any(word in message for word in task_keywords + ["prazo", "vencendo", "atrasada", "atrasado"]):
+                return "list_tasks"
+            # "minhas tarefas", "tenho tarefas", etc.
+            if ("minhas" in message or "tenho" in message) and any(word in message for word in task_keywords):
                 return "list_tasks"
 
         # Questions about tasks (e.g., "o que tenho pra fazer?")
@@ -1190,6 +1219,65 @@ Quer que eu marque esta tarefa como concluída quando terminar? Basta dizer "con
             "data": None
         }
     
+    def _handle_about_system(self, tasks: List[Task]) -> Dict[str, Any]:
+        """Handle questions about the system itself"""
+        
+        # Build a personalized explanation based on user's tasks
+        total_tasks = len(tasks)
+        pending = sum(1 for t in tasks if t.status.value == "todo")
+        in_progress = sum(1 for t in tasks if t.status.value == "in_progress")
+        completed = sum(1 for t in tasks if t.status.value == "done")
+        
+        about_text = """🚀 SGTI - Sistema de Gerenciamento de Tarefas Inteligente
+
+Sou seu assistente pessoal de produtividade! Fui criado para ajudar você a organizar suas tarefas de forma inteligente.
+
+💡 O que posso fazer por você:
+
+📋 Gerenciar Tarefas
+   Criar, editar, concluir e organizar suas atividades
+
+🎯 Priorização Inteligente
+   Sugiro qual tarefa você deveria fazer primeiro com base em prazos e prioridades
+
+📊 Análise de Produtividade
+   Mostro estatísticas e insights sobre seu desempenho
+
+🗓️ Controle de Prazos
+   Aviso sobre tarefas atrasadas ou próximas do vencimento
+
+💬 Conversa Natural
+   Você pode falar comigo naturalmente, sem comandos específicos!
+
+"""
+        
+        # Add personalized context
+        if total_tasks > 0:
+            about_text += f"""📈 Seu panorama atual:
+   Você tem {total_tasks} tarefa(s) no sistema
+   {pending} pendente(s), {in_progress} em andamento, {completed} concluída(s)
+
+"""
+        
+        about_text += """🎯 Experimente perguntar:
+   "Qual tarefa devo fazer agora?"
+   "Criar uma nova tarefa"
+   "Minhas tarefas para hoje"
+   "Meu progresso"
+
+Estou aqui para ajudar! Como posso te auxiliar?"""
+
+        return {
+            "message": about_text,
+            "action": "about_system",
+            "data": {
+                "total_tasks": total_tasks,
+                "pending": pending,
+                "in_progress": in_progress,
+                "completed": completed
+            }
+        }
+
     async def _handle_general_query(
         self, 
         message: str, 
