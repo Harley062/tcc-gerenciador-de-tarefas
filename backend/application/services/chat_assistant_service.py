@@ -150,7 +150,7 @@ class ChatAssistantService:
 
             message_lower = message.lower()
 
-            intent = self._detect_intent(message_lower)
+            intent = await self._detect_intent(message_lower)
 
             logger.info(
                 "Intent detected",
@@ -220,141 +220,100 @@ class ChatAssistantService:
                 "data": None
             }
     
-    def _detect_intent(self, message: str) -> str:
-        """Detect user intent from message with improved accuracy"""
+    async def _detect_intent_with_gpt(self, message: str) -> str:
+        """Use GPT to intelligently classify user intent"""
+        
+        system_prompt = """Você é um classificador de intenções para um sistema de gerenciamento de tarefas.
+
+Analise a mensagem do usuário e retorne APENAS UMA das seguintes intenções (sem explicação, apenas a palavra):
+
+INTENÇÕES DISPONÍVEIS:
+- greeting: Saudações como "oi", "olá", "bom dia", "boa tarde"
+- thanks: Agradecimentos como "obrigado", "valeu", "thanks"
+- about_system: Perguntas sobre o sistema, como funciona, o que faz, suas funcionalidades
+- help: Pedidos de ajuda ou comandos disponíveis
+- list_tasks: Listar, ver, mostrar tarefas (hoje, pendentes, atrasadas, etc.)
+- create_task: Criar, adicionar, nova tarefa
+- complete_task: Concluir, finalizar, terminar uma tarefa
+- delete_task: Deletar, remover, excluir uma tarefa
+- update_task: Atualizar, modificar, editar uma tarefa
+- suggest_next_task: Perguntar qual tarefa fazer agora, por onde começar, priorização
+- task_status: Ver progresso, status geral, produtividade, resumo
+- general: Qualquer outra coisa que não se encaixe acima
+
+REGRAS:
+- Se o usuário quer saber SOBRE o sistema/app/assistente em si → about_system
+- Se o usuário quer saber SUAS tarefas → list_tasks
+- Se o usuário pergunta "o que fazer agora" ou quer recomendação → suggest_next_task
+- Se é uma conversa casual ou pergunta genérica → general
+
+Responda APENAS com a intenção, nada mais."""
+
+        user_prompt = f"Mensagem do usuário: \"{message}\"\n\nIntenção:"
+
+        try:
+            result = await self.openai_adapter.generate_completion(
+                prompt=user_prompt,
+                system_prompt=system_prompt,
+                temperature=0.1,  # Baixa temperatura para consistência
+                max_tokens=20
+            )
+            
+            intent = result.get("content", "").strip().lower()
+            
+            # Validate intent is one of the expected values
+            valid_intents = [
+                "greeting", "thanks", "about_system", "help", "list_tasks",
+                "create_task", "complete_task", "delete_task", "update_task",
+                "suggest_next_task", "task_status", "general"
+            ]
+            
+            if intent in valid_intents:
+                logger.info(f"GPT classified intent as: {intent}")
+                return intent
+            else:
+                # If GPT returns something unexpected, default to general
+                logger.warning(f"GPT returned unexpected intent: {intent}, defaulting to general")
+                return "general"
+                
+        except Exception as e:
+            logger.error(f"GPT intent classification failed: {e}")
+            # Fallback to basic detection if GPT fails
+            return self._detect_intent_fallback(message)
+    
+    def _detect_intent_fallback(self, message: str) -> str:
+        """Fallback intent detection using keywords (used when GPT fails)"""
+        message_lower = message.lower()
+        
+        # Simple keyword-based fallback
+        if any(g in message_lower for g in ["oi", "olá", "bom dia", "boa tarde", "boa noite"]):
+            return "greeting"
+        if any(t in message_lower for t in ["obrigado", "valeu", "thanks"]):
+            return "thanks"
+        if any(h in message_lower for h in ["ajuda", "help", "comandos"]):
+            return "help"
+        if any(c in message_lower for c in ["criar", "adicionar", "nova tarefa"]):
+            return "create_task"
+        if any(c in message_lower for c in ["concluir", "finalizar", "terminar"]):
+            return "complete_task"
+        if any(d in message_lower for d in ["deletar", "remover", "excluir"]):
+            return "delete_task"
+        if any(l in message_lower for l in ["listar", "minhas tarefas", "tarefas de hoje"]):
+            return "list_tasks"
+            
+        return "general"
+    
+    async def _detect_intent(self, message: str) -> str:
+        """Detect user intent - uses GPT for intelligent classification"""
 
         # Check if user is responding with a number (selection from previous list)
         message_stripped = message.strip()
         if message_stripped.isdigit() and self.last_action_context:
             # User is selecting from a list
             return f"select_{self.last_action_context}"
-
-        # Check for greetings
-        greetings = ["oi", "olá", "ola", "hey", "hi", "hello", "bom dia", "boa tarde", "boa noite", "e aí", "eai", "eae"]
-        if any(message_stripped.lower() == g or message_stripped.lower().startswith(g + " ") for g in greetings):
-            return "greeting"
-
-        # Check for thanks
-        thanks = ["obrigado", "obrigada", "valeu", "thanks", "thank you", "vlw", "brigado", "brigada"]
-        if any(word in message.lower() for word in thanks):
-            return "thanks"
         
-        # HIGH PRIORITY: Check for questions about the system/app itself
-        # This should be checked BEFORE list_tasks to avoid false positives
-        about_system_patterns = [
-            "entender" in message and ("sistema" in message or "app" in message or "aplicativo" in message or "funciona" in message),
-            "como funciona" in message,
-            "o que é isso" in message or "o que é esse" in message,
-            "sobre o sistema" in message or "sobre o app" in message,
-            "explicar" in message and ("sistema" in message or "app" in message),
-            "o que você faz" in message or "o que voce faz" in message,
-            "quem é você" in message or "quem é voce" in message,
-            "suas funcionalidades" in message or "suas funções" in message,
-            "me explica" in message and ("sistema" in message or "app" in message or "funciona" in message),
-            "conhecer" in message and ("sistema" in message or "funcionalidades" in message),
-            message.strip() == "?",
-            "para que serve" in message,
-            "saber mais sobre" in message and "sistema" in message,
-        ]
-        if any(about_system_patterns):
-            return "about_system"
-
-        # Keywords for each intent with priority order
-        list_keywords = ["listar", "mostrar", "quais", "ver", "exibir", "list", "show", "what", "display", "me mostre", "me mostra", "tenho", "tem", "há", "minhas"]
-        task_keywords = ["tarefa", "tarefas", "task", "tasks", "todo", "todos", "atividade", "atividades", "fazer", "pendente", "pendentes"]
-        time_keywords = ["hoje", "amanhã", "semana", "mês", "today", "tomorrow", "week", "month", "agora", "próximo", "próxima"]
-        status_filter_keywords = ["pendente", "pendentes", "progresso", "concluída", "concluídas", "pending", "done", "completed", "in progress", "atrasada", "atrasadas"]
-        priority_keywords = ["alta", "high", "urgente", "urgent", "prioridade", "priority", "importante", "important"]
-
-        # EXPANDED create keywords with verb conjugations
-        create_keywords = ["criar", "crie", "cria", "adicionar", "adicione", "nova", "novo", "create", "add", "new", "cadastrar", "registrar", "agendar", "agende", "marcar", "marque"]
-        update_keywords = ["atualizar", "modificar", "mudar", "alterar", "editar", "update", "modify", "change", "edit"]
-        delete_keywords = ["deletar", "remover", "excluir", "apagar", "delete", "remove", "exclua", "apague", "remova", "delete"]
-        complete_keywords = ["concluir", "conclua", "finalizar", "finalize", "terminar", "termine", "completar", "complete", "finish", "done", "feito", "terminei", "finalizei", "concluí", "marcar como concluída", "marcar como feita"]
-        status_keywords = ["status", "andamento", "progress", "situação", "resumo", "overview", "como está", "como estão", "produtividade"]
-        help_keywords = ["ajuda", "help", "como", "how", "comandos", "commands", "o que você faz", "o que faz"]
-        
-        # Keywords for suggesting next task
-        suggest_next_keywords = ["qual", "próxima", "próximo", "deveria", "devo", "começar", "resolver", "focar", "priorizar", "sugerir", "sugira", "recomenda", "recomendar", "por onde"]
-
-        # Priority-based detection (specific intents first)
-        
-        # Check for "next task" suggestion - HIGH PRIORITY
-        # Patterns like: "qual próxima atividade", "o que deveria fazer", "por onde começo"
-        suggest_patterns = [
-            "qual" in message and ("próxim" in message or "atividade" in message or "tarefa" in message),
-            "deveria" in message and ("fazer" in message or "resolver" in message or "começar" in message),
-            "devo" in message and ("fazer" in message or "resolver" in message or "começar" in message),
-            "por onde" in message and ("começ" in message or "inici" in message),
-            "o que" in message and ("fazer agora" in message or "priorizar" in message or "focar" in message),
-            "me sugir" in message or "sugira" in message or "recomend" in message,
-            "próxima atividade" in message or "próxima tarefa" in message,
-            "próximo passo" in message
-        ]
-        if any(suggest_patterns):
-            return "suggest_next_task"
-
-        # Help - highest priority for explicit help requests
-        if any(word in message for word in help_keywords):
-            if "tarefa" not in message and "task" not in message:
-                return "help"
-
-        # Create task - HIGHEST PRIORITY (before time keywords)
-        # Check if message starts with create keywords or contains them prominently
-        if any(word in message for word in create_keywords):
-            return "create_task"
-
-        # Complete task - must have complete keyword
-        if any(word in message for word in complete_keywords):
-            return "complete_task"
-
-        # Delete task - must have delete keyword
-        if any(word in message for word in delete_keywords):
-            return "delete_task"
-
-        # Status - check for status queries
-        if any(word in message for word in status_keywords):
-            if any(word in message for word in task_keywords) or "minha" in message or "meu" in message:
-                return "task_status"
-
-        # Update task - must have update keyword AND task reference
-        if any(word in message for word in update_keywords):
-            if any(word in message for word in task_keywords) or len(message.split()) > 3:
-                return "update_task"
-
-        # Check for overdue/late tasks specifically
-        overdue_keywords = ["atrasada", "atrasadas", "atrasado", "atrasados", "vencida", "vencidas", "late", "overdue"]
-        if any(word in message for word in overdue_keywords):
-            return "list_tasks"
-
-        # List tasks - EXPANDED detection for better coverage
-        # Direct time references (e.g., "tarefas de hoje", "o que tenho hoje")
-        # BUT only if it mentions tasks or activities explicitly
-        if any(word in message for word in time_keywords):
-            if any(word in message for word in task_keywords) or "tenho" in message:
-                return "list_tasks"
-
-        # Status/priority filters (e.g., "tarefas pendentes", "alta prioridade")
-        if any(word in message for word in status_filter_keywords + priority_keywords):
-            if any(word in message for word in task_keywords) or any(word in message for word in ["minhas", "meus", "tenho", "tem"]):
-                return "list_tasks"
-
-        # Explicit list keywords with task keywords - be more specific
-        if any(word in message for word in list_keywords):
-            # Only trigger list_tasks if there's explicit task context
-            if any(word in message for word in task_keywords + ["prazo", "vencendo", "atrasada", "atrasado"]):
-                return "list_tasks"
-            # "minhas tarefas", "tenho tarefas", etc.
-            if ("minhas" in message or "tenho" in message) and any(word in message for word in task_keywords):
-                return "list_tasks"
-
-        # Questions about tasks (e.g., "o que tenho pra fazer?")
-        if any(word in message for word in ["o que", "what", "quais", "which"]):
-            if any(word in message for word in task_keywords + ["fazer", "to do", "pendente", "pending"]):
-                return "list_tasks"
-
-        # Default to general for anything else
-        return "general"
+        # Use GPT for intelligent intent classification
+        return await self._detect_intent_with_gpt(message)
     
     async def _handle_greeting(self, tasks: List[Task]) -> Dict[str, Any]:
         """Handle greeting messages with a friendly summary"""
