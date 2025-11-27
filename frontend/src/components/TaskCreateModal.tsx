@@ -3,6 +3,14 @@ import apiService from '../services/api';
 import { useToast } from './ToastContainer';
 import { aiApi } from '../services/aiApi';
 
+// Função para converter input local para ISO com timezone do Brasil
+const toISOWithBrazilTimezone = (localDatetime: string): string => {
+  if (!localDatetime) return '';
+  // O input datetime-local retorna no formato YYYY-MM-DDTHH:MM
+  // Adicionamos o offset de Brasília (-03:00)
+  return `${localDatetime}:00-03:00`;
+};
+
 interface TaskCreateModalProps {
   onClose: () => void;
   onCreated: (taskId: string) => void;
@@ -33,7 +41,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ onClose, onCreated })
         description: formData.description || undefined,
         status: formData.status,
         priority: formData.priority,
-        due_date: formData.due_date ? new Date(formData.due_date).toISOString() : undefined,
+        due_date: formData.due_date ? toISOWithBrazilTimezone(formData.due_date) : undefined,
         estimated_duration: formData.estimated_duration,
         tags: formData.tags
           .split(',')

@@ -3,7 +3,7 @@ Chat Assistant Service - Natural language interface for task management
 """
 import logging
 from typing import Any, Optional, List, Dict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from domain.entities.task import Task
 from infrastructure.gpt.openai_adapter import OpenAIAdapter
@@ -31,56 +31,71 @@ class ChatAssistantService:
     ) -> Dict[str, Any]:
         """Process a chat message and return appropriate response with actions"""
 
-        logger.info(
-            "Processing chat message",
-            extra={
-                "message_length": len(message),
-                "tasks_count": len(user_tasks),
-                "history_size": len(self.conversation_history)
+        try:
+            logger.info(
+                "Processing chat message",
+                extra={
+                    "message_length": len(message),
+                    "tasks_count": len(user_tasks),
+                    "history_size": len(self.conversation_history)
+                }
+            )
+
+            self.conversation_history.append({
+                "role": "user",
+                "content": message,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
+
+            message_lower = message.lower()
+
+            intent = self._detect_intent(message_lower)
+
+            logger.info(
+                "Intent detected",
+                extra={"intent": intent, "message_preview": message[:50]}
+            )
+
+            if intent == "list_tasks":
+                response = await self._handle_list_tasks(message_lower, user_tasks)
+            elif intent == "create_task":
+                response = await self._handle_create_task(message, user_tasks)
+            elif intent == "update_task":
+                response = await self._handle_update_task(message_lower, user_tasks)
+            elif intent == "delete_task":
+                response = await self._handle_delete_task(message_lower, user_tasks)
+            elif intent == "task_status":
+                response = await self._handle_task_status(message_lower, user_tasks)
+            elif intent == "help":
+                response = self._handle_help()
+            else:
+                response = await self._handle_general_query(message, user_tasks)
+
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": response.get("message", ""),
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
+
+            # Trim history to prevent unlimited growth
+            if len(self.conversation_history) > self.MAX_HISTORY_SIZE:
+                self.conversation_history = self.conversation_history[-self.MAX_HISTORY_SIZE:]
+
+            return response
+        except Exception as e:
+            logger.error(
+                f"Error processing chat message: {str(e)}",
+                exc_info=True,
+                extra={
+                    "message_preview": message[:50] if message else "",
+                    "error_type": type(e).__name__,
+                }
+            )
+            return {
+                "message": f"Desculpe, ocorreu um erro ao processar sua mensagem: {str(e)}",
+                "action": None,
+                "data": None
             }
-        )
-
-        self.conversation_history.append({
-            "role": "user",
-            "content": message,
-            "timestamp": datetime.utcnow().isoformat()
-        })
-
-        message_lower = message.lower()
-
-        intent = self._detect_intent(message_lower)
-
-        logger.info(
-            "Intent detected",
-            extra={"intent": intent, "message_preview": message[:50]}
-        )
-        
-        if intent == "list_tasks":
-            response = await self._handle_list_tasks(message_lower, user_tasks)
-        elif intent == "create_task":
-            response = await self._handle_create_task(message, user_tasks)
-        elif intent == "update_task":
-            response = await self._handle_update_task(message_lower, user_tasks)
-        elif intent == "delete_task":
-            response = await self._handle_delete_task(message_lower, user_tasks)
-        elif intent == "task_status":
-            response = await self._handle_task_status(message_lower, user_tasks)
-        elif intent == "help":
-            response = self._handle_help()
-        else:
-            response = await self._handle_general_query(message, user_tasks)
-        
-        self.conversation_history.append({
-            "role": "assistant",
-            "content": response.get("message", ""),
-            "timestamp": datetime.utcnow().isoformat()
-        })
-
-        # Trim history to prevent unlimited growth
-        if len(self.conversation_history) > self.MAX_HISTORY_SIZE:
-            self.conversation_history = self.conversation_history[-self.MAX_HISTORY_SIZE:]
-
-        return response
     
     def _detect_intent(self, message: str) -> str:
         """Detect user intent from message with improved accuracy"""
@@ -148,32 +163,32 @@ class ChatAssistantService:
         return "general"
     
     async def _handle_list_tasks(
-        self, 
-        message: str, 
+        self,
+        message: str,
         tasks: List[Task]
     ) -> Dict[str, Any]:
         """Handle request to list tasks"""
-        
+
         filtered_tasks = tasks
-        
+
         if "hoje" in message or "today" in message:
-            today = datetime.utcnow().date()
+            today = datetime.now(timezone.utc).date()
             filtered_tasks = [
-                t for t in tasks 
+                t for t in tasks
                 if t.due_date and t.due_date.date() == today
             ]
             period = "hoje"
         elif "amanhã" in message or "tomorrow" in message:
-            tomorrow = (datetime.utcnow() + timedelta(days=1)).date()
+            tomorrow = (datetime.now(timezone.utc) + timedelta(days=1)).date()
             filtered_tasks = [
-                t for t in tasks 
+                t for t in tasks
                 if t.due_date and t.due_date.date() == tomorrow
             ]
             period = "amanhã"
         elif "semana" in message or "week" in message:
-            week_end = datetime.utcnow() + timedelta(days=7)
+            week_end = datetime.now(timezone.utc) + timedelta(days=7)
             filtered_tasks = [
-                t for t in tasks 
+                t for t in tasks
                 if t.due_date and t.due_date <= week_end
             ]
             period = "esta semana"
@@ -206,7 +221,7 @@ class ChatAssistantService:
         def format_date(due_date) -> str:
             if not due_date:
                 return ""
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             date_diff = (due_date.date() - now.date()).days
 
             if date_diff < 0:

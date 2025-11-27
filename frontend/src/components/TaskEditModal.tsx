@@ -4,6 +4,24 @@ import apiService from '../services/api';
 import { useToast } from './ToastContainer';
 import SubtaskSuggestionsModal from './SubtaskSuggestionsModal';
 
+// Função para converter data para formato local (input datetime-local)
+const toLocalDatetimeString = (isoDate: string | undefined): string => {
+  if (!isoDate) return '';
+  const date = new Date(isoDate);
+  // Ajusta para o offset local (Brasília -03:00)
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - offset * 60000);
+  return localDate.toISOString().slice(0, 16);
+};
+
+// Função para converter input local para ISO com timezone do Brasil
+const toISOWithBrazilTimezone = (localDatetime: string): string => {
+  if (!localDatetime) return '';
+  // O input datetime-local retorna no formato YYYY-MM-DDTHH:MM
+  // Adicionamos o offset de Brasília (-03:00)
+  return `${localDatetime}:00-03:00`;
+};
+
 interface TaskEditModalProps {
   task: Task;
   onClose: () => void;
@@ -16,7 +34,7 @@ const TaskEditModal: React.FC<TaskEditModalProps> = ({ task, onClose, onSaved })
     description: task.description || '',
     status: task.status,
     priority: task.priority,
-    due_date: task.due_date ? new Date(task.due_date).toISOString().slice(0, 16) : '',
+    due_date: toLocalDatetimeString(task.due_date),
     tags: task.tags.join(', '),
   });
   const [saving, setSaving] = useState(false);
@@ -33,7 +51,7 @@ const TaskEditModal: React.FC<TaskEditModalProps> = ({ task, onClose, onSaved })
         description: formData.description || undefined,
         status: formData.status,
         priority: formData.priority,
-        due_date: formData.due_date ? new Date(formData.due_date).toISOString() : undefined,
+        due_date: formData.due_date ? toISOWithBrazilTimezone(formData.due_date) : undefined,
         tags: formData.tags
           .split(',')
           .map((tag) => tag.trim())

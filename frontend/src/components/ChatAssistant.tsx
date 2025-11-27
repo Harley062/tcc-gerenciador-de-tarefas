@@ -62,7 +62,7 @@ const ChatAssistant: React.FC = () => {
 
     try {
       const response = await aiApi.sendChatMessage(text);
-      
+
       const assistantMessage: Message = {
         role: 'assistant',
         content: response.message,
@@ -72,14 +72,28 @@ const ChatAssistant: React.FC = () => {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Chat error details:', error);
+
+      let errorText = 'Desculpe, ocorreu um erro ao processar sua mensagem.';
+
+      // Extract specific error message from API response
+      if (error?.response?.data?.detail) {
+        errorText = error.response.data.detail;
+      } else if (error?.response?.status === 401) {
+        errorText = 'Sessão expirada. Por favor, faça login novamente.';
+      } else if (error?.response?.status === 400) {
+        errorText = error?.response?.data?.detail || 'Requisição inválida. Verifique suas configurações.';
+      } else if (error?.message) {
+        errorText = `Erro: ${error.message}`;
+      }
+
       const errorMessage: Message = {
         role: 'assistant',
-        content: 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.',
+        content: errorText,
         timestamp: new Date().toISOString(),
       };
-      setMessages((prev) => [...prev, errorMessage]);
-      console.error(error);
+      setMessages((prev: Message[]) => [...prev, errorMessage]);
     } finally {
       setLoading(false);
     }

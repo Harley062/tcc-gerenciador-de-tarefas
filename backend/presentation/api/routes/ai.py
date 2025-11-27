@@ -386,20 +386,53 @@ async def chat_message(
 ):
     """Process a chat message and return response"""
     try:
+        logger.info(
+            f"Chat message received",
+            extra={
+                "user_id": str(current_user.id),
+                "message_length": len(request.message),
+            }
+        )
+
         repo = PostgreSQLTaskRepository(session)
         tasks, _ = await repo.get_by_user_id(current_user.id, limit=1000)
-        
+
+        logger.info(
+            f"Tasks retrieved for chat",
+            extra={
+                "user_id": str(current_user.id),
+                "tasks_count": len(tasks),
+            }
+        )
+
         response = await chat_service.process_message(
             message=request.message,
             user_tasks=tasks
         )
-        
+
+        logger.info(
+            f"Chat response generated",
+            extra={
+                "user_id": str(current_user.id),
+                "action": response.get("action"),
+            }
+        )
+
         return ChatMessageResponse(**response)
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error("Chat processing failed", exc_info=True)
+        logger.error(
+            f"Chat processing failed: {str(e)}",
+            exc_info=True,
+            extra={
+                "user_id": str(current_user.id),
+                "error_type": type(e).__name__,
+            }
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to process chat message"
+            detail=f"Erro ao processar mensagem: {str(e)}"
         )
 
 

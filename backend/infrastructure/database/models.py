@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import (
     ARRAY,
@@ -19,6 +20,14 @@ from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 
+# Timezone de Brasília
+BRAZIL_TZ = ZoneInfo("America/Sao_Paulo")
+
+
+def now_brazil():
+    """Retorna a data/hora atual no timezone de Brasília"""
+    return datetime.now(BRAZIL_TZ)
+
 
 class UserModel(Base):
     __tablename__ = "users"
@@ -28,8 +37,8 @@ class UserModel(Base):
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(255))
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
-    updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=now_brazil)
+    updated_at = Column(DateTime(timezone=True), default=now_brazil, onupdate=now_brazil)
 
     projects = relationship("ProjectModel", back_populates="user", cascade="all, delete-orphan")
     tasks = relationship("TaskModel", back_populates="user", cascade="all, delete-orphan")
@@ -45,8 +54,8 @@ class ProjectModel(Base):
     description = Column(Text)
     color = Column(String(7))
     icon = Column(String(50))
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
-    updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=now_brazil)
+    updated_at = Column(DateTime(timezone=True), default=now_brazil, onupdate=now_brazil)
 
     user = relationship("UserModel", back_populates="projects")
     tasks = relationship("TaskModel", back_populates="project")
@@ -71,8 +80,8 @@ class TaskModel(Base):
     task_metadata = Column(JSONB, name="metadata")
     natural_language_input = Column(Text)
     gpt_response = Column(JSONB)
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
-    updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=now_brazil)
+    updated_at = Column(DateTime(timezone=True), default=now_brazil, onupdate=now_brazil)
 
     user = relationship("UserModel", back_populates="tasks")
     project = relationship("ProjectModel", back_populates="tasks")
@@ -91,8 +100,8 @@ class UserSettingsModel(Base):
     enable_auto_subtasks = Column(Boolean, default=False)
     enable_auto_priority = Column(Boolean, default=True)
     enable_auto_tags = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
-    updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=now_brazil)
+    updated_at = Column(DateTime(timezone=True), default=now_brazil, onupdate=now_brazil)
 
     user = relationship("UserModel", back_populates="settings")
 
