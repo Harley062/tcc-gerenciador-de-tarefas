@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useTaskStore, Task, isStatusDone, isStatusCancelled, isStatusInProgress, isStatusTodo, isPriorityHigh, isPriorityUrgent } from '../store/taskStore';
+import { useTaskStore, Task, isStatusDone, isStatusCancelled, isStatusInProgress, isStatusTodo, isPriorityHigh, isPriorityUrgent, isPriorityMedium, isPriorityLow } from '../store/taskStore';
 import TaskCard from './TaskCard';
 import AIInsightsPanel from './AIInsightsPanel';
 import TaskEditModal from './TaskEditModal';
@@ -135,8 +135,17 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
         task.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      // Filtro de prioridade
-      const matchesPriority = !priorityFilter || task.priority === priorityFilter;
+      // Filtro de prioridade (usando helpers para suportar pt/en)
+      let matchesPriority = true;
+      if (priorityFilter === 'urgent') {
+        matchesPriority = isPriorityUrgent(task.priority);
+      } else if (priorityFilter === 'high') {
+        matchesPriority = isPriorityHigh(task.priority);
+      } else if (priorityFilter === 'medium') {
+        matchesPriority = isPriorityMedium(task.priority);
+      } else if (priorityFilter === 'low') {
+        matchesPriority = isPriorityLow(task.priority);
+      }
 
       // Filtro de tags
       const matchesTags = selectedTags.length === 0 ||
