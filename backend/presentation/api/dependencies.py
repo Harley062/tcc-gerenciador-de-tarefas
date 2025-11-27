@@ -83,7 +83,6 @@ async def get_gpt_service(
     settings_repo = UserSettingsRepository(session)
     user_settings = await settings_repo.get_or_create(current_user.id)
 
-    # Use user's API key if available, otherwise use global settings
     api_key = user_settings.openai_api_key or settings.openai_api_key
     
     if not api_key:

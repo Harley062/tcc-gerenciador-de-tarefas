@@ -64,11 +64,9 @@ async def get_analytics_report(
             extra={"period_days": period_days}
         )
 
-        # Buscar todas as tarefas do usuário
         repo = PostgreSQLTaskRepository(session)
         tasks, _ = await repo.get_by_user_id(current_user.id, limit=10000)
 
-        # Gerar relatório
         analytics_service = AnalyticsService()
         report = analytics_service.generate_full_report(tasks, period_days=period_days)
 
@@ -91,11 +89,9 @@ async def get_insights(
     Retorna insights automáticos baseados nas tarefas do usuário
     """
     try:
-        # Buscar tarefas
         repo = PostgreSQLTaskRepository(session)
         tasks, _ = await repo.get_by_user_id(current_user.id, limit=10000)
 
-        # Gerar relatório e insights
         analytics_service = AnalyticsService()
         report = analytics_service.generate_full_report(tasks, period_days=period_days)
         insights = analytics_service.generate_insights(report)
@@ -128,21 +124,17 @@ async def get_notifications(
             extra={"hours_ahead": hours_ahead}
         )
 
-        # Buscar tarefas ativas
         repo = PostgreSQLTaskRepository(session)
         tasks, _ = await repo.get_by_user_id(current_user.id, limit=10000)
 
-        # Gerar notificações
         notification_service = NotificationService()
         notifications = notification_service.get_tasks_requiring_notification(
             tasks, hours_ahead=hours_ahead
         )
 
-        # Formatar notificações
         message = notification_service.format_notification_message(notifications)
         summary = notification_service.get_notification_summary(notifications)
 
-        # Converter tarefas para dict
         result = {
             "overdue": [t.to_dict() for t in notifications["overdue"]],
             "due_today": [t.to_dict() for t in notifications["due_today"]],

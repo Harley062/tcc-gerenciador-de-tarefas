@@ -2,13 +2,11 @@ from enum import Enum
 
 
 class Priority(str, Enum):
-    # Português (preferido)
     BAIXA = "baixa"
     MEDIA = "media"
     ALTA = "alta"
     URGENTE = "urgente"
 
-    # English (para compatibilidade com dados existentes)
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"

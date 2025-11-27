@@ -1,11 +1,5 @@
-/**
- * Tema moderno para o gerenciador de tarefas
- * Baseado em templates modernos de 2024/2025
- */
-
 export const theme = {
   colors: {
-    // Cores primárias - Azul moderno
     primary: {
       50: '#eff6ff',
       100: '#dbeafe',
@@ -19,7 +13,6 @@ export const theme = {
       900: '#1e3a8a',
     },
 
-    // Cores secundárias - Roxo/Violeta
     secondary: {
       50: '#faf5ff',
       100: '#f3e8ff',
@@ -33,7 +26,6 @@ export const theme = {
       900: '#581c87',
     },
 
-    // Sucesso - Verde
     success: {
       50: '#f0fdf4',
       100: '#dcfce7',
@@ -47,7 +39,6 @@ export const theme = {
       900: '#14532d',
     },
 
-    // Aviso - Amarelo/Laranja
     warning: {
       50: '#fffbeb',
       100: '#fef3c7',
@@ -61,7 +52,6 @@ export const theme = {
       900: '#78350f',
     },
 
-    // Erro - Vermelho
     error: {
       50: '#fef2f2',
       100: '#fee2e2',
@@ -75,7 +65,6 @@ export const theme = {
       900: '#7f1d1d',
     },
 
-    // Tons de cinza
     gray: {
       50: '#f9fafb',
       100: '#f3f4f6',
@@ -89,7 +78,6 @@ export const theme = {
       900: '#111827',
     },
 
-    // Background
     background: {
       main: '#f8fafc',
       paper: '#ffffff',
@@ -97,7 +85,6 @@ export const theme = {
     },
   },
 
-  // Sombras modernas
   shadows: {
     sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
     DEFAULT: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
@@ -108,7 +95,6 @@ export const theme = {
     inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
   },
 
-  // Border radius
   radius: {
     none: '0',
     sm: '0.125rem',
@@ -120,7 +106,6 @@ export const theme = {
     full: '9999px',
   },
 
-  // Espaçamento
   spacing: {
     xs: '0.5rem',
     sm: '0.75rem',
@@ -130,7 +115,6 @@ export const theme = {
     '2xl': '3rem',
   },
 
-  // Tipografia
   typography: {
     fontFamily: {
       sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -148,7 +132,6 @@ export const theme = {
     },
   },
 
-  // Transições
   transitions: {
     fast: '150ms',
     base: '200ms',

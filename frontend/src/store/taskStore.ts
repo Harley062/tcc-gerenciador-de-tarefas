@@ -2,11 +2,9 @@ import { create } from 'zustand';
 import apiService from '../services/api';
 import websocketService from '../services/websocket';
 
-// Status em português (preferido) e inglês (compatibilidade)
 export type TaskStatus = 'a_fazer' | 'em_progresso' | 'concluida' | 'cancelada' | 'todo' | 'in_progress' | 'done' | 'cancelled' | 'pending';
 export type TaskPriority = 'baixa' | 'media' | 'alta' | 'urgente' | 'low' | 'medium' | 'high' | 'urgent';
 
-// Helper para normalizar status (inglês -> português)
 export const normalizeStatus = (status: string): TaskStatus => {
   const mapping: Record<string, TaskStatus> = {
     'todo': 'a_fazer',
@@ -18,7 +16,6 @@ export const normalizeStatus = (status: string): TaskStatus => {
   return mapping[status] || status as TaskStatus;
 };
 
-// Helper para normalizar prioridade (inglês -> português)
 export const normalizePriority = (priority: string): TaskPriority => {
   const mapping: Record<string, TaskPriority> = {
     'low': 'baixa',
@@ -29,13 +26,11 @@ export const normalizePriority = (priority: string): TaskPriority => {
   return mapping[priority] || priority as TaskPriority;
 };
 
-// Helper para verificar status (aceita português e inglês)
 export const isStatusDone = (status: string): boolean => status === 'done' || status === 'concluida';
 export const isStatusCancelled = (status: string): boolean => status === 'cancelled' || status === 'cancelada';
 export const isStatusInProgress = (status: string): boolean => status === 'in_progress' || status === 'em_progresso';
 export const isStatusTodo = (status: string): boolean => status === 'todo' || status === 'a_fazer' || status === 'pending';
 
-// Helper para verificar prioridade (aceita português e inglês)
 export const isPriorityHigh = (priority: string): boolean => priority === 'high' || priority === 'alta';
 export const isPriorityUrgent = (priority: string): boolean => priority === 'urgent' || priority === 'urgente';
 export const isPriorityMedium = (priority: string): boolean => priority === 'medium' || priority === 'media';
@@ -102,7 +97,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     try {
       const response = await apiService.getTasks({
         ...options,
-        limit: options?.limit || 100, // Use higher default limit for now
+        limit: options?.limit || 100,
       });
       set({ tasks: response.tasks, total: response.total, isLoading: false });
     } catch (error: any) {

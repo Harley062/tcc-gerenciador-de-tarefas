@@ -76,7 +76,6 @@ class UserSettingsRepository:
         )
         await self.session.commit()
         
-        # Refresh to get updated_at
         result = await self.session.execute(
             select(UserSettingsModel).where(UserSettingsModel.user_id == settings.user_id)
         )

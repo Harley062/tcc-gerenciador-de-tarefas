@@ -1,7 +1,3 @@
-/**
- * Serviço de Notificações Desktop
- */
-
 class NotificationService {
   private permission: NotificationPermission = 'default';
 
@@ -11,9 +7,6 @@ class NotificationService {
     }
   }
 
-  /**
-   * Solicitar permissão para notificações
-   */
   async requestPermission(): Promise<boolean> {
     if (!('Notification' in window)) {
       console.warn('Este navegador não suporta notificações desktop');
@@ -29,9 +22,6 @@ class NotificationService {
     return permission === 'granted';
   }
 
-  /**
-   * Enviar notificação
-   */
   async notify(title: string, options?: NotificationOptions): Promise<Notification | null> {
     if (!('Notification' in window)) {
       return null;
@@ -56,9 +46,6 @@ class NotificationService {
     }
   }
 
-  /**
-   * Notificar sobre tarefa atrasada
-   */
   notifyOverdueTask(taskTitle: string) {
     return this.notify('Tarefa Atrasada!', {
       body: `A tarefa "${taskTitle}" está atrasada.`,
@@ -68,9 +55,6 @@ class NotificationService {
     });
   }
 
-  /**
-   * Notificar sobre tarefa próxima do vencimento
-   */
   notifyUpcomingTask(taskTitle: string, dueDate: string) {
     return this.notify('Tarefa Próxima do Vencimento', {
       body: `A tarefa "${taskTitle}" vence em ${dueDate}.`,
@@ -80,9 +64,6 @@ class NotificationService {
     });
   }
 
-  /**
-   * Notificar sobre tarefa concluída
-   */
   notifyTaskCompleted(taskTitle: string) {
     return this.notify('Tarefa Concluída!', {
       body: `"${taskTitle}" foi marcada como concluída.`,
@@ -92,9 +73,6 @@ class NotificationService {
     });
   }
 
-  /**
-   * Verificar se notificações estão habilitadas
-   */
   isEnabled(): boolean {
     return 'Notification' in window && this.permission === 'granted';
   }

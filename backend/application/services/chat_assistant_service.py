@@ -27,34 +27,27 @@ class ChatAssistantService:
     - Remember conversation context for smart follow-ups
     """
 
-    MAX_HISTORY_SIZE = 30  # Maximum number of messages to keep in history
+    MAX_HISTORY_SIZE = 30
     
-    # Quick intent cache for common phrases (avoids GPT calls)
     QUICK_INTENT_MAP = {
-        # Greetings
         "oi": "greeting", "olá": "greeting", "ola": "greeting", "hey": "greeting",
         "bom dia": "greeting", "boa tarde": "greeting", "boa noite": "greeting",
         "e aí": "greeting", "eai": "greeting", "oi!": "greeting", "olá!": "greeting",
         
-        # Thanks
         "obrigado": "thanks", "obrigada": "thanks", "valeu": "thanks", "vlw": "thanks",
         "brigado": "thanks", "thanks": "thanks", "obrigado!": "thanks",
         
-        # Help
         "ajuda": "help", "help": "help", "comandos": "help", "?": "help",
         "o que você faz": "about_system", "o que voce faz": "about_system",
         
-        # Confirmations
         "sim": "confirm_yes", "s": "confirm_yes", "ok": "confirm_yes", 
         "confirmar": "confirm_yes", "pode ser": "confirm_yes", "isso": "confirm_yes",
         "sim!": "confirm_yes", "confirma": "confirm_yes", "pode": "confirm_yes",
         
-        # Negations
         "não": "confirm_no", "nao": "confirm_no", "n": "confirm_no",
         "cancelar": "confirm_no", "cancela": "confirm_no", "desistir": "confirm_no",
         "não quero": "confirm_no", "deixa pra lá": "confirm_no",
         
-        # Quick actions
         "minhas tarefas": "list_tasks", "listar tarefas": "list_tasks",
         "tarefas de hoje": "list_tasks", "tarefas para hoje": "list_tasks",
         "criar tarefa": "create_task", "nova tarefa": "create_task",
@@ -64,19 +57,19 @@ class ChatAssistantService:
     def __init__(
         self,
         openai_adapter: OpenAIAdapter,
-        task_repository = None,  # Optional: for direct execution
+        task_repository = None,
         user_id: UUID = None,
     ):
         self.openai_adapter = openai_adapter
         self.task_repository = task_repository
         self.user_id = user_id
         self.conversation_history = []
-        self.last_action_context = None  # Store context of last action for follow-up
-        self.pending_tasks_list = []  # Store task list for selection
-        self.agent_mode = True  # Agent executes actions directly when possible
-        self.executed_actions = []  # Track actions executed in current session
-        self.awaiting_confirmation = None  # Store pending confirmation data
-        self.conversation_context = None  # Current conversation topic/context
+        self.last_action_context = None
+        self.pending_tasks_list = []
+        self.agent_mode = True
+        self.executed_actions = []
+        self.awaiting_confirmation = None
+        self.conversation_context = None
     
     def set_repository(self, repository, user_id: UUID):
         """Set the task repository for direct execution"""
@@ -88,11 +81,9 @@ class ChatAssistantService:
         if not self.conversation_history:
             return False
         
-        # Find the last assistant message
         for msg in reversed(self.conversation_history):
             if msg.get("role") == "assistant":
                 content = msg.get("content", "").lower()
-                # Check if the message was asking for task description
                 waiting_phrases = [
                     "descreva a tarefa",
                     "qual tarefa",
@@ -110,14 +101,12 @@ class ChatAssistantService:
         if not self.conversation_history:
             return None
         
-        # Check last few messages for context
         recent = self.conversation_history[-4:] if len(self.conversation_history) >= 4 else self.conversation_history
         
         for msg in reversed(recent):
             if msg.get("role") == "assistant":
                 content = msg.get("content", "").lower()
                 
-                # Detect various contexts
                 if "vou criar a tarefa" in content or "confirmar para criar" in content:
                     return "awaiting_create_confirmation"
                 elif "marcar como concluída" in content or "confirmar" in content and "concluí" in content:
@@ -135,15 +124,12 @@ class ChatAssistantService:
         """Check for quick intent matches without calling GPT"""
         message_lower = message.lower().strip()
         
-        # Direct match
         if message_lower in self.QUICK_INTENT_MAP:
             return self.QUICK_INTENT_MAP[message_lower]
         
-        # Check for number (selection)
         if message_lower.isdigit() and self.last_action_context:
             return f"select_{self.last_action_context}"
         
-        # Check for patterns
         if message_lower.startswith("criar ") or message_lower.startswith("adicionar "):
             return "create_task"
         if message_lower.startswith("concluir ") or message_lower.startswith("finalizar "):
@@ -250,19 +236,14 @@ class ChatAssistantService:
 
             message_lower = message.lower().strip()
             
-            # Step 1: Check conversation context first
             conv_context = self._get_conversation_context()
             
-            # Step 2: Quick intent check (no GPT call needed)
             quick_intent = self._quick_intent_check(message_lower)
             
-            # Step 3: Handle based on context and intent
             intent = None
             
-            # Handle confirmations based on context
             if quick_intent == "confirm_yes" and conv_context:
                 if conv_context == "awaiting_create_confirmation":
-                    # User confirmed task creation - but frontend handles this
                     intent = "confirm_yes"
                 elif conv_context == "awaiting_complete_confirmation":
                     intent = "confirm_yes"
@@ -271,21 +252,17 @@ class ChatAssistantService:
             elif quick_intent == "confirm_no" and conv_context:
                 intent = "confirm_no"
             
-            # Handle task description after being asked
             elif conv_context == "awaiting_task_description" and not quick_intent:
                 logger.info("Context: waiting for task description, treating as create_task")
                 intent = "create_task"
             
-            # Handle selection after being asked
             elif conv_context == "awaiting_selection" and message_lower.isdigit():
                 if self.last_action_context:
                     intent = f"select_{self.last_action_context}"
             
-            # Use quick intent if found
             elif quick_intent and quick_intent not in ["confirm_yes", "confirm_no"]:
                 intent = quick_intent
             
-            # Fall back to GPT classification
             if not intent:
                 intent = await self._detect_intent(message_lower)
 
@@ -300,7 +277,6 @@ class ChatAssistantService:
                 extra={"intent": intent, "context": conv_context, "message_preview": message[:50]}
             )
 
-            # Route to appropriate handler
             if intent == "confirm_yes":
                 response = self._handle_confirmation_yes()
             elif intent == "confirm_no":
@@ -319,7 +295,6 @@ class ChatAssistantService:
                 response = await self._handle_create_task(message, user_tasks)
             elif intent == "complete_task":
                 response = await self._handle_complete_task(message_lower, user_tasks)
-                # Save context for follow-up selection
                 if response.get("action") == "select_complete":
                     self.last_action_context = "complete"
                     self.pending_tasks_list = response.get("data", [])
@@ -329,7 +304,6 @@ class ChatAssistantService:
                 response = await self._handle_update_task(message_lower, user_tasks)
             elif intent == "delete_task":
                 response = await self._handle_delete_task(message_lower, user_tasks)
-                # Save context for follow-up selection
                 if response.get("action") == "select_delete":
                     self.last_action_context = "delete"
                     self.pending_tasks_list = response.get("data", [])
@@ -348,7 +322,6 @@ class ChatAssistantService:
                 "timestamp": now_brazil().isoformat()
             })
 
-            # Trim history to prevent unlimited growth
             if len(self.conversation_history) > self.MAX_HISTORY_SIZE:
                 self.conversation_history = self.conversation_history[-self.MAX_HISTORY_SIZE:]
 
@@ -371,7 +344,6 @@ class ChatAssistantService:
     async def _detect_intent_with_gpt(self, message: str) -> str:
         """Use GPT to intelligently classify user intent with conversation context"""
         
-        # Build context from recent conversation
         recent_context = ""
         if self.conversation_history:
             recent = self.conversation_history[-4:]
@@ -410,7 +382,6 @@ REGRAS IMPORTANTES:
 
 Responda APENAS com a intenção, nada mais."""
 
-        # Build user prompt with context
         context_section = ""
         if recent_context:
             context_section = f"\nCONTEXTO DA CONVERSA RECENTE:\n{recent_context}\n"
@@ -421,13 +392,12 @@ Responda APENAS com a intenção, nada mais."""
             result = await self.openai_adapter.generate_completion(
                 prompt=user_prompt,
                 system_prompt=system_prompt,
-                temperature=0.1,  # Baixa temperatura para consistência
+                temperature=0.1,
                 max_tokens=20
             )
             
             intent = result.get("content", "").strip().lower()
             
-            # Validate intent is one of the expected values
             valid_intents = [
                 "greeting", "thanks", "about_system", "help", "list_tasks",
                 "create_task", "complete_task", "delete_task", "update_task",
@@ -438,20 +408,17 @@ Responda APENAS com a intenção, nada mais."""
                 logger.info(f"GPT classified intent as: {intent}")
                 return intent
             else:
-                # If GPT returns something unexpected, default to general
                 logger.warning(f"GPT returned unexpected intent: {intent}, defaulting to general")
                 return "general"
                 
         except Exception as e:
             logger.error(f"GPT intent classification failed: {e}")
-            # Fallback to basic detection if GPT fails
             return self._detect_intent_fallback(message)
     
     def _detect_intent_fallback(self, message: str) -> str:
         """Fallback intent detection using keywords (used when GPT fails)"""
         message_lower = message.lower()
         
-        # Simple keyword-based fallback
         if any(g in message_lower for g in ["oi", "olá", "bom dia", "boa tarde", "boa noite"]):
             return "greeting"
         if any(t in message_lower for t in ["obrigado", "valeu", "thanks"]):
@@ -472,13 +439,10 @@ Responda APENAS com a intenção, nada mais."""
     async def _detect_intent(self, message: str) -> str:
         """Detect user intent - uses GPT for intelligent classification"""
 
-        # Check if user is responding with a number (selection from previous list)
         message_stripped = message.strip()
         if message_stripped.isdigit() and self.last_action_context:
-            # User is selecting from a list
             return f"select_{self.last_action_context}"
         
-        # Use GPT for intelligent intent classification
         return await self._detect_intent_with_gpt(message)
     
     async def _handle_greeting(self, tasks: List[Task]) -> Dict[str, Any]:
@@ -486,7 +450,6 @@ Responda APENAS com a intenção, nada mais."""
         now = now_brazil()
         hour = now.hour
         
-        # Determine time-appropriate greeting
         if 5 <= hour < 12:
             greeting = "Bom dia"
         elif 12 <= hour < 18:
@@ -494,7 +457,6 @@ Responda APENAS com a intenção, nada mais."""
         else:
             greeting = "Boa noite"
         
-        # Quick summary
         pending = [t for t in tasks if t.status.value != "done"]
         overdue = [t for t in pending if t.due_date and to_brazil_tz(t.due_date).date() < now.date()]
         today_tasks = [t for t in pending if t.due_date and to_brazil_tz(t.due_date).date() == now.date()]
@@ -533,8 +495,6 @@ Responda APENAS com a intenção, nada mais."""
     
     def _handle_confirmation_yes(self) -> Dict[str, Any]:
         """Handle when user confirms with 'sim', 'ok', etc."""
-        # The actual confirmation is handled by the frontend buttons
-        # This is for when user types confirmation instead of clicking
         return {
             "message": "👍 Entendido! Use os botões de confirmação acima para confirmar a ação, ou me diga o que mais posso ajudar.",
             "action": None,
@@ -543,7 +503,6 @@ Responda APENAS com a intenção, nada mais."""
     
     def _handle_confirmation_no(self) -> Dict[str, Any]:
         """Handle when user cancels with 'não', 'cancelar', etc."""
-        # Clear any pending context
         self.awaiting_confirmation = None
         self.last_action_context = None
         self.pending_tasks_list = []
@@ -564,7 +523,6 @@ Responda APENAS com a intenção, nada mais."""
         now = now_brazil()
         today = now.date()
         
-        # Filter only pending tasks (not done)
         pending_tasks = [
             t for t in tasks 
             if str(t.status).lower().replace("taskstatus.", "") not in ["done", "concluida", "cancelled", "cancelada"]
@@ -577,7 +535,6 @@ Responda APENAS com a intenção, nada mais."""
                 "data": None
             }
         
-        # Categorize tasks
         overdue_tasks = []
         urgent_tasks = []
         high_priority_tasks = []
@@ -588,7 +545,6 @@ Responda APENAS com a intenção, nada mais."""
             priority = str(t.priority).lower().replace("priority.", "")
             status = str(t.status).lower().replace("taskstatus.", "")
             
-            # Check if overdue
             if t.due_date:
                 task_date = to_brazil_tz(t.due_date).date()
                 if task_date < today:
@@ -598,7 +554,6 @@ Responda APENAS com a intenção, nada mais."""
                     today_tasks.append(t)
                     continue
             
-            # Check priority
             if priority in ["urgente", "urgent"]:
                 urgent_tasks.append(t)
             elif priority in ["alta", "high"]:
@@ -606,12 +561,10 @@ Responda APENAS com a intenção, nada mais."""
             else:
                 other_tasks.append(t)
         
-        # Build recommendation based on priority order
         suggested_task = None
         reason = ""
         
         if overdue_tasks:
-            # Sort by due date (oldest first) and priority
             overdue_tasks.sort(key=lambda t: (t.due_date, self._priority_order(t.priority)))
             suggested_task = overdue_tasks[0]
             days_overdue = (today - to_brazil_tz(suggested_task.due_date).date()).days
@@ -629,12 +582,10 @@ Responda APENAS com a intenção, nada mais."""
             suggested_task = high_priority_tasks[0]
             reason = "🔴 Esta tarefa tem alta prioridade. É importante resolvê-la logo."
         else:
-            # Get oldest pending task or first in list
             other_tasks.sort(key=lambda t: t.created_at if t.created_at else datetime.max.replace(tzinfo=timezone.utc))
             suggested_task = other_tasks[0] if other_tasks else pending_tasks[0]
             reason = "📋 Esta é a próxima tarefa na sua lista. Comece por ela para manter o progresso."
         
-        # Format response
         priority_label = self._format_priority(suggested_task.priority)
         status_label = self._format_status(suggested_task.status)
         due_info = ""
@@ -799,7 +750,6 @@ Quer que eu marque esta tarefa como concluída quando terminar? Basta dizer "con
             filtered_tasks = [t for t in tasks if str(t.priority).lower() in ["urgente", "urgent"]]
             period = "urgentes"
         else:
-            # Default: show non-completed tasks
             filtered_tasks = [t for t in tasks if str(t.status).lower().replace("taskstatus.", "") != "done"]
             period = ""
         
@@ -817,12 +767,10 @@ Quer que eu marque esta tarefa como concluída quando terminar? Basta dizer "con
                     "data": None
                 }
 
-        # Helper function for date formatting
         def format_date(due_date) -> str:
             if not due_date:
                 return ""
             now = now_brazil()
-            # Converter para timezone do Brasil
             due_date_brazil = to_brazil_tz(due_date)
             date_diff = (due_date_brazil.date() - now.date()).days
 
@@ -858,14 +806,12 @@ Quer que eu marque esta tarefa como concluída quando terminar? Basta dizer "con
                 "low": "BAIXA"
             }.get(p, p.upper())
 
-        # Build formatted task list
         task_lines = []
         for idx, t in enumerate(filtered_tasks[:10], 1):
             status = format_status(t.status)
             priority = format_priority(t.priority)
             date_info = format_date(t.due_date)
 
-            # Truncate title if too long
             title = t.title if len(t.title) <= 60 else t.title[:57] + "..."
 
             task_line = f"{idx}. {title} | {status} | {priority}{date_info}"
@@ -873,7 +819,6 @@ Quer que eu marque esta tarefa como concluída quando terminar? Basta dizer "con
 
         task_list = "\n".join(task_lines)
 
-        # Add summary info
         total = len(filtered_tasks)
         showing = min(10, total)
         more_info = f"\n\nMostrando {showing} de {total}" if total > 10 else ""
@@ -900,7 +845,6 @@ Quer que eu marque esta tarefa como concluída quando terminar? Basta dizer "con
     ) -> Dict[str, Any]:
         """Handle request to create a task - uses GPT to extract task details"""
 
-        # Use GPT to extract task title and date intelligently
         task_info = await self._extract_task_info_with_gpt(message)
         
         task_title = task_info.get("title", "").strip()
@@ -914,7 +858,6 @@ Quer que eu marque esta tarefa como concluída quando terminar? Basta dizer "con
                 "data": None
             }
 
-        # Build confirmation message
         confirm_msg = f"🆕 Vou criar a tarefa:\n\n📌 {task_title}"
         
         if due_date:
@@ -931,7 +874,7 @@ Quer que eu marque esta tarefa como concluída quando terminar? Basta dizer "con
             "action": "confirm_create",
             "data": {
                 "title": task_title,
-                "text": task_title,  # Keep for compatibility
+                "text": task_title,
                 "due_date": due_date,
                 "priority": priority
             },
@@ -987,10 +930,8 @@ Saída: {{"title": "Ligar para o cliente", "due_date": "{today_str} 15:00", "pri
             
             response_text = result.get("content", "").strip()
             
-            # Try to parse JSON from response
             import json
             
-            # Clean up response if needed
             if "```json" in response_text:
                 response_text = response_text.split("```json")[1].split("```")[0].strip()
             elif "```" in response_text:
@@ -1003,7 +944,6 @@ Saída: {{"title": "Ligar para o cliente", "due_date": "{today_str} 15:00", "pri
             
         except Exception as e:
             logger.error(f"Failed to extract task info with GPT: {e}")
-            # Fallback: use original message as title with basic cleanup
             task_text = message.lower()
             prefixes = ["nova tarefa", "criar tarefa", "criar", "adicionar tarefa", "adicionar", "agendar", "marcar"]
             for prefix in prefixes:
@@ -1047,13 +987,11 @@ Saída: {{"title": "Ligar para o cliente", "due_date": "{today_str} 15:00", "pri
         
         task_index = int(message_stripped) - 1
         
-        # Try to find task from pending list first
         if self.pending_tasks_list and 0 <= task_index < len(self.pending_tasks_list):
             task_data = self.pending_tasks_list[task_index]
             task_id = task_data.get("id")
             task_title = task_data.get("title", "Tarefa")
             
-            # Clear context after selection
             self.last_action_context = None
             self.pending_tasks_list = []
             
@@ -1086,13 +1024,11 @@ Saída: {{"title": "Ligar para o cliente", "due_date": "{today_str} 15:00", "pri
                     ]
                 }
         
-        # Fallback: try to find from current tasks
         pending_tasks = [t for t in tasks if str(t.status).lower().replace("taskstatus.", "") != "done"]
         
         if 0 <= task_index < len(pending_tasks):
             task = pending_tasks[task_index]
             
-            # Clear context
             self.last_action_context = None
             self.pending_tasks_list = []
             
@@ -1138,7 +1074,6 @@ Saída: {{"title": "Ligar para o cliente", "due_date": "{today_str} 15:00", "pri
     ) -> Dict[str, Any]:
         """Handle request to mark a task as complete"""
         
-        # Filtrar apenas tarefas não concluídas
         pending_tasks = [t for t in tasks if str(t.status).lower().replace("taskstatus.", "") != "done"]
         
         if not pending_tasks:
@@ -1148,7 +1083,6 @@ Saída: {{"title": "Ligar para o cliente", "due_date": "{today_str} 15:00", "pri
                 "data": None
             }
         
-        # Verificar se o usuário digitou um número (seleção de tarefa)
         message_stripped = message.strip()
         if message_stripped.isdigit():
             task_index = int(message_stripped) - 1
@@ -1168,7 +1102,6 @@ Saída: {{"title": "Ligar para o cliente", "due_date": "{today_str} 15:00", "pri
                     ]
                 }
         
-        # Extrair palavras-chave da mensagem
         task_keywords = []
         exclude_words = ["concluir", "finalizar", "terminar", "completar", "complete", "finish", "done", "feito", "terminei", "tarefa", "tarefas", "marcar", "como", "concluída", "feita"]
         for word in message.split():
@@ -1182,7 +1115,6 @@ Saída: {{"title": "Ligar para o cliente", "due_date": "{today_str} 15:00", "pri
                     matching_tasks.append(task)
         
         if not task_keywords or not matching_tasks:
-            # Listar tarefas pendentes para o usuário escolher
             task_list = "\n".join([f"{i+1}. {t.title} ({self._format_status(t.status)})" for i, t in enumerate(pending_tasks[:8])])
             return {
                 "message": f"✅ Qual tarefa você quer marcar como concluída?\n\n{task_list}\n\nDigite o nome ou número da tarefa.",
@@ -1281,7 +1213,6 @@ Saída: {{"title": "Ligar para o cliente", "due_date": "{today_str} 15:00", "pri
                 task_keywords.append(word)
         
         if not task_keywords:
-            # Listar tarefas para o usuário escolher
             if tasks:
                 task_list = "\n".join([f"{i+1}. {t.title}" for i, t in enumerate(tasks[:8])])
                 return {
@@ -1342,7 +1273,6 @@ Saída: {{"title": "Ligar para o cliente", "due_date": "{today_str} 15:00", "pri
         
         total = len(tasks)
         
-        # Count by status (handle enum properly)
         pending = len([t for t in tasks if str(t.status).lower().replace("taskstatus.", "") == "pending"])
         todo = len([t for t in tasks if str(t.status).lower().replace("taskstatus.", "") == "todo"])
         in_progress = len([t for t in tasks if str(t.status).lower().replace("taskstatus.", "") == "in_progress"])
@@ -1351,21 +1281,18 @@ Saída: {{"title": "Ligar para o cliente", "due_date": "{today_str} 15:00", "pri
         active_tasks = pending + todo + in_progress
         completion_rate = (done / total * 100) if total > 0 else 0
         
-        # Count overdue tasks
         now = now_brazil()
         overdue = len([
             t for t in tasks 
             if t.due_date and to_brazil_tz(t.due_date) < now and str(t.status).lower().replace("taskstatus.", "") != "done"
         ])
         
-        # Count high priority pending
         high_priority = len([
             t for t in tasks 
             if str(t.priority).lower() in ["alta", "high", "urgente", "urgent"] 
             and str(t.status).lower().replace("taskstatus.", "") != "done"
         ])
         
-        # Count tasks due today
         today = now.date()
         due_today = len([
             t for t in tasks 
@@ -1373,7 +1300,6 @@ Saída: {{"title": "Ligar para o cliente", "due_date": "{today_str} 15:00", "pri
             and str(t.status).lower().replace("taskstatus.", "") != "done"
         ])
         
-        # Build status message with insights
         status_lines = [
             f"📊 Resumo das suas tarefas:",
             f"",
@@ -1383,7 +1309,6 @@ Saída: {{"title": "Ligar para o cliente", "due_date": "{today_str} 15:00", "pri
             f"📋 Pendentes: {pending + todo}",
         ]
         
-        # Add alerts
         alerts = []
         if overdue > 0:
             alerts.append(f"🚨 {overdue} tarefa(s) atrasada(s)!")
@@ -1396,7 +1321,6 @@ Saída: {{"title": "Ligar para o cliente", "due_date": "{today_str} 15:00", "pri
             status_lines.append("")
             status_lines.extend(alerts)
         
-        # Add motivational message
         if completion_rate >= 80:
             status_lines.append("\n🌟 Excelente! Você está quase lá!")
         elif completion_rate >= 50:
@@ -1455,7 +1379,6 @@ Saída: {{"title": "Ligar para o cliente", "due_date": "{today_str} 15:00", "pri
     def _handle_about_system(self, tasks: List[Task]) -> Dict[str, Any]:
         """Handle questions about the system itself"""
         
-        # Build a personalized explanation based on user's tasks
         total_tasks = len(tasks)
         pending = sum(1 for t in tasks if t.status.value == "todo")
         in_progress = sum(1 for t in tasks if t.status.value == "in_progress")
@@ -1484,7 +1407,6 @@ Sou seu assistente pessoal de produtividade! Fui criado para ajudar você a orga
 
 """
         
-        # Add personalized context
         if total_tasks > 0:
             about_text += f"""📈 Seu panorama atual:
    Você tem {total_tasks} tarefa(s) no sistema
@@ -1526,15 +1448,12 @@ Estou aqui para ajudar! Como posso te auxiliar?"""
     ) -> Dict[str, Any]:
         """Handle query using GPT-4 with improved prompting and context"""
 
-        # Get current date for temporal context (using Brazil timezone)
         now = now_brazil()
         today = now.date()
         tomorrow = (now + timedelta(days=1)).date()
 
-        # Build concise task context with temporal annotations (no descriptions to save tokens)
         task_lines = []
         for t in tasks[:30]:
-            # Add temporal context
             temporal_tag = ""
             if t.due_date:
                 task_date = to_brazil_tz(t.due_date).date()
@@ -1545,7 +1464,6 @@ Estou aqui para ajudar! Como posso te auxiliar?"""
                 elif task_date == tomorrow:
                     temporal_tag = " [AMANHÃ]"
             
-            # Format status and priority in Portuguese
             status_pt = self._format_status_text(t.status)
             priority_pt = self._format_priority_text(t.priority)
 
@@ -1557,16 +1475,14 @@ Estou aqui para ajudar! Como posso te auxiliar?"""
 
         task_summary = "\n".join(task_lines)
 
-        # Build conversation history for context
         recent_history = ""
         if len(self.conversation_history) > 1:
-            recent_messages = self.conversation_history[-6:]  # Last 3 exchanges
+            recent_messages = self.conversation_history[-6:]
             recent_history = "\n".join([
                 f"{msg['role'].upper()}: {msg['content'][:200]}"
                 for msg in recent_messages
             ])
 
-        # Comprehensive system prompt with clear boundaries
         system_prompt = """Você é um assistente especializado em gerenciamento de tarefas. Suas responsabilidades são LIMITADAS a:
 
 1. Responder perguntas sobre as tarefas do usuário com base nos dados fornecidos
@@ -1599,12 +1515,10 @@ Resposta: "Você tem 1 tarefa urgente:
 Se perguntarem algo fora do escopo, responda: "Só posso ajudar com questões relacionadas às suas tarefas. Digite 'ajuda' para ver os comandos."
 """
 
-        # Add current date/time context for better filtering (using Brazil timezone)
         current_datetime = now_brazil()
         today_str = current_datetime.strftime("%d/%m/%Y")
         time_str = current_datetime.strftime("%H:%M")
 
-        # Build history section separately to avoid f-string backslash issues
         history_section = ""
         if recent_history:
             history_section = f"\nHISTÓRICO DA CONVERSA:\n{recent_history}\n"
@@ -1635,12 +1549,11 @@ Responda agora de forma útil e factual:"""
                 }
             )
 
-            # Use structured message format with system prompt
             result = await self.openai_adapter.generate_completion(
                 prompt=user_prompt,
                 system_prompt=system_prompt,
-                temperature=0.4,  # Balanced temperature for consistent but natural responses
-                max_tokens=800    # Increased for better responses
+                temperature=0.4,
+                max_tokens=800
             )
 
             response_content = result.get("content", "").strip()
@@ -1654,7 +1567,6 @@ Responda agora de forma útil e factual:"""
                 }
             )
 
-            # Validate response is not empty and not too long
             if not response_content:
                 return {
                     "message": "Desculpe, não consegui gerar uma resposta adequada. Digite 'ajuda' para ver os comandos disponíveis.",
@@ -1662,7 +1574,6 @@ Responda agora de forma útil e factual:"""
                     "data": None
                 }
 
-            # Limit response length to avoid overwhelming user
             if len(response_content) > 1000:
                 response_content = response_content[:1000] + "..."
 

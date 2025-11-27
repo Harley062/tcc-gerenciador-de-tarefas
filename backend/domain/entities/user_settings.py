@@ -7,9 +7,9 @@ from uuid import UUID, uuid4
 @dataclass
 class UserSettings:
     user_id: UUID
-    llm_provider: str = "llama"  # gpt4 or llama
+    llm_provider: str = "llama"
     openai_api_key: Optional[str] = None
-    llama_endpoint: str = "http://localhost:11434"  # Default Ollama endpoint (container network name)
+    llama_endpoint: str = "http://localhost:11434"
     default_task_duration: int = 60
     enable_auto_subtasks: bool = False
     enable_auto_priority: bool = True
@@ -27,7 +27,7 @@ class UserSettings:
             "id": str(self.id),
             "user_id": str(self.user_id),
             "llm_provider": self.llm_provider,
-            "openai_api_key": "***" if self.openai_api_key else None,  # Mask API key
+            "openai_api_key": "***" if self.openai_api_key else None,
             "llama_endpoint": self.llama_endpoint,
             "default_task_duration": self.default_task_duration,
             "enable_auto_subtasks": self.enable_auto_subtasks,

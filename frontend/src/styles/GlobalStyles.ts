@@ -31,7 +31,6 @@ export const GlobalStyles = createGlobalStyle`
       monospace;
   }
 
-  /* Scrollbar customizado */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -51,7 +50,6 @@ export const GlobalStyles = createGlobalStyle`
     background: #94a3b8;
   }
 
-  /* Animações globais */
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -92,7 +90,6 @@ export const GlobalStyles = createGlobalStyle`
     }
   }
 
-  /* Utilitários de animação */
   .animate-fade-in {
     animation: fadeIn 0.3s ease-in-out;
   }
@@ -105,13 +102,11 @@ export const GlobalStyles = createGlobalStyle`
     animation: slideInRight 0.4s ease-out;
   }
 
-  /* Estilo para botões desabilitados */
   button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
   }
 
-  /* Focus states acessíveis */
   button:focus-visible,
   input:focus-visible,
   select:focus-visible,
@@ -120,18 +115,15 @@ export const GlobalStyles = createGlobalStyle`
     outline-offset: 2px;
   }
 
-  /* Seleção de texto */
   ::selection {
     background-color: #bfdbfe;
     color: #1e40af;
   }
 
-  /* Transições suaves */
   a, button, input, select, textarea {
     transition: all 0.2s ease-in-out;
   }
 
-  /* Links */
   a {
     color: #3b82f6;
     text-decoration: none;
@@ -142,14 +134,12 @@ export const GlobalStyles = createGlobalStyle`
     text-decoration: underline;
   }
 
-  /* Container padrão */
   .container {
     max-width: 1280px;
     margin: 0 auto;
     padding: 0 1rem;
   }
 
-  /* Cards modernos */
   .card {
     background: white;
     border-radius: 0.75rem;
@@ -163,7 +153,6 @@ export const GlobalStyles = createGlobalStyle`
     transform: translateY(-2px);
   }
 
-  /* Badges */
   .badge {
     display: inline-flex;
     align-items: center;
@@ -198,7 +187,6 @@ export const GlobalStyles = createGlobalStyle`
     color: #374151;
   }
 
-  /* Botões modernos */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -250,7 +238,6 @@ export const GlobalStyles = createGlobalStyle`
     background-color: #dc2626;
   }
 
-  /* Input fields modernos */
   .input {
     width: 100%;
     padding: 0.625rem 0.875rem;
@@ -271,7 +258,6 @@ export const GlobalStyles = createGlobalStyle`
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
 
-  /* Loading spinner */
   .spinner {
     border: 2px solid #f3f4f6;
     border-top: 2px solid #3b82f6;
@@ -286,7 +272,6 @@ export const GlobalStyles = createGlobalStyle`
     100% { transform: rotate(360deg); }
   }
 
-  /* Grid responsivo */
   .grid {
     display: grid;
     gap: 1.5rem;
@@ -311,7 +296,6 @@ export const GlobalStyles = createGlobalStyle`
     }
   }
 
-  /* Responsividade */
   @media (max-width: 640px) {
     .card {
       padding: 1rem;

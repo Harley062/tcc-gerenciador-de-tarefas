@@ -18,7 +18,6 @@ class EnhancedGPTService(GPTService):
         llama_adapter: Optional[LlamaAdapter] = None,
         cache_repository=None,
     ):
-        # Initialize parent with openai_adapter for backward compatibility
         super().__init__(openai_adapter, cache_repository)
         self.llama_adapter = llama_adapter or LlamaAdapter()
         self.current_provider = "llama"
@@ -35,7 +34,6 @@ class EnhancedGPTService(GPTService):
     async def parse_task(self, text: str) -> tuple[Any, dict[str, Any]]:
         """Parse task using the configured LLM provider with fallback"""
 
-        # Try the configured provider first
         try:
             if self.current_provider == "gpt4" and self.openai_adapter:
                 logger.info(f"Parsing task with GPT-4: {text[:50]}...")
@@ -44,7 +42,6 @@ class EnhancedGPTService(GPTService):
                 logger.info(f"Parsing task with Llama: {text[:50]}...")
                 result = await self.llama_adapter.parse_task(text)
             else:
-                # If provider unknown, attempt Llama then GPT
                 logger.info(f"Parsing task with fallback chain: {text[:50]}...")
                 try:
                     result = await self.llama_adapter.parse_task(text)
@@ -58,7 +55,6 @@ class EnhancedGPTService(GPTService):
                 "cost": result.get("cost", 0.0),
             }
             
-            # Convert to ParsedTask object
             from application.services.gpt_service import ParsedTask
             parsed_task = ParsedTask(**parsed_data)
             
@@ -69,17 +65,14 @@ class EnhancedGPTService(GPTService):
                 f"Primary parser ({self.current_provider}) failed, attempting alternate providers",
                 extra={"error": str(e), "provider": self.current_provider}
             )
-            # Try alternate provider(s)
             try:
                 if self.current_provider == "gpt4" and self.llama_adapter:
                     result = await self.llama_adapter.parse_task(text)
                 elif self.current_provider == "llama" and self.openai_adapter:
                     result = await self._parse_with_gpt(text)
                 elif self.openai_adapter:
-                    # last-resort: try GPT adapter if available
                     result = await self._parse_with_gpt(text)
                 else:
-                    # No fallback available, re-raise the original error
                     logger.error(
                         f"No fallback provider available. Provider: {self.current_provider}, "
                         f"OpenAI available: {self.openai_adapter is not None}, "
@@ -127,7 +120,6 @@ class EnhancedGPTService(GPTService):
             elif self.current_provider == "llama":
                 return await self.llama_adapter.suggest_subtasks(task_title, task_description)
             else:
-                # Unknown provider: try Llama then GPT
                 try:
                     return await self.llama_adapter.suggest_subtasks(task_title, task_description)
                 except Exception:

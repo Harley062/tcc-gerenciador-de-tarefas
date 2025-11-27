@@ -245,7 +245,6 @@ const AnalyticsDashboard: React.FC = () => {
   );
 };
 
-// Função auxiliar para determinar o ícone do insight
 const getInsightIcon = (insight: string): string => {
   if (insight.includes('Excelente') || insight.includes('Parabéns')) return '🎉';
   if (insight.includes('ATENÇÃO') || insight.includes('atrasadas')) return '⚠️';

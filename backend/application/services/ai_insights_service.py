@@ -86,7 +86,6 @@ REGRAS OBRIGATÓRIAS:
         parsed = json.loads(content)
         logger.info(f"Parsed JSON: {parsed}")
 
-        # Handle both array and object responses
         if isinstance(parsed, list):
             subtasks = parsed
         elif isinstance(parsed, dict):
@@ -201,7 +200,7 @@ Data/hora atual: {now.isoformat()}
 Tarefas existentes (para contexto):
 """
 
-        for t in existing_tasks[:10]:  # Limit to 10 tasks for context
+        for t in existing_tasks[:10]:
             task_context += f"- {t.title} (Prioridade: {t.priority}, Status: {t.status}"
             if t.due_date:
                 task_context += f", Vencimento: {t.due_date.isoformat()}"
@@ -339,23 +338,20 @@ Retorne APENAS o objeto JSON, sem texto adicional."""
                 return dt.replace(tzinfo=timezone.utc)
             return dt
         
-        # Filtra tarefas pelo período
         now = utcnow_aware()
         if period == "daily":
             period_start = now - timedelta(days=1)
         elif period == "weekly":
             period_start = now - timedelta(days=7)
-        else:  # monthly
+        else:
             period_start = now - timedelta(days=30)
         
-        # Filtra tarefas ativas/recentes do período
         period_tasks = [t for t in tasks if t.created_at and make_aware(t.created_at) >= period_start]
         
         completed = [t for t in tasks if get_status(t) == "done"]
         in_progress = [t for t in tasks if get_status(t) == "in_progress"]
         todo = [t for t in tasks if get_status(t) == "todo"]
         
-        # Tarefas concluídas no período
         completed_in_period = [
             t for t in completed 
             if t.completed_at and make_aware(t.completed_at) >= period_start
@@ -365,13 +361,11 @@ Retorne APENAS o objeto JSON, sem texto adicional."""
         
         high_priority_pending = [t for t in todo + in_progress if get_priority(t) in ["high", "alta", "urgente", "urgent"]]
         
-        # Tarefas atrasadas
         overdue_tasks = [
             t for t in todo + in_progress 
             if t.due_date and make_aware(t.due_date) < now
         ]
         
-        # Gerar insights baseados nos dados reais
         insights = []
         
         total_active = len(todo) + len(in_progress)
@@ -403,7 +397,6 @@ Retorne APENAS o objeto JSON, sem texto adicional."""
         if total_active == 0 and len(completed) > 0:
             insights.append("✅ Parabéns! Todas as tarefas foram concluídas. Que tal planejar novas metas?")
         
-        # Gerar recomendações dinâmicas baseadas nos dados
         recommendations = []
         
         if len(overdue_tasks) > 0:
@@ -429,7 +422,6 @@ Retorne APENAS o objeto JSON, sem texto adicional."""
         if len(completed) > 0 and len(todo) == 0 and len(in_progress) == 0:
             recommendations.append("🌟 Incrível! Você zerou sua lista de tarefas. Planeje os próximos passos!")
         
-        # Se não há recomendações específicas, adiciona dicas gerais
         if len(recommendations) == 0:
             recommendations.append("📅 Defina prazos para suas tarefas para manter o foco.")
             recommendations.append("🔄 Revise suas tarefas diariamente para manter a produtividade.")
@@ -445,5 +437,5 @@ Retorne APENAS o objeto JSON, sem texto adicional."""
             "insights": insights,
             "top_completed": [{"title": t.title, "priority": get_priority(t)} for t in completed_in_period[:5]],
             "high_priority_pending": [{"title": t.title, "due_date": get_due_date(t)} for t in high_priority_pending[:5]],
-            "recommendations": recommendations[:4]  # Limita a 4 recomendações
+            "recommendations": recommendations[:4]
         }

@@ -20,7 +20,6 @@ from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 
-# Timezone de Brasília
 BRAZIL_TZ = ZoneInfo("America/Sao_Paulo")
 
 

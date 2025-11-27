@@ -12,7 +12,6 @@ from domain.utils.datetime_utils import now_brazil
 logger = logging.getLogger("sgti")
 
 
-# Helpers para verificar status (suporta português e inglês)
 def get_status_value(status) -> str:
     """Obtém o valor string do status (suporta Enum e string)"""
     return status.value if hasattr(status, 'value') else str(status)
@@ -110,18 +109,15 @@ class AnalyticsService:
                 "on_time_rate": 0.0
             }
 
-        # Calcular tempo médio de conclusão
         completion_times = []
         on_time = 0
         late = 0
 
         for task in completed_tasks:
-            # Tempo desde criação até conclusão
             if task.created_at and task.completed_at:
                 delta = task.completed_at - task.created_at
-                completion_times.append(delta.total_seconds() / 3600)  # em horas
+                completion_times.append(delta.total_seconds() / 3600)
 
-            # Verificar se foi concluída no prazo
             if task.due_date:
                 if task.completed_at <= task.due_date:
                     on_time += 1
@@ -175,7 +171,6 @@ class AnalyticsService:
             if now.date() < t.due_date.date() <= (now + timedelta(days=7)).date()
         ])
 
-        # Tempo estimado total
         total_estimated_minutes = sum(t.estimated_duration for t in tasks_with_estimate)
         active_estimated = sum(
             t.estimated_duration for t in tasks_with_estimate
@@ -221,7 +216,6 @@ class AnalyticsService:
         now = now_brazil()
         start_date = (now - timedelta(days=days)).date()
 
-        # Agrupar por dia
         created_by_day = defaultdict(int)
         completed_by_day = defaultdict(int)
 
@@ -232,7 +226,6 @@ class AnalyticsService:
             if is_done(task.status) and task.completed_at and task.completed_at.date() >= start_date:
                 completed_by_day[task.completed_at.date()] += 1
 
-        # Criar lista de dias
         trends = []
         current_date = start_date
         while current_date <= now.date():
@@ -289,10 +282,8 @@ class AnalyticsService:
                 "overdue_by_priority": {}
             }
 
-        # Calcular dias de atraso
         days_overdue = [(now - t.due_date).days for t in overdue_tasks]
 
-        # Agrupar por prioridade
         by_priority = defaultdict(int)
         for task in overdue_tasks:
             by_priority[task.priority] += 1
@@ -333,14 +324,12 @@ class AnalyticsService:
         """
         insights = []
 
-        # Verifica se há tarefas
         total_tasks = report["summary"].get("total_tasks", 0)
         
         if total_tasks == 0:
             insights.append("📋 Você ainda não tem tarefas cadastradas. Comece criando sua primeira tarefa!")
             return insights
 
-        # Insights de conclusão
         completion_rate = report["summary"].get("completion_rate", 0)
         if completion_rate >= 80:
             insights.append(f"🎉 Excelente! Você tem {completion_rate}% de taxa de conclusão. Continue assim!")
@@ -351,7 +340,6 @@ class AnalyticsService:
         elif completion_rate > 0:
             insights.append(f"💪 Taxa de conclusão baixa ({completion_rate}%). Revise suas prioridades e foque nas mais importantes.")
 
-        # Insights de atraso
         overdue = report.get("overdue_analysis", {}).get("total_overdue", 0)
         if overdue > 0:
             avg_days = report.get("overdue_analysis", {}).get("avg_days_overdue", 0)
@@ -360,7 +348,6 @@ class AnalyticsService:
             else:
                 insights.append(f"⚠️ {overdue} tarefas atrasadas precisam de atenção.")
 
-        # Insights de prioridade
         priority_dist = report.get("priority_distribution", {})
         urgent = priority_dist.get("urgente", 0)
         high = priority_dist.get("alta", 0)
@@ -369,7 +356,6 @@ class AnalyticsService:
         elif urgent + high > 0:
             insights.append(f"📌 {urgent + high} tarefas importantes aguardam sua atenção.")
 
-        # Insights de produtividade
         productivity = report.get("productivity", {})
         velocity = productivity.get("completion_velocity", 0)
         avg_per_day = productivity.get("avg_tasks_completed_per_day", 0)
@@ -382,7 +368,6 @@ class AnalyticsService:
         if avg_per_day >= 3:
             insights.append(f"🌟 Incrível! Média de {avg_per_day:.1f} tarefas por dia concluídas.")
 
-        # Insights de prazo
         completion = report.get("completion", {})
         on_time_rate = completion.get("on_time_rate", 0)
         if on_time_rate >= 80:
@@ -390,7 +375,6 @@ class AnalyticsService:
         elif on_time_rate < 50 and on_time_rate > 0:
             insights.append(f"📅 Apenas {on_time_rate}% das tarefas no prazo. Tente definir prazos mais realistas.")
 
-        # Insights de tempo
         time_analysis = report.get("time_analysis", {})
         due_today = time_analysis.get("due_today_count", 0)
         due_week = time_analysis.get("due_this_week_count", 0)
@@ -401,7 +385,6 @@ class AnalyticsService:
         if due_week > 5:
             insights.append(f"📅 Semana movimentada: {due_week} tarefas vencem esta semana.")
 
-        # Insights de projetos
         project_dist = report.get("project_distribution", {})
         without_project = project_dist.get("tasks_without_project", 0)
         if without_project > 10:

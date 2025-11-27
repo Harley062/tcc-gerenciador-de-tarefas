@@ -9,7 +9,6 @@ from pydantic import BaseModel, Field
 
 logger = logging.getLogger("sgti")
 
-# Timezone de Brasília
 BRAZIL_TZ = ZoneInfo("America/Sao_Paulo")
 
 
@@ -185,7 +184,6 @@ Retorne apenas JSON válido seguindo o schema, sem texto adicional."""
     ) -> dict[str, Any]:
         """Generate a general completion from GPT with configurable parameters"""
         try:
-            # Build messages array
             messages = []
             if system_prompt:
                 messages.append({"role": "system", "content": system_prompt})

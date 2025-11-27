@@ -37,38 +37,32 @@ class NotificationService:
         threshold = now + timedelta(hours=hours_ahead)
 
         notifications = {
-            "overdue": [],      # Tarefas atrasadas
-            "due_today": [],    # Vence hoje
-            "due_tomorrow": [], # Vence amanhã
-            "due_soon": [],     # Vence em breve (até 24h)
-            "high_priority_pending": []  # Alta prioridade sem prazo
+            "overdue": [],
+            "due_today": [],
+            "due_tomorrow": [],
+            "due_soon": [],
+            "high_priority_pending": []
         }
 
         for task in tasks:
-            # Pular tarefas já concluídas ou canceladas
             if task.status in ["done", "cancelled"]:
                 continue
 
             if task.due_date:
                 due_date = task.due_date
 
-                # Tarefa atrasada
                 if due_date < now:
                     notifications["overdue"].append(task)
 
-                # Vence hoje
                 elif due_date.date() == now.date():
                     notifications["due_today"].append(task)
 
-                # Vence amanhã
                 elif due_date.date() == (now + timedelta(days=1)).date():
                     notifications["due_tomorrow"].append(task)
 
-                # Vence em breve (próximas 24h)
                 elif due_date <= threshold:
                     notifications["due_soon"].append(task)
 
-            # Tarefas de alta prioridade sem prazo
             elif task.priority in ["alta", "urgente", "high", "urgent"]:
                 notifications["high_priority_pending"].append(task)
 
@@ -89,17 +83,15 @@ class NotificationService:
         """
         messages = []
 
-        # Tarefas atrasadas (prioridade máxima)
         if notifications["overdue"]:
             count = len(notifications["overdue"])
             messages.append(f"URGENTE: {count} tarefa(s) ATRASADA(S)!")
-            for task in notifications["overdue"][:3]:  # Mostrar até 3
+            for task in notifications["overdue"][:3]:
                 days_late = (now_brazil() - task.due_date).days
                 messages.append(f"  - {task.title} (atrasada há {days_late} dia(s))")
             if count > 3:
                 messages.append(f"  ... e mais {count - 3} tarefa(s)")
 
-        # Vence hoje
         if notifications["due_today"]:
             count = len(notifications["due_today"])
             messages.append(f"\nVENCE HOJE: {count} tarefa(s)")
@@ -109,7 +101,6 @@ class NotificationService:
             if count > 3:
                 messages.append(f"  ... e mais {count - 3} tarefa(s)")
 
-        # Vence amanhã
         if notifications["due_tomorrow"]:
             count = len(notifications["due_tomorrow"])
             messages.append(f"\nVENCE AMANHÃ: {count} tarefa(s)")
@@ -119,7 +110,6 @@ class NotificationService:
             if count > 3:
                 messages.append(f"  ... e mais {count - 3} tarefa(s)")
 
-        # Alta prioridade sem prazo
         if notifications["high_priority_pending"]:
             count = len(notifications["high_priority_pending"])
             messages.append(f"\nALTA PRIORIDADE sem prazo: {count} tarefa(s)")

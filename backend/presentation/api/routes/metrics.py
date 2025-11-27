@@ -21,8 +21,8 @@ async def health_check():
     metrics = metrics_collector.get_metrics_summary()
     
     is_healthy = (
-        metrics["p95_latency_ms"] < 500 and  # P95 < 500ms requirement
-        metrics["error_rate_percent"] < 0.1   # Error rate < 0.1% requirement
+        metrics["p95_latency_ms"] < 500 and
+        metrics["error_rate_percent"] < 0.1
     )
     
     return {

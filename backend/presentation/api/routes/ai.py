@@ -87,7 +87,7 @@ class DependenciesResponse(BaseModel):
 
 
 class SummaryRequest(BaseModel):
-    period: str = "daily"  # daily, weekly, monthly
+    period: str = "daily"
 
 
 class SummaryResponse(BaseModel):
@@ -104,7 +104,7 @@ class ChatMessageRequest(BaseModel):
 
 
 class ChatActionRequest(BaseModel):
-    action: str  # "create", "complete", "delete", "update_status"
+    action: str
     task_id: Optional[str] = None
     task_data: Optional[dict] = None
 
@@ -112,9 +112,9 @@ class ChatActionRequest(BaseModel):
 class ChatMessageResponse(BaseModel):
     message: str
     action: Optional[str]
-    data: Optional[Any] = None  # Pode ser dict ou list dependendo da ação
-    requires_confirmation: bool = False  # Se precisa de confirmação do usuário
-    action_buttons: Optional[List[dict]] = None  # Botões de ação rápida
+    data: Optional[Any] = None
+    requires_confirmation: bool = False
+    action_buttons: Optional[List[dict]] = None
 
 
 class TaskParseRequest(BaseModel):
@@ -181,7 +181,6 @@ async def get_ai_insights_service(
     )
 
 
-# Store chat service instances per user for context persistence
 _chat_services: Dict[str, ChatAssistantService] = {}
 
 
@@ -204,10 +203,8 @@ async def get_chat_assistant_service(
             detail="Configure sua chave OpenAI em Configurações para usar recursos de IA"
         )
     
-    # Reuse existing service to maintain conversation context
     if user_id_str in _chat_services:
         service = _chat_services[user_id_str]
-        # Update repository reference for this session
         repo = PostgreSQLTaskRepository(session)
         service.set_repository(repo, current_user.id)
         return service
@@ -514,7 +511,6 @@ async def execute_chat_action(
     
     repo = PostgreSQLTaskRepository(session)
     
-    # Helper to convert priority string to Priority enum
     def get_priority(priority_str: str) -> Priority:
         priority_map = {
             "baixa": Priority.BAIXA,
@@ -530,41 +526,32 @@ async def execute_chat_action(
     
     try:
         if request.action == "create":
-            # Criar tarefa usando os dados já extraídos pelo chat assistant
             if not request.task_data:
                 raise HTTPException(status_code=400, detail="Dados da tarefa são obrigatórios")
             
-            # Get title from task_data (already extracted by GPT in chat)
             title = request.task_data.get("title") or request.task_data.get("text")
             if not title:
                 raise HTTPException(status_code=400, detail="Título da tarefa é obrigatório")
             
-            # Get due_date if provided (already extracted by chat assistant)
             due_date = None
             due_date_str = request.task_data.get("due_date")
             if due_date_str:
                 from datetime import datetime
                 from domain.utils.datetime_utils import BRAZIL_TZ
                 try:
-                    # Try parsing different formats
                     if "T" in due_date_str:
-                        # ISO format - may have timezone info
                         due_date = datetime.fromisoformat(due_date_str.replace("Z", "+00:00"))
-                        # If it has UTC timezone, convert to Brazil
                         if due_date.tzinfo is not None and str(due_date.tzinfo) != "America/Sao_Paulo":
                             due_date = due_date.astimezone(BRAZIL_TZ)
                     elif " " in due_date_str:
-                        # Format: "YYYY-MM-DD HH:MM" - assume Brazil timezone
                         due_date = datetime.strptime(due_date_str, "%Y-%m-%d %H:%M")
                         due_date = due_date.replace(tzinfo=BRAZIL_TZ)
                     else:
-                        # Format: "YYYY-MM-DD" - assume Brazil timezone, set to midnight
                         due_date = datetime.strptime(due_date_str, "%Y-%m-%d")
                         due_date = due_date.replace(tzinfo=BRAZIL_TZ)
                 except Exception as e:
                     logger.warning(f"Could not parse due_date '{due_date_str}': {e}")
             
-            # Get priority if provided
             priority_str = request.task_data.get("priority", "medium")
             priority = get_priority(priority_str)
             
@@ -581,10 +568,8 @@ async def execute_chat_action(
             
             created_task = await repo.create(task)
             
-            # Format response message with date if present
             response_msg = f"✅ Tarefa '{created_task.title}' criada com sucesso!"
             if created_task.due_date:
-                # Check if already in Brazil timezone to avoid double conversion
                 if created_task.due_date.tzinfo is not None and str(created_task.due_date.tzinfo) == "America/Sao_Paulo":
                     due_brazil = created_task.due_date
                 else:

@@ -2,13 +2,11 @@ from enum import Enum
 
 
 class TaskStatus(str, Enum):
-    # Português (preferido)
     A_FAZER = "a_fazer"
     EM_PROGRESSO = "em_progresso"
     CONCLUIDA = "concluida"
     CANCELADA = "cancelada"
     
-    # English (para compatibilidade com dados existentes)
     PENDING = "pending"
     TODO = "todo"
     IN_PROGRESS = "in_progress"

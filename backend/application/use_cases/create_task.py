@@ -75,7 +75,7 @@ class CreateTaskUseCase:
         else:
             start_date = datetime.now(timezone.utc).replace(hour=9, minute=0, second=0, microsecond=0)
             if frequency == "weekly":
-                days_ahead = (0 - start_date.weekday()) % 7  # Next Monday
+                days_ahead = (0 - start_date.weekday()) % 7
                 if days_ahead == 0:
                     days_ahead = 7
                 start_date = start_date + timedelta(days=days_ahead)
@@ -103,7 +103,7 @@ class CreateTaskUseCase:
                 except ValueError:
                     occurrence_date = start_date.replace(year=new_year, month=new_month, day=28)
             else:
-                occurrence_date = start_date + timedelta(days=i * 7)  # Default to weekly
+                occurrence_date = start_date + timedelta(days=i * 7)
             
             task = Task(
                 user_id=user_id,

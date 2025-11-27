@@ -59,7 +59,6 @@ async def update_settings(
     repo = UserSettingsRepository(session)
     settings = await repo.get_or_create(current_user.id)
     
-    # Update only provided fields
     settings.llm_provider = "gpt4"
     
     if request.openai_api_key is not None:

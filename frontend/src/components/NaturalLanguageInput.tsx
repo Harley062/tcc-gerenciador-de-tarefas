@@ -55,7 +55,6 @@ const NaturalLanguageInput: React.FC<NaturalLanguageInputProps> = ({ onTaskCreat
   return (
     <div className="w-full max-w-4xl mx-auto p-6">
       <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl shadow-xl p-8 border border-white/20 dark:border-gray-700/50 relative overflow-hidden group">
-        {/* Decorative background elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none"></div>
 
