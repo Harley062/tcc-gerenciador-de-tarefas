@@ -2,6 +2,7 @@
 Chat Assistant Service - AI Agent for autonomous task management
 """
 import logging
+import random
 from typing import Any, Optional, List, Dict, Callable, Awaitable
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
@@ -156,7 +157,11 @@ class ChatAssistantService:
                 extra={"intent": intent, "message_preview": message[:50]}
             )
 
-            if intent == "list_tasks":
+            if intent == "greeting":
+                response = await self._handle_greeting(user_tasks)
+            elif intent == "thanks":
+                response = self._handle_thanks()
+            elif intent == "list_tasks":
                 response = await self._handle_list_tasks(message_lower, user_tasks)
             elif intent == "create_task":
                 response = await self._handle_create_task(message, user_tasks)
@@ -206,7 +211,7 @@ class ChatAssistantService:
                 }
             )
             return {
-                "message": f"Desculpe, ocorreu um erro ao processar sua mensagem: {str(e)}",
+                "message": "Desculpe, ocorreu um erro. Tente novamente ou digite 'ajuda' para ver os comandos disponíveis.",
                 "action": None,
                 "data": None
             }
@@ -220,8 +225,18 @@ class ChatAssistantService:
             # User is selecting from a list
             return f"select_{self.last_action_context}"
 
+        # Check for greetings
+        greetings = ["oi", "olá", "ola", "hey", "hi", "hello", "bom dia", "boa tarde", "boa noite", "e aí", "eai", "eae"]
+        if any(message_stripped.lower() == g or message_stripped.lower().startswith(g + " ") for g in greetings):
+            return "greeting"
+
+        # Check for thanks
+        thanks = ["obrigado", "obrigada", "valeu", "thanks", "thank you", "vlw", "brigado", "brigada"]
+        if any(word in message.lower() for word in thanks):
+            return "thanks"
+
         # Keywords for each intent with priority order
-        list_keywords = ["listar", "mostrar", "quais", "ver", "exibir", "list", "show", "what", "display", "me mostre", "me mostra", "tenho", "tem", "há"]
+        list_keywords = ["listar", "mostrar", "quais", "ver", "exibir", "list", "show", "what", "display", "me mostre", "me mostra", "tenho", "tem", "há", "minhas"]
         task_keywords = ["tarefa", "tarefas", "task", "tasks", "todo", "todos", "atividade", "atividades", "fazer", "pendente", "pendentes"]
         time_keywords = ["hoje", "amanhã", "semana", "mês", "today", "tomorrow", "week", "month", "agora", "próximo", "próxima"]
         status_filter_keywords = ["pendente", "pendentes", "progresso", "concluída", "concluídas", "pending", "done", "completed", "in progress", "atrasada", "atrasadas"]
@@ -265,6 +280,11 @@ class ChatAssistantService:
             if any(word in message for word in task_keywords) or len(message.split()) > 3:
                 return "update_task"
 
+        # Check for overdue/late tasks specifically
+        overdue_keywords = ["atrasada", "atrasadas", "atrasado", "atrasados", "vencida", "vencidas", "late", "overdue"]
+        if any(word in message for word in overdue_keywords):
+            return "list_tasks"
+
         # List tasks - EXPANDED detection for better coverage
         # Direct time references (e.g., "tarefas de hoje", "o que tenho hoje")
         if any(word in message for word in time_keywords):
@@ -277,7 +297,6 @@ class ChatAssistantService:
 
         # Explicit list keywords with task keywords
         if any(word in message for word in list_keywords):
-            if any(word in message for word in task_keywords):
                 return "list_tasks"
 
         # Questions about tasks (e.g., "o que tenho pra fazer?")
@@ -287,6 +306,56 @@ class ChatAssistantService:
 
         # Default to general for anything else
         return "general"
+    
+    async def _handle_greeting(self, tasks: List[Task]) -> Dict[str, Any]:
+        """Handle greeting messages with a friendly summary"""
+        now = now_brazil()
+        hour = now.hour
+        
+        # Determine time-appropriate greeting
+        if 5 <= hour < 12:
+            greeting = "Bom dia"
+        elif 12 <= hour < 18:
+            greeting = "Boa tarde"
+        else:
+            greeting = "Boa noite"
+        
+        # Quick summary
+        pending = [t for t in tasks if t.status.value != "done"]
+        overdue = [t for t in pending if t.due_date and to_brazil_tz(t.due_date).date() < now.date()]
+        today_tasks = [t for t in pending if t.due_date and to_brazil_tz(t.due_date).date() == now.date()]
+        
+        summary_parts = []
+        if len(overdue) > 0:
+            summary_parts.append(f"⚠️ {len(overdue)} atrasada(s)")
+        if len(today_tasks) > 0:
+            summary_parts.append(f"📅 {len(today_tasks)} para hoje")
+        if len(pending) > 0:
+            summary_parts.append(f"📋 {len(pending)} pendente(s) no total")
+        
+        summary = " | ".join(summary_parts) if summary_parts else "✨ Nenhuma tarefa pendente!"
+        
+        message = f"{greeting}! 👋 Sou seu agente de tarefas.\n\n{summary}\n\nComo posso ajudar? Exemplos:\n• 📋 Listar tarefas\n• ➕ Criar tarefa\n• ✅ Concluir tarefa\n• 📈 Meu progresso"
+        
+        return {
+            "message": message,
+            "action": None,
+            "data": {"pending": len(pending), "overdue": len(overdue), "today": len(today_tasks)}
+        }
+    
+    def _handle_thanks(self) -> Dict[str, Any]:
+        """Handle thank you messages"""
+        responses = [
+            "😊 Por nada! Estou aqui para ajudar.",
+            "👍 Disponha! Qualquer coisa, é só chamar.",
+            "✨ Fico feliz em ajudar! Precisa de mais alguma coisa?",
+            "🙌 Sempre às ordens! Boa produtividade!"
+        ]
+        return {
+            "message": random.choice(responses),
+            "action": None,
+            "data": None
+        }
     
     async def _handle_list_tasks(
         self,
@@ -318,30 +387,46 @@ class ChatAssistantService:
                 if t.due_date and t.due_date <= week_end
             ]
             period = "esta semana"
+        elif "atrasada" in message or "atrasadas" in message or "vencida" in message or "overdue" in message or "late" in message:
+            today = now_brazil()
+            filtered_tasks = [
+                t for t in tasks
+                if t.due_date and to_brazil_tz(t.due_date) < today and str(t.status).lower().replace("taskstatus.", "") != "done"
+            ]
+            period = "atrasadas"
         elif "pendente" in message or "pending" in message or "todo" in message:
-            filtered_tasks = [t for t in tasks if t.status in ["pending", "todo"]]
+            filtered_tasks = [t for t in tasks if str(t.status).lower().replace("taskstatus.", "") in ["pending", "todo"]]
             period = "pendentes"
         elif "progresso" in message or "progress" in message:
-            filtered_tasks = [t for t in tasks if t.status == "in_progress"]
+            filtered_tasks = [t for t in tasks if str(t.status).lower().replace("taskstatus.", "") == "in_progress"]
             period = "em progresso"
         elif "concluída" in message or "done" in message or "completed" in message:
-            filtered_tasks = [t for t in tasks if t.status == "done"]
+            filtered_tasks = [t for t in tasks if str(t.status).lower().replace("taskstatus.", "") == "done"]
             period = "concluídas"
         elif "alta" in message or "high" in message or "priorit" in message:
-            filtered_tasks = [t for t in tasks if t.priority in ["alta", "high"]]
+            filtered_tasks = [t for t in tasks if str(t.priority).lower() in ["alta", "high"]]
             period = "de alta prioridade"
         elif "urgente" in message or "urgent" in message:
-            filtered_tasks = [t for t in tasks if t.priority in ["urgente", "urgent"]]
+            filtered_tasks = [t for t in tasks if str(t.priority).lower() in ["urgente", "urgent"]]
             period = "urgentes"
         else:
-            period = "todas"
+            # Default: show non-completed tasks
+            filtered_tasks = [t for t in tasks if str(t.status).lower().replace("taskstatus.", "") != "done"]
+            period = ""
         
         if not filtered_tasks:
-            return {
-                "message": f"Você não tem tarefas {period}.",
-                "action": None,
-                "data": None
-            }
+            if period:
+                return {
+                    "message": f"✨ Você não tem tarefas {period}. Ótimo trabalho!",
+                    "action": None,
+                    "data": None
+                }
+            else:
+                return {
+                    "message": "✨ Você não tem tarefas pendentes. Que tal criar uma nova?",
+                    "action": None,
+                    "data": None
+                }
 
         # Helper function for date formatting
         def format_date(due_date) -> str:
@@ -770,38 +855,85 @@ class ChatAssistantService:
         message: str, 
         tasks: List[Task]
     ) -> Dict[str, Any]:
-        """Handle request for task status summary"""
+        """Handle request for task status summary with insights"""
         
         total = len(tasks)
-        pending = len([t for t in tasks if t.status == "pending"])
-        todo = len([t for t in tasks if t.status == "todo"])
-        in_progress = len([t for t in tasks if t.status == "in_progress"])
-        done = len([t for t in tasks if t.status == "done"])
         
+        # Count by status (handle enum properly)
+        pending = len([t for t in tasks if str(t.status).lower().replace("taskstatus.", "") == "pending"])
+        todo = len([t for t in tasks if str(t.status).lower().replace("taskstatus.", "") == "todo"])
+        in_progress = len([t for t in tasks if str(t.status).lower().replace("taskstatus.", "") == "in_progress"])
+        done = len([t for t in tasks if str(t.status).lower().replace("taskstatus.", "") == "done"])
+        
+        active_tasks = pending + todo + in_progress
         completion_rate = (done / total * 100) if total > 0 else 0
         
-        high_priority = len([t for t in tasks if t.priority == "high" and t.status != "done"])
+        # Count overdue tasks
+        now = now_brazil()
+        overdue = len([
+            t for t in tasks 
+            if t.due_date and to_brazil_tz(t.due_date) < now and str(t.status).lower().replace("taskstatus.", "") != "done"
+        ])
         
-        message_text = f"""Status das suas tarefas:
-
-Total: {total} tarefas
-Concluídas: {done} ({completion_rate:.1f}%)
-Em progresso: {in_progress}
-Pendentes: {pending}
-A fazer: {todo}
-
-{f'ATENÇÃO: Você tem {high_priority} tarefa(s) de alta prioridade pendente(s).' if high_priority > 0 else 'Nenhuma tarefa de alta prioridade pendente.'}"""
+        # Count high priority pending
+        high_priority = len([
+            t for t in tasks 
+            if str(t.priority).lower() in ["alta", "high", "urgente", "urgent"] 
+            and str(t.status).lower().replace("taskstatus.", "") != "done"
+        ])
+        
+        # Count tasks due today
+        today = now.date()
+        due_today = len([
+            t for t in tasks 
+            if t.due_date and to_brazil_tz(t.due_date).date() == today 
+            and str(t.status).lower().replace("taskstatus.", "") != "done"
+        ])
+        
+        # Build status message with insights
+        status_lines = [
+            f"📊 Resumo das suas tarefas:",
+            f"",
+            f"📈 Total: {total} tarefas",
+            f"✅ Concluídas: {done} ({completion_rate:.0f}%)",
+            f"🔄 Em progresso: {in_progress}",
+            f"📋 Pendentes: {pending + todo}",
+        ]
+        
+        # Add alerts
+        alerts = []
+        if overdue > 0:
+            alerts.append(f"🚨 {overdue} tarefa(s) atrasada(s)!")
+        if due_today > 0:
+            alerts.append(f"⏰ {due_today} tarefa(s) para hoje")
+        if high_priority > 0:
+            alerts.append(f"⚡ {high_priority} de alta prioridade")
+        
+        if alerts:
+            status_lines.append("")
+            status_lines.extend(alerts)
+        
+        # Add motivational message
+        if completion_rate >= 80:
+            status_lines.append("\n🌟 Excelente! Você está quase lá!")
+        elif completion_rate >= 50:
+            status_lines.append("\n💪 Bom progresso! Continue assim!")
+        elif active_tasks == 0 and done > 0:
+            status_lines.append("\n🎉 Parabéns! Todas as tarefas concluídas!")
+        
+        message_text = "\n".join(status_lines)
         
         return {
             "message": message_text,
             "action": "status",
             "data": {
                 "total": total,
-                "pending": pending,
-                "todo": todo,
+                "pending": pending + todo,
                 "in_progress": in_progress,
                 "done": done,
                 "completion_rate": completion_rate,
+                "overdue": overdue,
+                "due_today": due_today,
                 "high_priority_pending": high_priority
             }
         }
@@ -809,36 +941,27 @@ A fazer: {todo}
     def _handle_help(self) -> Dict[str, Any]:
         """Handle help request"""
 
-        help_text = """🤖 **Agente de IA - Gerenciador de Tarefas**
+        help_text = """🤖 Comandos do Agente de IA
 
-Sou um agente autônomo que executa ações diretamente no seu sistema!
+📋 LISTAR:
+• Minhas tarefas / Tarefas de hoje
+• Tarefas atrasadas / Tarefas pendentes
 
-📋 **LISTAR TAREFAS:**
-• "Listar tarefas" / "Minhas tarefas"
-• "Tarefas de hoje" / "O que tenho para amanhã?"
-• "Tarefas pendentes" / "Tarefas atrasadas"
-• "Tarefas de alta prioridade"
+➕ CRIAR:
+• Criar [descrição da tarefa]
+• Ex: Criar reunião amanhã às 14h
 
-➕ **CRIAR TAREFAS (executo automaticamente):**
-• "Criar reunião com cliente amanhã às 14h"
-• "Nova tarefa: revisar código do projeto"
-• "Adicionar: enviar relatório até sexta"
+✅ CONCLUIR:
+• Concluir [nome da tarefa]
+• Ou digite o número após listar
 
-✅ **CONCLUIR TAREFAS (executo para você):**
-• "Concluir tarefa de reunião"
-• "Finalizar apresentação"
-• Digite o número da tarefa quando eu listar
+🗑️ DELETAR:
+• Deletar [nome da tarefa]
 
-🗑️ **DELETAR TAREFAS (executo com confirmação):**
-• "Deletar tarefa de backup"
-• "Remover reunião cancelada"
+📊 STATUS:
+• Meu progresso / Status
 
-📊 **STATUS E ANÁLISE:**
-• "Status das tarefas"
-• "Como está meu progresso?"
-• "Quantas tarefas tenho?"
-
-🚀 **Como funciono:** Entendo linguagem natural, identifico a ação, e executo diretamente após sua confirmação!"""
+💡 Dica: Fale naturalmente! Eu entendo o contexto."""
 
         return {
             "message": help_text,

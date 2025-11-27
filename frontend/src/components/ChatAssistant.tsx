@@ -26,12 +26,12 @@ const ChatAssistant: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const suggestions = [
-    "📋 Listar tarefas",
-    "➕ Criar nova tarefa",
+    "📋 Listar minhas tarefas",
+    "➕ Criar tarefa",
     "✅ Concluir tarefa",
-    "🗑️ Deletar tarefa",
-    "📊 Status das tarefas",
-    "⏰ Tarefas de hoje"
+    "⏰ Tarefas de hoje",
+    "🚨 Tarefas atrasadas",
+    "📊 Meu progresso"
   ];
 
   const scrollToBottom = () => {
@@ -50,7 +50,7 @@ const ChatAssistant: React.FC = () => {
       setMessages([
         {
           role: 'assistant',
-          content: '👋 Olá! Sou um **Agente de IA** integrado ao seu sistema de tarefas.\n\n🚀 **Posso executar ações diretamente:**\n• ➕ Criar tarefas automaticamente\n• ✅ Concluir tarefas por você\n• 🗑️ Deletar tarefas\n• 📋 Listar e filtrar tarefas\n• 📊 Mostrar seu progresso\n\n💡 Basta me pedir em linguagem natural!\nEx: "Crie uma tarefa para revisar o código amanhã"',
+          content: '👋 Olá! Sou seu Agente de Tarefas com IA.\n\n🎯 O que posso fazer por você:\n\n• Criar tarefas - Ex: Criar reunião amanhã às 14h\n• Listar tarefas - Ex: Minhas tarefas de hoje\n• Concluir tarefas - Ex: Concluir tarefa de relatório\n• Deletar tarefas - Ex: Remover tarefa X\n• Ver progresso - Ex: Como está meu dia?\n\n💡 Dica: Use as sugestões rápidas abaixo!',
           timestamp: new Date().toISOString(),
         },
       ]);
@@ -164,7 +164,7 @@ const ChatAssistant: React.FC = () => {
       setMessages([
         {
           role: 'assistant',
-          content: '💬 Histórico limpo! Como posso ajudar?',
+          content: '🔄 Conversa reiniciada! Como posso ajudar agora?',
           timestamp: new Date().toISOString(),
         },
       ]);
@@ -326,7 +326,7 @@ const ChatAssistant: React.FC = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Digite sua mensagem..."
+            placeholder="Ex: Criar tarefa para amanhã..."
             className="flex-1 bg-gray-100 dark:bg-gray-900 border-0 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             disabled={loading}
           />
@@ -343,7 +343,7 @@ const ChatAssistant: React.FC = () => {
           </button>
         </div>
         <p className="text-[10px] text-center text-gray-400 mt-2">
-          Pressione Enter para enviar
+          Enter para enviar • Diga "ajuda" para comandos
         </p>
       </div>
     </div>
