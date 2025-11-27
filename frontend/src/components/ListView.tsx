@@ -23,6 +23,12 @@ const ListView: React.FC = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, priorityFilter, selectedTags, dueDateFilter, sortBy, statusFilter]);
 
   useEffect(() => {
     fetchTasks({ status: statusFilter || undefined });
@@ -509,27 +515,57 @@ const ListView: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredTasks.map((task, index) => (
-            <div key={task.id} className="relative group animate-slide-up" style={{ animationDelay: `${index * 0.05}s` }}>
-              <TaskCard
-                task={task}
-                onEdit={(task) => setSelectedTaskForEdit(task)}
-                onStatusChange={handleStatusChange}
-                onDelete={handleDelete}
-              />
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredTasks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((task, index) => (
+              <div key={task.id} className="relative group animate-slide-up" style={{ animationDelay: `${index * 0.05}s` }}>
+                <TaskCard
+                  task={task}
+                  onEdit={(task) => setSelectedTaskForEdit(task)}
+                  onStatusChange={handleStatusChange}
+                  onDelete={handleDelete}
+                />
+                <button
+                  onClick={() => setSelectedTaskForAI(task)}
+                  className="absolute top-4 right-4 z-10 p-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg text-purple-600 dark:text-purple-400 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 shadow-sm border border-purple-100 dark:border-purple-900/30"
+                  title="Ver Insights de IA"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {filteredTasks.length > itemsPerPage && (
+            <div className="flex justify-center items-center gap-4 mt-8 pb-8">
               <button
-                onClick={() => setSelectedTaskForAI(task)}
-                className="absolute top-4 right-4 z-10 p-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg text-purple-600 dark:text-purple-400 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 shadow-sm border border-purple-100 dark:border-purple-900/30"
-                title="Ver Insights de IA"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors text-gray-600 dark:text-gray-400"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Página {currentPage} de {Math.ceil(filteredTasks.length / itemsPerPage)}
+              </span>
+
+              <button
+                onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredTasks.length / itemsPerPage), p + 1))}
+                disabled={currentPage === Math.ceil(filteredTasks.length / itemsPerPage)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors text-gray-600 dark:text-gray-400"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {selectedTaskForAI && (

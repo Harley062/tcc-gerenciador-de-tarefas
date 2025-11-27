@@ -9,6 +9,7 @@ import CalendarView from './components/CalendarView';
 import SettingsView from './components/SettingsView';
 import DashboardView from './components/DashboardView';
 import ChatAssistant from './components/ChatAssistant';
+import CreateTaskAIModal from './components/CreateTaskAIModal';
 import NotificationBell from './components/NotificationBell';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { GlobalStyles } from './styles/GlobalStyles';
@@ -20,6 +21,7 @@ const App: React.FC = () => {
   const { setupWebSocket, fetchTasks } = useTaskStore();
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [showInput, setShowInput] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
@@ -96,9 +98,9 @@ const App: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
-              {/* Mobile Quick Add Button */}
+              {/* Mobile Quick Add Button (abre modal 'Criar Tarefa com IA') */}
               <button
-                onClick={() => setShowInput(!showInput)}
+                onClick={() => setShowAIModal(true)}
                 className="lg:hidden btn btn-primary p-2"
                 aria-label="Adicionar nova tarefa"
                 title="Adicionar tarefa"
@@ -237,18 +239,8 @@ const App: React.FC = () => {
         </div>
       </nav>
 
+
       <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-0">
-        {/* Quick Add Input - Always visible on Dashboard/List */}
-        {(currentView === 'dashboard' || currentView === 'list') && (
-          <div className={`mb-8 transition-all duration-300 ${showInput ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 hidden lg:block lg:opacity-100 lg:translate-y-0'}`}>
-            <NaturalLanguageInput 
-              onTaskCreated={() => {
-                fetchTasks({});
-                // Feedback visual ou sonoro poderia ser adicionado aqui
-              }} 
-            />
-          </div>
-        )}
 
         <div className="animate-fade-in">
           {currentView === 'dashboard' && <DashboardView />}
@@ -260,6 +252,15 @@ const App: React.FC = () => {
       </main>
 
       <ChatAssistant />
+      {showAIModal && (
+        <CreateTaskAIModal
+          onClose={() => setShowAIModal(false)}
+          onTaskCreated={() => {
+            fetchTasks({});
+            setShowAIModal(false);
+          }}
+        />
+      )}
       </div>
     </>
   );

@@ -103,25 +103,40 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ task, onClose, onCrea
   }, [activeTab]);
 
   return (
-    <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-white/20 dark:border-gray-700/50 p-6 hover:shadow-md transition-all duration-300">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <span className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-xl">✨</span>
-          Insights IA
-        </h2>
-        <button
-          onClick={loadSubtasks}
-          disabled={loading}
-          className="p-2 text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-all duration-200 disabled:opacity-50"
-          title="Atualizar insights"
-        >
-          <svg className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-        </button>
-      </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in" onClick={(e) => {
+      if (e.target === e.currentTarget) onClose();
+    }}>
+      <div className="w-full max-w-2xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/50 max-h-[90vh] overflow-y-auto flex flex-col">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <span className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-xl">✨</span>
+              Insights IA
+            </h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={loadSubtasks}
+                disabled={loading}
+                className="p-2 text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-all duration-200 disabled:opacity-50"
+                title="Atualizar insights"
+              >
+                <svg className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+              <button
+                onClick={onClose}
+                className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                title="Fechar"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
 
-      {error && (
+          {error && (
         <div className="mb-6 p-4 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-800 rounded-xl flex items-start gap-3">
           <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -387,6 +402,8 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ task, onClose, onCrea
           }}
         />
       )}
+        </div>
+      </div>
     </div>
   );
 };

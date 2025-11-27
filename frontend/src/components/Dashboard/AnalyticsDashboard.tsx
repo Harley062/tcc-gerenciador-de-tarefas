@@ -189,7 +189,7 @@ const AnalyticsDashboard: React.FC = () => {
       </section>
 
       {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-2 gap-6 mb-8">
         <StatsCard
           title="Total de Tarefas"
           value={analytics.summary.total_tasks}
