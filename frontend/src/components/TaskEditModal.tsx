@@ -30,7 +30,7 @@ const TaskEditModal: React.FC<TaskEditModalProps> = ({ task, onClose, onSaved })
     status: normalizeStatus(task.status) as TaskStatus,
     priority: normalizePriority(task.priority) as TaskPriority,
     due_date: toLocalDatetimeString(task.due_date),
-    tags: task.tags.join(', '),
+    tags: (task.tags || []).join(', '),
   });
   const [saving, setSaving] = useState(false);
   const [showSubtaskModal, setShowSubtaskModal] = useState(false);
