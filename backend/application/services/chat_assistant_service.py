@@ -436,7 +436,7 @@ class ChatAssistantService:
             }
 
         return {
-            "message": f"🆕 Vou criar a tarefa:\n\n\"{task_text}\"\n\nClique em 'Confirmar' para criar ou 'Cancelar' para desistir.",
+            "message": f"🆕 Vou criar a tarefa:\n\n📌 {task_text}\n\nClique em Confirmar para criar ou Cancelar para desistir.",
             "action": "confirm_create",
             "data": {
                 "text": task_text
@@ -491,7 +491,7 @@ class ChatAssistantService:
             
             if action_type == "complete":
                 return {
-                    "message": f"✅ Marcar como concluída:\n\n\"{task_title}\"\n\nConfirmar?",
+                    "message": f"✅ Marcar como concluída:\n\n📌 {task_title}\n\nConfirmar?",
                     "action": "confirm_complete",
                     "data": {
                         "task_id": str(task_id),
@@ -505,7 +505,7 @@ class ChatAssistantService:
                 }
             elif action_type == "delete":
                 return {
-                    "message": f"🗑️ Excluir tarefa:\n\n\"{task_title}\"\n\n⚠️ Esta ação não pode ser desfeita. Confirmar?",
+                    "message": f"🗑️ Excluir tarefa:\n\n📌 {task_title}\n\n⚠️ Esta ação não pode ser desfeita. Confirmar?",
                     "action": "confirm_delete",
                     "data": {
                         "task_id": str(task_id),
@@ -530,7 +530,7 @@ class ChatAssistantService:
             
             if action_type == "complete":
                 return {
-                    "message": f"✅ Marcar como concluída:\n\n\"{task.title}\"\n\nConfirmar?",
+                    "message": f"✅ Marcar como concluída:\n\n📌 {task.title}\n\nConfirmar?",
                     "action": "confirm_complete",
                     "data": {
                         "task_id": str(task.id),
@@ -544,7 +544,7 @@ class ChatAssistantService:
                 }
             elif action_type == "delete":
                 return {
-                    "message": f"🗑️ Excluir tarefa:\n\n\"{task.title}\"\n\n⚠️ Esta ação não pode ser desfeita. Confirmar?",
+                    "message": f"🗑️ Excluir tarefa:\n\n📌 {task.title}\n\n⚠️ Esta ação não pode ser desfeita. Confirmar?",
                     "action": "confirm_delete",
                     "data": {
                         "task_id": str(task.id),
@@ -587,7 +587,7 @@ class ChatAssistantService:
             if 0 <= task_index < len(pending_tasks):
                 task = pending_tasks[task_index]
                 return {
-                    "message": f"✅ Marcar como concluída:\n\n\"{task.title}\"\n\nConfirmar?",
+                    "message": f"✅ Marcar como concluída:\n\n📌 {task.title}\n\nConfirmar?",
                     "action": "confirm_complete",
                     "data": {
                         "task_id": str(task.id),
@@ -625,7 +625,7 @@ class ChatAssistantService:
         if len(matching_tasks) == 1:
             task = matching_tasks[0]
             return {
-                "message": f"✅ Marcar como concluída:\n\n\"{task.title}\"\n\nConfirmar?",
+                "message": f"✅ Marcar como concluída:\n\n📌 {task.title}\n\nConfirmar?",
                 "action": "confirm_complete",
                 "data": {
                     "task_id": str(task.id),
@@ -742,7 +742,7 @@ class ChatAssistantService:
         if len(matching_tasks) == 1:
             task = matching_tasks[0]
             return {
-                "message": f"🗑️ Tem certeza que quer deletar a tarefa:\n\n\"{task.title}\"?\n\nEssa ação não pode ser desfeita.",
+                "message": f"🗑️ Tem certeza que quer deletar a tarefa:\n\n📌 {task.title}\n\n⚠️ Essa ação não pode ser desfeita.",
                 "action": "confirm_delete",
                 "data": {
                     "task_id": str(task.id),
