@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "taskmaster-backend"
+name = "sgti-backend"
 version = "0.1.0"
-description = "Sistema de Gerenciamento de Tarefas Inteligente - Backend"
+description = "SGTI - Sistema Gerenciador de Tarefas Inteligente - Backend"
 authors = ["Harley Gonçalves <harleygteixeira@gmail.com>"]
 readme = "README.md"
 

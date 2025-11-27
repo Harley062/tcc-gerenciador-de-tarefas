@@ -9,7 +9,7 @@ from collections import defaultdict, Counter
 from domain.entities.task import Task
 from domain.utils.datetime_utils import now_brazil
 
-logger = logging.getLogger("taskmaster")
+logger = logging.getLogger("sgti")
 
 
 # Helpers para verificar status (suporta português e inglês)

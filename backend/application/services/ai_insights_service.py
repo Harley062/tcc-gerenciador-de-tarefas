@@ -9,7 +9,7 @@ from uuid import UUID
 from domain.entities.task import Task
 from infrastructure.gpt.openai_adapter import OpenAIAdapter
 
-logger = logging.getLogger("taskmaster")
+logger = logging.getLogger("sgti")
 
 
 class AIInsightsService:

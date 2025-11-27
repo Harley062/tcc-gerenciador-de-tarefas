@@ -7,7 +7,7 @@ from typing import Callable
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-logger = logging.getLogger("taskmaster")
+logger = logging.getLogger("sgti")
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):

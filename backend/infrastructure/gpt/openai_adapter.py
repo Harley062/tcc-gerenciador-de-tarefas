@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 from openai import AsyncOpenAI, OpenAIError
 from pydantic import BaseModel, Field
 
-logger = logging.getLogger("taskmaster")
+logger = logging.getLogger("sgti")
 
 # Timezone de Brasília
 BRAZIL_TZ = ZoneInfo("America/Sao_Paulo")

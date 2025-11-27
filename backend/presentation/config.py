@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql+asyncpg://taskmaster:taskmaster123@localhost/taskmaster"
+    database_url: str = "postgresql+asyncpg://sgti:sgti123@localhost/sgti"
     redis_url: str = "redis://localhost:6379"
     openai_api_key: str = ""
     openai_model: str = "gpt-4"

@@ -6,7 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-logger = logging.getLogger("taskmaster")
+logger = logging.getLogger("sgti")
 
 
 async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:

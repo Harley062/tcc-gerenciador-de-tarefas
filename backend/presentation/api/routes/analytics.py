@@ -13,7 +13,7 @@ from infrastructure.database.postgresql_repository import PostgreSQLTaskReposito
 from presentation.api.dependencies import get_current_user, get_db_session
 from pydantic import BaseModel
 
-logger = logging.getLogger("taskmaster")
+logger = logging.getLogger("sgti")
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 

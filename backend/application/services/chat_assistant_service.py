@@ -11,7 +11,7 @@ from domain.entities.task import Task
 from domain.utils.datetime_utils import now_brazil, to_brazil_tz, BRAZIL_TZ
 from infrastructure.gpt.openai_adapter import OpenAIAdapter
 
-logger = logging.getLogger("taskmaster")
+logger = logging.getLogger("sgti")
 
 
 class ChatAssistantService:

@@ -11,7 +11,7 @@ from typing import Callable, Dict, Any
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-logger = logging.getLogger("taskmaster")
+logger = logging.getLogger("sgti")
 
 
 class MetricsCollector:

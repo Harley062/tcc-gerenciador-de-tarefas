@@ -89,10 +89,10 @@ const App: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-display font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-400 dark:from-primary-400 dark:to-primary-200">
-                  TaskMaster
+                  SGTI
                 </h1>
                 <span className="hidden md:block text-[10px] text-gray-500 dark:text-gray-400 font-medium tracking-wider uppercase">
-                  Gerenciamento Inteligente
+                  Sistema Gerenciador de Tarefas Inteligente
                 </span>
               </div>
             </div>

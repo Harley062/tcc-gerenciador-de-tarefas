@@ -9,7 +9,7 @@ from uuid import UUID
 from domain.entities.task import Task
 from domain.utils.datetime_utils import now_brazil
 
-logger = logging.getLogger("taskmaster")
+logger = logging.getLogger("sgti")
 
 
 class NotificationService:

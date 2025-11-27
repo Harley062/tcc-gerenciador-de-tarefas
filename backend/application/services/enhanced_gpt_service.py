@@ -6,7 +6,7 @@ from application.services.gpt_service import GPTService
 from infrastructure.gpt.openai_adapter import OpenAIAdapter
 from infrastructure.llm.llama_adapter import LlamaAdapter
 
-logger = logging.getLogger("taskmaster")
+logger = logging.getLogger("sgti")
 
 
 class EnhancedGPTService(GPTService):

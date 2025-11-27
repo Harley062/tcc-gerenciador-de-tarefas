@@ -16,7 +16,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
   const steps: OnboardingStep[] = [
     {
-      title: 'Bem-vindo ao TaskMaster!',
+      title: 'Bem-vindo(a) ao SGTI!',
       description: 'Organize suas tarefas de forma inteligente com IA integrada. Vamos começar um tour rápido pelas principais funcionalidades.',
       icon: '👋',
     },

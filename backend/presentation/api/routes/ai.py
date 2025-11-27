@@ -17,7 +17,7 @@ from pydantic import BaseModel
 import os
 from presentation.config import get_settings
 
-logger = logging.getLogger("taskmaster")
+logger = logging.getLogger("sgti")
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 

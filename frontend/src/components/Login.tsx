@@ -112,10 +112,10 @@ const Login: React.FC<LoginProps> = ({ onSuccess }) => {
             <span className="text-3xl">✨</span>
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">
-            TaskMaster
+            SGTI
           </h1>
           <p className="text-gray-400">
-            Gerenciamento Inteligente de Tarefas
+            Sistema Gerenciador de Tarefas Inteligente
           </p>
         </div>
 
@@ -242,7 +242,7 @@ const Login: React.FC<LoginProps> = ({ onSuccess }) => {
         </form>
         
         <p className="text-center text-gray-500 text-xs mt-6">
-          © 2024 TaskMaster AI. Todos os direitos reservados.
+          © 2024 SGTI. Todos os direitos reservados.
         </p>
       </div>
     </div>

@@ -1,4 +1,4 @@
-# TaskMaster - Sistema de Gerenciamento de Tarefas Inteligente (SGTI)
+# SGTI - Sistema Gerenciador de Tarefas Inteligente
 
 Sistema completo de gerenciamento de tarefas com IA integrada, suportando múltiplos provedores de LLM (GPT-4, Llama) e criação automática de tarefas recorrentes.
 
@@ -150,7 +150,7 @@ Crie um arquivo `.env` no diretório `backend/`:
 
 ```bash
 # Database
-DATABASE_URL=postgresql+asyncpg://taskmaster:taskmaster123@postgres/taskmaster
+DATABASE_URL=postgresql+asyncpg://sgti:sgti123@postgres/sgti
 
 # Redis
 REDIS_URL=redis://redis:6379
@@ -221,7 +221,7 @@ exit
 As tabelas são criadas automaticamente na inicialização. Para aplicar migrações manualmente:
 
 ```bash
-docker compose exec postgres psql -U taskmaster -d taskmaster -f /path/to/migration.sql
+docker compose exec postgres psql -U sgti -d sgti -f /path/to/migration.sql
 ```
 
 ## 🧪 Testes

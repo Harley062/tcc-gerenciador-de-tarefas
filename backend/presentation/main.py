@@ -32,8 +32,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="TaskMaster API",
-    description="Sistema de Gerenciamento de Tarefas Inteligente",
+    title="SGTI API",
+    description="Sistema Gerenciador de Tarefas Inteligente",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -66,7 +66,7 @@ app.include_router(analytics.router, prefix="/api")
 @app.get("/")
 async def root():
     return {
-        "message": "TaskMaster API",
+        "message": "SGTI API - Sistema Gerenciador de Tarefas Inteligente",
         "version": "1.0.0",
         "docs": "/docs",
     }

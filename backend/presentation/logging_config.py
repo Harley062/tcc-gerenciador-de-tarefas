@@ -14,7 +14,7 @@ class CustomJsonFormatter(jsonlogger.JsonFormatter):
 
 
 def setup_logging(log_level: str = "INFO") -> None:
-    logger = logging.getLogger("taskmaster")
+    logger = logging.getLogger("sgti")
     logger.setLevel(getattr(logging, log_level.upper()))
     
     handler = logging.StreamHandler(sys.stdout)

@@ -101,7 +101,7 @@ const DashboardView: React.FC = () => {
         <div className="mb-8 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
           <div>
             <h1 className="text-4xl sm:text-5xl font-display font-bold text-gray-900 dark:text-white mb-2 tracking-tight">
-              {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-purple-600 dark:from-primary-400 dark:to-purple-400">Bem-vindo!</span>
+              {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-purple-600 dark:from-primary-400 dark:to-purple-400">Bem-vindo(a)!</span>
             </h1>
             <p className="text-gray-600 dark:text-gray-400 text-lg font-medium">Aqui está o resumo da sua produtividade.</p>
           </div>

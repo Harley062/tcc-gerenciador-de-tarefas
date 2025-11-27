@@ -3,24 +3,24 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15
-    container_name: taskmaster-postgres
+    container_name: sgti-postgres
     environment:
-      POSTGRES_DB: taskmaster
-      POSTGRES_USER: taskmaster
-      POSTGRES_PASSWORD: taskmaster123
+      POSTGRES_DB: sgti
+      POSTGRES_USER: sgti
+      POSTGRES_PASSWORD: sgti123
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U taskmaster"]
+      test: ["CMD-SHELL", "pg_isready -U sgti"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: taskmaster-redis
+    container_name: sgti-redis
     ports:
       - "6379:6379"
     healthcheck:
@@ -31,7 +31,7 @@ services:
 
   backend:
     build: ./backend
-    container_name: taskmaster-backend
+    container_name: sgti-backend
     ports:
       - "8000:8000"
     depends_on:
@@ -40,7 +40,7 @@ services:
       redis:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql+asyncpg://taskmaster:taskmaster123@postgres/taskmaster
+      - DATABASE_URL=postgresql+asyncpg://sgti:sgti123@postgres/sgti
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-secret-key-change-in-production}
       - CORS_ORIGINS=http://localhost:3000,http://localhost:8000
@@ -51,7 +51,7 @@ services:
 
   frontend:
     build: ./frontend
-    container_name: taskmaster-frontend
+    container_name: sgti-frontend
     ports:
       - "3000:3000"
     depends_on:
