@@ -3,6 +3,7 @@ Chat Assistant Service - AI Agent for autonomous task management
 """
 import logging
 import random
+import re
 from typing import Any, Optional, List, Dict, Callable, Awaitable
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
@@ -23,9 +24,42 @@ class ChatAssistantService:
     - Chain multiple actions in a single conversation
     - Maintain context across messages
     - Use natural language understanding via GPT
+    - Remember conversation context for smart follow-ups
     """
 
     MAX_HISTORY_SIZE = 30  # Maximum number of messages to keep in history
+    
+    # Quick intent cache for common phrases (avoids GPT calls)
+    QUICK_INTENT_MAP = {
+        # Greetings
+        "oi": "greeting", "olá": "greeting", "ola": "greeting", "hey": "greeting",
+        "bom dia": "greeting", "boa tarde": "greeting", "boa noite": "greeting",
+        "e aí": "greeting", "eai": "greeting", "oi!": "greeting", "olá!": "greeting",
+        
+        # Thanks
+        "obrigado": "thanks", "obrigada": "thanks", "valeu": "thanks", "vlw": "thanks",
+        "brigado": "thanks", "thanks": "thanks", "obrigado!": "thanks",
+        
+        # Help
+        "ajuda": "help", "help": "help", "comandos": "help", "?": "help",
+        "o que você faz": "about_system", "o que voce faz": "about_system",
+        
+        # Confirmations
+        "sim": "confirm_yes", "s": "confirm_yes", "ok": "confirm_yes", 
+        "confirmar": "confirm_yes", "pode ser": "confirm_yes", "isso": "confirm_yes",
+        "sim!": "confirm_yes", "confirma": "confirm_yes", "pode": "confirm_yes",
+        
+        # Negations
+        "não": "confirm_no", "nao": "confirm_no", "n": "confirm_no",
+        "cancelar": "confirm_no", "cancela": "confirm_no", "desistir": "confirm_no",
+        "não quero": "confirm_no", "deixa pra lá": "confirm_no",
+        
+        # Quick actions
+        "minhas tarefas": "list_tasks", "listar tarefas": "list_tasks",
+        "tarefas de hoje": "list_tasks", "tarefas para hoje": "list_tasks",
+        "criar tarefa": "create_task", "nova tarefa": "create_task",
+        "meu progresso": "task_status", "meu status": "task_status",
+    }
 
     def __init__(
         self,
@@ -41,12 +75,84 @@ class ChatAssistantService:
         self.pending_tasks_list = []  # Store task list for selection
         self.agent_mode = True  # Agent executes actions directly when possible
         self.executed_actions = []  # Track actions executed in current session
+        self.awaiting_confirmation = None  # Store pending confirmation data
+        self.conversation_context = None  # Current conversation topic/context
     
     def set_repository(self, repository, user_id: UUID):
         """Set the task repository for direct execution"""
         self.task_repository = repository
         self.user_id = user_id
     
+    def _is_waiting_for_task_description(self) -> bool:
+        """Check if the last assistant message was asking for task description"""
+        if not self.conversation_history:
+            return False
+        
+        # Find the last assistant message
+        for msg in reversed(self.conversation_history):
+            if msg.get("role") == "assistant":
+                content = msg.get("content", "").lower()
+                # Check if the message was asking for task description
+                waiting_phrases = [
+                    "descreva a tarefa",
+                    "qual tarefa",
+                    "que tarefa você quer criar",
+                    "por favor, descreva",
+                    "me diga qual tarefa",
+                    "qual seria a tarefa"
+                ]
+                return any(phrase in content for phrase in waiting_phrases)
+        
+        return False
+    
+    def _get_conversation_context(self) -> Optional[str]:
+        """Analyze recent conversation to understand context"""
+        if not self.conversation_history:
+            return None
+        
+        # Check last few messages for context
+        recent = self.conversation_history[-4:] if len(self.conversation_history) >= 4 else self.conversation_history
+        
+        for msg in reversed(recent):
+            if msg.get("role") == "assistant":
+                content = msg.get("content", "").lower()
+                
+                # Detect various contexts
+                if "vou criar a tarefa" in content or "confirmar para criar" in content:
+                    return "awaiting_create_confirmation"
+                elif "marcar como concluída" in content or "confirmar" in content and "concluí" in content:
+                    return "awaiting_complete_confirmation"
+                elif "excluir tarefa" in content or "deletar" in content:
+                    return "awaiting_delete_confirmation"
+                elif "descreva a tarefa" in content or "qual tarefa você quer" in content:
+                    return "awaiting_task_description"
+                elif "digite o número" in content or "qual delas" in content:
+                    return "awaiting_selection"
+        
+        return None
+    
+    def _quick_intent_check(self, message: str) -> Optional[str]:
+        """Check for quick intent matches without calling GPT"""
+        message_lower = message.lower().strip()
+        
+        # Direct match
+        if message_lower in self.QUICK_INTENT_MAP:
+            return self.QUICK_INTENT_MAP[message_lower]
+        
+        # Check for number (selection)
+        if message_lower.isdigit() and self.last_action_context:
+            return f"select_{self.last_action_context}"
+        
+        # Check for patterns
+        if message_lower.startswith("criar ") or message_lower.startswith("adicionar "):
+            return "create_task"
+        if message_lower.startswith("concluir ") or message_lower.startswith("finalizar "):
+            return "complete_task"
+        if message_lower.startswith("deletar ") or message_lower.startswith("excluir ") or message_lower.startswith("remover "):
+            return "delete_task"
+        
+        return None
+
     async def execute_action(self, action: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Execute an action directly.
@@ -142,22 +248,64 @@ class ChatAssistantService:
                 }
             )
 
+            message_lower = message.lower().strip()
+            
+            # Step 1: Check conversation context first
+            conv_context = self._get_conversation_context()
+            
+            # Step 2: Quick intent check (no GPT call needed)
+            quick_intent = self._quick_intent_check(message_lower)
+            
+            # Step 3: Handle based on context and intent
+            intent = None
+            
+            # Handle confirmations based on context
+            if quick_intent == "confirm_yes" and conv_context:
+                if conv_context == "awaiting_create_confirmation":
+                    # User confirmed task creation - but frontend handles this
+                    intent = "confirm_yes"
+                elif conv_context == "awaiting_complete_confirmation":
+                    intent = "confirm_yes"
+                elif conv_context == "awaiting_delete_confirmation":
+                    intent = "confirm_yes"
+            elif quick_intent == "confirm_no" and conv_context:
+                intent = "confirm_no"
+            
+            # Handle task description after being asked
+            elif conv_context == "awaiting_task_description" and not quick_intent:
+                logger.info("Context: waiting for task description, treating as create_task")
+                intent = "create_task"
+            
+            # Handle selection after being asked
+            elif conv_context == "awaiting_selection" and message_lower.isdigit():
+                if self.last_action_context:
+                    intent = f"select_{self.last_action_context}"
+            
+            # Use quick intent if found
+            elif quick_intent and quick_intent not in ["confirm_yes", "confirm_no"]:
+                intent = quick_intent
+            
+            # Fall back to GPT classification
+            if not intent:
+                intent = await self._detect_intent(message_lower)
+
             self.conversation_history.append({
                 "role": "user",
                 "content": message,
                 "timestamp": now_brazil().isoformat()
             })
 
-            message_lower = message.lower()
-
-            intent = await self._detect_intent(message_lower)
-
             logger.info(
                 "Intent detected",
-                extra={"intent": intent, "message_preview": message[:50]}
+                extra={"intent": intent, "context": conv_context, "message_preview": message[:50]}
             )
 
-            if intent == "greeting":
+            # Route to appropriate handler
+            if intent == "confirm_yes":
+                response = self._handle_confirmation_yes()
+            elif intent == "confirm_no":
+                response = self._handle_confirmation_no()
+            elif intent == "greeting":
                 response = await self._handle_greeting(user_tasks)
             elif intent == "thanks":
                 response = self._handle_thanks()
@@ -221,19 +369,31 @@ class ChatAssistantService:
             }
     
     async def _detect_intent_with_gpt(self, message: str) -> str:
-        """Use GPT to intelligently classify user intent"""
+        """Use GPT to intelligently classify user intent with conversation context"""
+        
+        # Build context from recent conversation
+        recent_context = ""
+        if self.conversation_history:
+            recent = self.conversation_history[-4:]
+            context_lines = []
+            for msg in recent:
+                role = "Usuário" if msg.get("role") == "user" else "Assistente"
+                content = msg.get("content", "")[:100]
+                context_lines.append(f"{role}: {content}")
+            if context_lines:
+                recent_context = "\n".join(context_lines)
         
         system_prompt = """Você é um classificador de intenções para um sistema de gerenciamento de tarefas.
 
-Analise a mensagem do usuário e retorne APENAS UMA das seguintes intenções (sem explicação, apenas a palavra):
+Analise a mensagem do usuário CONSIDERANDO O CONTEXTO DA CONVERSA e retorne APENAS UMA das seguintes intenções:
 
 INTENÇÕES DISPONÍVEIS:
 - greeting: Saudações como "oi", "olá", "bom dia", "boa tarde"
 - thanks: Agradecimentos como "obrigado", "valeu", "thanks"
-- about_system: Perguntas sobre o sistema, como funciona, o que faz, suas funcionalidades
+- about_system: Perguntas sobre o sistema, como funciona, o que faz, funcionalidades
 - help: Pedidos de ajuda ou comandos disponíveis
 - list_tasks: Listar, ver, mostrar tarefas (hoje, pendentes, atrasadas, etc.)
-- create_task: Criar, adicionar, nova tarefa
+- create_task: Criar/adicionar tarefa OU descrever uma tarefa para criar (título, descrição, horário)
 - complete_task: Concluir, finalizar, terminar uma tarefa
 - delete_task: Deletar, remover, excluir uma tarefa
 - update_task: Atualizar, modificar, editar uma tarefa
@@ -241,15 +401,21 @@ INTENÇÕES DISPONÍVEIS:
 - task_status: Ver progresso, status geral, produtividade, resumo
 - general: Qualquer outra coisa que não se encaixe acima
 
-REGRAS:
-- Se o usuário quer saber SOBRE o sistema/app/assistente em si → about_system
-- Se o usuário quer saber SUAS tarefas → list_tasks
-- Se o usuário pergunta "o que fazer agora" ou quer recomendação → suggest_next_task
-- Se é uma conversa casual ou pergunta genérica → general
+REGRAS IMPORTANTES:
+1. Se a ÚLTIMA mensagem do assistente PEDIU para descrever uma tarefa, e o usuário responde com algo que parece uma tarefa (ex: "reunião com cliente às 14h") → create_task
+2. Se o usuário menciona horário, data ou atividade que parece uma tarefa → provavelmente create_task
+3. Se o usuário quer saber SOBRE o sistema/app/assistente em si → about_system
+4. Se o usuário quer ver/listar SUAS tarefas existentes → list_tasks
+5. Se pergunta "o que fazer agora" ou quer recomendação → suggest_next_task
 
 Responda APENAS com a intenção, nada mais."""
 
-        user_prompt = f"Mensagem do usuário: \"{message}\"\n\nIntenção:"
+        # Build user prompt with context
+        context_section = ""
+        if recent_context:
+            context_section = f"\nCONTEXTO DA CONVERSA RECENTE:\n{recent_context}\n"
+        
+        user_prompt = f"{context_section}MENSAGEM ATUAL DO USUÁRIO: \"{message}\"\n\nIntenção:"
 
         try:
             result = await self.openai_adapter.generate_completion(
@@ -362,6 +528,34 @@ Responda APENAS com a intenção, nada mais."""
         return {
             "message": random.choice(responses),
             "action": None,
+            "data": None
+        }
+    
+    def _handle_confirmation_yes(self) -> Dict[str, Any]:
+        """Handle when user confirms with 'sim', 'ok', etc."""
+        # The actual confirmation is handled by the frontend buttons
+        # This is for when user types confirmation instead of clicking
+        return {
+            "message": "👍 Entendido! Use os botões de confirmação acima para confirmar a ação, ou me diga o que mais posso ajudar.",
+            "action": None,
+            "data": None
+        }
+    
+    def _handle_confirmation_no(self) -> Dict[str, Any]:
+        """Handle when user cancels with 'não', 'cancelar', etc."""
+        # Clear any pending context
+        self.awaiting_confirmation = None
+        self.last_action_context = None
+        self.pending_tasks_list = []
+        
+        responses = [
+            "👌 Tudo bem, ação cancelada! O que mais posso fazer por você?",
+            "✅ Cancelado! Estou aqui se precisar de algo.",
+            "Ok, sem problemas! Como posso ajudar?"
+        ]
+        return {
+            "message": random.choice(responses),
+            "action": "cancelled",
             "data": None
         }
     

@@ -530,28 +530,71 @@ async def execute_chat_action(
     
     try:
         if request.action == "create":
-            # Criar tarefa usando o GPT para parsear
-            if not request.task_data or not request.task_data.get("text"):
-                raise HTTPException(status_code=400, detail="Texto da tarefa é obrigatório")
+            # Criar tarefa usando os dados já extraídos pelo chat assistant
+            if not request.task_data:
+                raise HTTPException(status_code=400, detail="Dados da tarefa são obrigatórios")
             
-            parsed_task, _ = await gpt_service.parse_task(request.task_data["text"])
+            # Get title from task_data (already extracted by GPT in chat)
+            title = request.task_data.get("title") or request.task_data.get("text")
+            if not title:
+                raise HTTPException(status_code=400, detail="Título da tarefa é obrigatório")
+            
+            # Get due_date if provided (already extracted by chat assistant)
+            due_date = None
+            due_date_str = request.task_data.get("due_date")
+            if due_date_str:
+                from datetime import datetime
+                from domain.utils.datetime_utils import BRAZIL_TZ
+                try:
+                    # Try parsing different formats
+                    if "T" in due_date_str:
+                        # ISO format - may have timezone info
+                        due_date = datetime.fromisoformat(due_date_str.replace("Z", "+00:00"))
+                        # If it has UTC timezone, convert to Brazil
+                        if due_date.tzinfo is not None and str(due_date.tzinfo) != "America/Sao_Paulo":
+                            due_date = due_date.astimezone(BRAZIL_TZ)
+                    elif " " in due_date_str:
+                        # Format: "YYYY-MM-DD HH:MM" - assume Brazil timezone
+                        due_date = datetime.strptime(due_date_str, "%Y-%m-%d %H:%M")
+                        due_date = due_date.replace(tzinfo=BRAZIL_TZ)
+                    else:
+                        # Format: "YYYY-MM-DD" - assume Brazil timezone, set to midnight
+                        due_date = datetime.strptime(due_date_str, "%Y-%m-%d")
+                        due_date = due_date.replace(tzinfo=BRAZIL_TZ)
+                except Exception as e:
+                    logger.warning(f"Could not parse due_date '{due_date_str}': {e}")
+            
+            # Get priority if provided
+            priority_str = request.task_data.get("priority", "medium")
+            priority = get_priority(priority_str)
             
             task = Task(
                 user_id=current_user.id,
-                title=parsed_task.title,
-                description=parsed_task.description,
+                title=title,
+                description=request.task_data.get("description", ""),
                 status=TaskStatus.TODO,
-                priority=get_priority(parsed_task.priority),
-                due_date=parsed_task.due_date,
-                estimated_duration=parsed_task.estimated_duration,
-                tags=parsed_task.tags,
+                priority=priority,
+                due_date=due_date,
+                estimated_duration=request.task_data.get("estimated_duration"),
+                tags=request.task_data.get("tags", []),
             )
             
             created_task = await repo.create(task)
             
+            # Format response message with date if present
+            response_msg = f"✅ Tarefa '{created_task.title}' criada com sucesso!"
+            if created_task.due_date:
+                # Check if already in Brazil timezone to avoid double conversion
+                if created_task.due_date.tzinfo is not None and str(created_task.due_date.tzinfo) == "America/Sao_Paulo":
+                    due_brazil = created_task.due_date
+                else:
+                    from domain.utils.datetime_utils import to_brazil_tz
+                    due_brazil = to_brazil_tz(created_task.due_date)
+                response_msg += f"\n📅 Agendada para: {due_brazil.strftime('%d/%m/%Y às %H:%M')}"
+            
             return {
                 "success": True,
-                "message": f"✅ Tarefa '{created_task.title}' criada com sucesso!",
+                "message": response_msg,
                 "task": {
                     "id": str(created_task.id),
                     "title": created_task.title,
