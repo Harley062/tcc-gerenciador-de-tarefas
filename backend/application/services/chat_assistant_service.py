@@ -161,6 +161,8 @@ class ChatAssistantService:
                 response = await self._handle_greeting(user_tasks)
             elif intent == "thanks":
                 response = self._handle_thanks()
+            elif intent == "suggest_next_task":
+                response = await self._handle_suggest_next_task(user_tasks)
             elif intent == "list_tasks":
                 response = await self._handle_list_tasks(message_lower, user_tasks)
             elif intent == "create_task":
@@ -249,8 +251,26 @@ class ChatAssistantService:
         complete_keywords = ["concluir", "conclua", "finalizar", "finalize", "terminar", "termine", "completar", "complete", "finish", "done", "feito", "terminei", "finalizei", "concluí", "marcar como concluída", "marcar como feita"]
         status_keywords = ["status", "andamento", "progress", "situação", "resumo", "overview", "como está", "como estão", "produtividade"]
         help_keywords = ["ajuda", "help", "como", "how", "comandos", "commands", "o que você faz", "o que faz"]
+        
+        # Keywords for suggesting next task
+        suggest_next_keywords = ["qual", "próxima", "próximo", "deveria", "devo", "começar", "resolver", "focar", "priorizar", "sugerir", "sugira", "recomenda", "recomendar", "por onde"]
 
         # Priority-based detection (specific intents first)
+        
+        # Check for "next task" suggestion - HIGH PRIORITY
+        # Patterns like: "qual próxima atividade", "o que deveria fazer", "por onde começo"
+        suggest_patterns = [
+            "qual" in message and ("próxim" in message or "atividade" in message or "tarefa" in message),
+            "deveria" in message and ("fazer" in message or "resolver" in message or "começar" in message),
+            "devo" in message and ("fazer" in message or "resolver" in message or "começar" in message),
+            "por onde" in message and ("começ" in message or "inici" in message),
+            "o que" in message and ("fazer agora" in message or "priorizar" in message or "focar" in message),
+            "me sugir" in message or "sugira" in message or "recomend" in message,
+            "próxima atividade" in message or "próxima tarefa" in message,
+            "próximo passo" in message
+        ]
+        if any(suggest_patterns):
+            return "suggest_next_task"
 
         # Help - highest priority for explicit help requests
         if any(word in message for word in help_keywords):
@@ -356,6 +376,167 @@ class ChatAssistantService:
             "action": None,
             "data": None
         }
+    
+    async def _handle_suggest_next_task(self, tasks: List[Task]) -> Dict[str, Any]:
+        """Suggest the next task the user should work on based on priority and due dates"""
+        now = now_brazil()
+        today = now.date()
+        
+        # Filter only pending tasks (not done)
+        pending_tasks = [
+            t for t in tasks 
+            if str(t.status).lower().replace("taskstatus.", "") not in ["done", "concluida", "cancelled", "cancelada"]
+        ]
+        
+        if not pending_tasks:
+            return {
+                "message": "🎉 Parabéns! Você não tem tarefas pendentes. Todas as suas tarefas foram concluídas!\n\nQue tal criar uma nova tarefa? Basta dizer algo como:\n• \"Criar tarefa reunião com cliente\"",
+                "action": None,
+                "data": None
+            }
+        
+        # Categorize tasks
+        overdue_tasks = []
+        urgent_tasks = []
+        high_priority_tasks = []
+        today_tasks = []
+        other_tasks = []
+        
+        for t in pending_tasks:
+            priority = str(t.priority).lower().replace("priority.", "")
+            status = str(t.status).lower().replace("taskstatus.", "")
+            
+            # Check if overdue
+            if t.due_date:
+                task_date = to_brazil_tz(t.due_date).date()
+                if task_date < today:
+                    overdue_tasks.append(t)
+                    continue
+                elif task_date == today:
+                    today_tasks.append(t)
+                    continue
+            
+            # Check priority
+            if priority in ["urgente", "urgent"]:
+                urgent_tasks.append(t)
+            elif priority in ["alta", "high"]:
+                high_priority_tasks.append(t)
+            else:
+                other_tasks.append(t)
+        
+        # Build recommendation based on priority order
+        suggested_task = None
+        reason = ""
+        
+        if overdue_tasks:
+            # Sort by due date (oldest first) and priority
+            overdue_tasks.sort(key=lambda t: (t.due_date, self._priority_order(t.priority)))
+            suggested_task = overdue_tasks[0]
+            days_overdue = (today - to_brazil_tz(suggested_task.due_date).date()).days
+            reason = f"⚠️ Esta tarefa está **atrasada há {days_overdue} dia(s)**. Resolva-a imediatamente para evitar mais atrasos."
+        elif urgent_tasks:
+            urgent_tasks.sort(key=lambda t: t.due_date if t.due_date else datetime.max.replace(tzinfo=timezone.utc))
+            suggested_task = urgent_tasks[0]
+            reason = "🚨 Esta tarefa tem **prioridade URGENTE**. Deve ser resolvida o mais rápido possível."
+        elif today_tasks:
+            today_tasks.sort(key=lambda t: (self._priority_order(t.priority), t.due_date))
+            suggested_task = today_tasks[0]
+            reason = "📅 Esta tarefa **vence hoje**. Priorize para não atrasar."
+        elif high_priority_tasks:
+            high_priority_tasks.sort(key=lambda t: t.due_date if t.due_date else datetime.max.replace(tzinfo=timezone.utc))
+            suggested_task = high_priority_tasks[0]
+            reason = "🔴 Esta tarefa tem **alta prioridade**. É importante resolvê-la logo."
+        else:
+            # Get oldest pending task or first in list
+            other_tasks.sort(key=lambda t: t.created_at if t.created_at else datetime.max.replace(tzinfo=timezone.utc))
+            suggested_task = other_tasks[0] if other_tasks else pending_tasks[0]
+            reason = "📋 Esta é a próxima tarefa na sua lista. Comece por ela para manter o progresso."
+        
+        # Format response
+        priority_label = self._format_priority(suggested_task.priority)
+        status_label = self._format_status(suggested_task.status)
+        due_info = ""
+        if suggested_task.due_date:
+            due_date_br = to_brazil_tz(suggested_task.due_date)
+            due_info = f"\n📆 Prazo: {due_date_br.strftime('%d/%m/%Y às %H:%M')}"
+        
+        message = f"""🎯 **Recomendo que você trabalhe nesta tarefa agora:**
+
+**{suggested_task.title}**
+• Status: {status_label}
+• Prioridade: {priority_label}{due_info}
+
+{reason}
+
+---
+📊 Resumo das suas tarefas pendentes:
+• ⚠️ Atrasadas: {len(overdue_tasks)}
+• 📅 Para hoje: {len(today_tasks)}
+• 🚨 Urgentes: {len(urgent_tasks)}
+• 🔴 Alta prioridade: {len(high_priority_tasks)}
+• 📋 Outras: {len(other_tasks)}
+
+Quer que eu marque esta tarefa como concluída quando terminar? Basta dizer "concluir {suggested_task.title[:30]}..."."""
+
+        return {
+            "message": message,
+            "action": "suggest_task",
+            "data": {
+                "suggested_task": {
+                    "id": str(suggested_task.id),
+                    "title": suggested_task.title,
+                    "priority": str(suggested_task.priority),
+                    "status": str(suggested_task.status),
+                    "due_date": suggested_task.due_date.isoformat() if suggested_task.due_date else None
+                },
+                "summary": {
+                    "overdue": len(overdue_tasks),
+                    "today": len(today_tasks),
+                    "urgent": len(urgent_tasks),
+                    "high_priority": len(high_priority_tasks),
+                    "other": len(other_tasks),
+                    "total_pending": len(pending_tasks)
+                }
+            }
+        }
+    
+    def _priority_order(self, priority) -> int:
+        """Return numeric order for priority (lower = higher priority)"""
+        p = str(priority).lower().replace("priority.", "")
+        order = {
+            "urgente": 0, "urgent": 0,
+            "alta": 1, "high": 1,
+            "media": 2, "medium": 2,
+            "baixa": 3, "low": 3
+        }
+        return order.get(p, 99)
+    
+    def _format_priority(self, priority) -> str:
+        """Format priority for display"""
+        p = str(priority).lower().replace("priority.", "")
+        labels = {
+            "urgente": "🚨 Urgente",
+            "urgent": "🚨 Urgente",
+            "alta": "🔴 Alta",
+            "high": "🔴 Alta",
+            "media": "🟡 Média",
+            "medium": "🟡 Média",
+            "baixa": "🟢 Baixa",
+            "low": "🟢 Baixa"
+        }
+        return labels.get(p, p.capitalize())
+    
+    def _format_status(self, status) -> str:
+        """Format status for display"""
+        s = str(status).lower().replace("taskstatus.", "")
+        labels = {
+            "todo": "📋 A Fazer",
+            "pending": "📋 A Fazer",
+            "in_progress": "🔄 Em Progresso",
+            "done": "✅ Concluída",
+            "cancelled": "❌ Cancelada"
+        }
+        return labels.get(s, s.capitalize())
     
     async def _handle_list_tasks(
         self,
