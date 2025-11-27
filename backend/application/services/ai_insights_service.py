@@ -348,9 +348,9 @@ Retorne APENAS o objeto JSON, sem texto adicional."""
         
         period_tasks = [t for t in tasks if t.created_at and make_aware(t.created_at) >= period_start]
         
-        completed = [t for t in tasks if get_status(t) == "done"]
-        in_progress = [t for t in tasks if get_status(t) == "in_progress"]
-        todo = [t for t in tasks if get_status(t) == "todo"]
+        completed = [t for t in tasks if get_status(t) in ["done", "concluida"]]
+        in_progress = [t for t in tasks if get_status(t) in ["in_progress", "em_progresso"]]
+        todo = [t for t in tasks if get_status(t) in ["todo", "a_fazer", "pending"]]
         
         completed_in_period = [
             t for t in completed 
