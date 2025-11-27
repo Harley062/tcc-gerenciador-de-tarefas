@@ -18,6 +18,7 @@ interface AuthState {
   register: (email: string, password: string, fullName?: string) => Promise<void>;
   logout: () => void;
   checkAuth: () => Promise<void>;
+  clearError: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -32,15 +33,29 @@ export const useAuthStore = create<AuthState>((set) => ({
       await apiService.login(email, password);
       const user = await apiService.getCurrentUser();
       set({ user, isAuthenticated: true, isLoading: false });
-      
+
       const token = localStorage.getItem('access_token');
       if (token) {
         websocketService.connect(token);
       }
     } catch (error: any) {
-      set({ 
-        error: error.response?.data?.detail || 'Login failed', 
-        isLoading: false 
+      let errorMessage = 'Falha ao fazer login. Tente novamente.';
+
+      if (error.response?.status === 401) {
+        errorMessage = 'Email ou senha incorretos. Verifique suas credenciais.';
+      } else if (error.response?.status === 422) {
+        errorMessage = 'Dados inválidos. Verifique o formato do email e senha.';
+      } else if (error.response?.status === 429) {
+        errorMessage = 'Muitas tentativas de login. Aguarde alguns minutos.';
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message === 'Network Error') {
+        errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+      }
+
+      set({
+        error: errorMessage,
+        isLoading: false
       });
       throw error;
     }
@@ -53,15 +68,32 @@ export const useAuthStore = create<AuthState>((set) => ({
       await apiService.login(email, password);
       const user = await apiService.getCurrentUser();
       set({ user, isAuthenticated: true, isLoading: false });
-      
+
       const token = localStorage.getItem('access_token');
       if (token) {
         websocketService.connect(token);
       }
     } catch (error: any) {
-      set({ 
-        error: error.response?.data?.detail || 'Registration failed', 
-        isLoading: false 
+      let errorMessage = 'Falha ao criar conta. Tente novamente.';
+
+      if (error.response?.status === 400) {
+        errorMessage = 'Este email já está cadastrado. Tente fazer login.';
+      } else if (error.response?.status === 422) {
+        errorMessage = 'Dados inválidos. Verifique o formato do email e senha.';
+      } else if (error.response?.data?.detail) {
+        const detail = error.response.data.detail;
+        if (typeof detail === 'string') {
+          errorMessage = detail;
+        } else if (Array.isArray(detail)) {
+          errorMessage = detail.map((err: any) => err.msg).join(', ');
+        }
+      } else if (error.message === 'Network Error') {
+        errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+      }
+
+      set({
+        error: errorMessage,
+        isLoading: false
       });
       throw error;
     }
@@ -88,5 +120,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ isAuthenticated: false, user: null });
       apiService.logout();
     }
+  },
+
+  clearError: () => {
+    set({ error: null });
   },
 }));

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuthStore } from './store/authStore';
 import { useTaskStore } from './store/taskStore';
 import Login from './components/Login';
@@ -24,7 +24,6 @@ const App: React.FC = () => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
   });
-  const listViewSearchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (darkMode) {
@@ -52,11 +51,6 @@ const App: React.FC = () => {
     { key: '3', callback: () => setCurrentView('kanban') },
     { key: '4', callback: () => setCurrentView('calendar') },
     { key: '5', callback: () => setCurrentView('settings') },
-    { key: '/', callback: () => {
-      if (currentView === 'list' && listViewSearchRef.current) {
-        listViewSearchRef.current.focus();
-      }
-    }},
     { key: 'Escape', callback: () => {
       if (document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
@@ -71,7 +65,7 @@ const App: React.FC = () => {
   return (
     <>
       <GlobalStyles />
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200 bg-[url('./grid.svg')] bg-fixed bg-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         {/* Skip to main content - Acessibilidade */}
         <a
           href="#main-content"
@@ -225,8 +219,8 @@ const App: React.FC = () => {
 
                 <div className="flex items-center gap-3">
                   <div className="hidden sm:block text-right">
-                    <p className="text-sm font-bold text-gray-900 dark:text-white leading-none">{user?.username}</p>
-                    <button 
+                    <p className="text-sm font-bold text-gray-900 dark:text-white leading-none">{user?.full_name || user?.email}</p>
+                    <button
                       onClick={logout}
                       className="text-xs text-gray-500 hover:text-red-500 transition-colors mt-1"
                     >
@@ -234,7 +228,7 @@ const App: React.FC = () => {
                     </button>
                   </div>
                   <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-primary-500/20 ring-2 ring-white dark:ring-gray-800">
-                    {user?.username?.charAt(0).toUpperCase()}
+                    {(user?.full_name || user?.email)?.charAt(0).toUpperCase()}
                   </div>
                 </div>
               </div>
@@ -258,7 +252,7 @@ const App: React.FC = () => {
 
         <div className="animate-fade-in">
           {currentView === 'dashboard' && <DashboardView />}
-          {currentView === 'list' && <ListView searchRef={listViewSearchRef} />}
+          {currentView === 'list' && <ListView />}
           {currentView === 'kanban' && <KanbanView />}
           {currentView === 'calendar' && <CalendarView />}
           {currentView === 'settings' && <SettingsView />}

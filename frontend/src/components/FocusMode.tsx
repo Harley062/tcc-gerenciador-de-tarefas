@@ -102,7 +102,7 @@ const FocusMode: React.FC<FocusModeProps> = ({ onClose, initialTask }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col animate-fade-in bg-[url('/grid.svg')] bg-center">
+    <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col animate-fade-in">
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-900 to-primary-900/20 pointer-events-none"></div>
       
       {/* Header */}
