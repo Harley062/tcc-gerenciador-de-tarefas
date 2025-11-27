@@ -130,10 +130,10 @@ const CalendarView: React.FC = () => {
         </div>
       </header>
       
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="flex flex-col gap-8">
         
-        <div className="lg:col-span-5 xl:col-span-4">
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-primary-900/5 border border-white/20 dark:border-gray-700/50 p-8 sticky top-6">
+        <div className="w-full">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-primary-900/5 border border-white/20 dark:border-gray-700/50 p-8">
             <style>{`
               .react-calendar { 
                 width: 100%; 
@@ -229,7 +229,7 @@ const CalendarView: React.FC = () => {
           </div>
         </div>
 
-        <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+        <div className="w-full space-y-6">
           
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-lg border border-white/20 dark:border-gray-700/50 p-8 flex flex-col sm:flex-row justify-between items-center gap-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
