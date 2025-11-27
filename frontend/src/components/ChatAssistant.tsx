@@ -15,6 +15,14 @@ const ChatAssistant: React.FC = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const suggestions = [
+    "📋 Listar minhas tarefas",
+    "⚠️ Tarefas atrasadas",
+    "📅 O que tenho para hoje?",
+    "📊 Resumo de produtividade"
+  ];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -22,7 +30,10 @@ const ChatAssistant: React.FC = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+    if (isOpen && !loading) {
+      inputRef.current?.focus();
+    }
+  }, [messages, isOpen, loading]);
 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
@@ -36,12 +47,12 @@ const ChatAssistant: React.FC = () => {
     }
   }, [isOpen]);
 
-  const sendMessage = async () => {
-    if (!input.trim() || loading) return;
+  const sendMessage = async (text: string = input) => {
+    if (!text.trim() || loading) return;
 
     const userMessage: Message = {
       role: 'user',
-      content: input,
+      content: text,
       timestamp: new Date().toISOString(),
     };
 
@@ -50,7 +61,7 @@ const ChatAssistant: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await aiApi.sendChatMessage(input);
+      const response = await aiApi.sendChatMessage(text);
       
       const assistantMessage: Message = {
         role: 'assistant',
@@ -191,7 +202,7 @@ const ChatAssistant: React.FC = () => {
         {loading && (
           <div className="flex justify-start animate-fade-in">
             <div className="bg-white dark:bg-gray-800 rounded-2xl rounded-tl-none p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 items-center h-5">
                 <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce"></div>
                 <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                 <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
@@ -202,10 +213,26 @@ const ChatAssistant: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Suggestions */}
+      {messages.length < 2 && !loading && (
+        <div className="px-4 pb-2 flex gap-2 overflow-x-auto custom-scrollbar">
+          {suggestions.map((suggestion, index) => (
+            <button
+              key={index}
+              onClick={() => sendMessage(suggestion)}
+              className="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-800 border border-primary-100 dark:border-gray-700 rounded-full text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Input */}
       <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200/50 dark:border-gray-700/50 backdrop-blur-xl">
         <div className="flex gap-2 relative">
           <input
+            ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -215,7 +242,7 @@ const ChatAssistant: React.FC = () => {
             disabled={loading}
           />
           <button
-            onClick={sendMessage}
+            onClick={() => sendMessage()}
             disabled={loading || !input.trim()}
             className="bg-primary-600 hover:bg-primary-700 text-white rounded-xl px-4 py-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[50px]"
           >
