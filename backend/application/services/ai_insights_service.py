@@ -305,7 +305,10 @@ Retorne APENAS o objeto JSON, sem texto adicional."""
         tasks: List[Task],
         period: str = "daily"
     ) -> Dict[str, Any]:
-        """Generate AI-powered summary of tasks"""
+        """Generate AI-powered summary of tasks based on real data"""
+        from datetime import timedelta
+        from domain.utils.datetime_utils import utcnow_aware
+        
         def get_status(task):
             return task.status.value if hasattr(task.status, 'value') else str(task.status)
         
@@ -327,25 +330,109 @@ Retorne APENAS o objeto JSON, sem texto adicional."""
                 return int(val)
             return 0
         
+        def make_aware(dt):
+            """Converte datetime naive para aware (UTC) se necessário"""
+            if dt is None:
+                return None
+            if dt.tzinfo is None:
+                from datetime import timezone
+                return dt.replace(tzinfo=timezone.utc)
+            return dt
+        
+        # Filtra tarefas pelo período
+        now = utcnow_aware()
+        if period == "daily":
+            period_start = now - timedelta(days=1)
+        elif period == "weekly":
+            period_start = now - timedelta(days=7)
+        else:  # monthly
+            period_start = now - timedelta(days=30)
+        
+        # Filtra tarefas ativas/recentes do período
+        period_tasks = [t for t in tasks if t.created_at and make_aware(t.created_at) >= period_start]
+        
         completed = [t for t in tasks if get_status(t) == "done"]
         in_progress = [t for t in tasks if get_status(t) == "in_progress"]
         todo = [t for t in tasks if get_status(t) == "todo"]
         
+        # Tarefas concluídas no período
+        completed_in_period = [
+            t for t in completed 
+            if t.completed_at and make_aware(t.completed_at) >= period_start
+        ]
+        
         total_time = sum(get_duration(t) for t in completed)
         
-        high_priority_pending = [t for t in todo + in_progress if get_priority(t) == "high"]
+        high_priority_pending = [t for t in todo + in_progress if get_priority(t) in ["high", "alta", "urgente", "urgent"]]
         
+        # Tarefas atrasadas
+        overdue_tasks = [
+            t for t in todo + in_progress 
+            if t.due_date and make_aware(t.due_date) < now
+        ]
+        
+        # Gerar insights baseados nos dados reais
         insights = []
-        if len(completed) > 5:
-            insights.append("🎉 Excelente produtividade! Você completou muitas tarefas.")
-        elif len(completed) == 0:
-            insights.append("💡 Nenhuma tarefa concluída ainda. Que tal começar pela mais importante?")
+        
+        total_active = len(todo) + len(in_progress)
+        
+        if len(completed_in_period) > 0:
+            if len(completed_in_period) >= 5:
+                insights.append(f"🎉 Excelente produtividade! Você completou {len(completed_in_period)} tarefas neste período.")
+            elif len(completed_in_period) >= 2:
+                insights.append(f"👍 Bom progresso! {len(completed_in_period)} tarefas concluídas neste período.")
+            else:
+                insights.append(f"📝 Você concluiu {len(completed_in_period)} tarefa neste período. Continue focado!")
+        else:
+            if total_active > 0:
+                insights.append("💡 Nenhuma tarefa concluída ainda neste período. Que tal começar pela mais importante?")
+            else:
+                insights.append("📋 Você não tem tarefas ativas. Crie novas tarefas para começar!")
+        
+        if len(overdue_tasks) > 0:
+            insights.append(f"⚠️ ATENÇÃO: {len(overdue_tasks)} tarefas estão atrasadas e precisam de ação imediata.")
         
         if len(high_priority_pending) > 3:
-            insights.append(f"⚠️ Você tem {len(high_priority_pending)} tarefas de alta prioridade pendentes.")
+            insights.append(f"🔴 Você tem {len(high_priority_pending)} tarefas de alta prioridade pendentes. Priorize-as!")
+        elif len(high_priority_pending) > 0:
+            insights.append(f"📌 {len(high_priority_pending)} tarefas de alta prioridade aguardam conclusão.")
         
         if len(in_progress) > 5:
             insights.append("🎯 Muitas tarefas em progresso. Considere focar em finalizar algumas antes de iniciar novas.")
+        
+        if total_active == 0 and len(completed) > 0:
+            insights.append("✅ Parabéns! Todas as tarefas foram concluídas. Que tal planejar novas metas?")
+        
+        # Gerar recomendações dinâmicas baseadas nos dados
+        recommendations = []
+        
+        if len(overdue_tasks) > 0:
+            recommendations.append(f"🚨 Resolva as {len(overdue_tasks)} tarefas atrasadas - elas impactam sua produtividade.")
+        
+        if len(high_priority_pending) > 0:
+            recommendations.append("⭐ Comece seu dia pelas tarefas de alta prioridade para maximizar resultados.")
+        
+        if len(in_progress) > 3:
+            recommendations.append("🎯 Finalize tarefas em andamento antes de iniciar novas para manter o foco.")
+        
+        if total_time > 0:
+            hours = total_time // 60
+            minutes = total_time % 60
+            if hours > 0:
+                recommendations.append(f"⏱️ Você investiu {hours}h{minutes}min em tarefas. Continue o bom trabalho!")
+            else:
+                recommendations.append(f"⏱️ Você investiu {minutes} minutos em tarefas. Continue focado!")
+        
+        if len(todo) > 10:
+            recommendations.append("📝 Sua lista de tarefas está grande. Considere priorizar ou delegar algumas.")
+        
+        if len(completed) > 0 and len(todo) == 0 and len(in_progress) == 0:
+            recommendations.append("🌟 Incrível! Você zerou sua lista de tarefas. Planeje os próximos passos!")
+        
+        # Se não há recomendações específicas, adiciona dicas gerais
+        if len(recommendations) == 0:
+            recommendations.append("📅 Defina prazos para suas tarefas para manter o foco.")
+            recommendations.append("🔄 Revise suas tarefas diariamente para manter a produtividade.")
         
         return {
             "period": period,
@@ -356,11 +443,7 @@ Retorne APENAS o objeto JSON, sem texto adicional."""
                 "total_time_minutes": total_time
             },
             "insights": insights,
-            "top_completed": [{"title": t.title, "priority": get_priority(t)} for t in completed[:5]],
+            "top_completed": [{"title": t.title, "priority": get_priority(t)} for t in completed_in_period[:5]],
             "high_priority_pending": [{"title": t.title, "due_date": get_due_date(t)} for t in high_priority_pending[:5]],
-            "recommendations": [
-                "Foque em tarefas de alta prioridade primeiro",
-                "Divida tarefas grandes em subtarefas menores",
-                "Reserve tempo para revisar tarefas concluídas"
-            ]
+            "recommendations": recommendations[:4]  # Limita a 4 recomendações
         }

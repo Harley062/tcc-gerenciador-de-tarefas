@@ -333,42 +333,81 @@ class AnalyticsService:
         """
         insights = []
 
+        # Verifica se há tarefas
+        total_tasks = report["summary"].get("total_tasks", 0)
+        
+        if total_tasks == 0:
+            insights.append("📋 Você ainda não tem tarefas cadastradas. Comece criando sua primeira tarefa!")
+            return insights
+
         # Insights de conclusão
-        completion_rate = report["summary"]["completion_rate"]
+        completion_rate = report["summary"].get("completion_rate", 0)
         if completion_rate >= 80:
-            insights.append(f"Excelente! Você tem {completion_rate}% de taxa de conclusão.")
+            insights.append(f"🎉 Excelente! Você tem {completion_rate}% de taxa de conclusão. Continue assim!")
         elif completion_rate >= 60:
-            insights.append(f"Boa taxa de conclusão: {completion_rate}%. Continue assim!")
-        elif completion_rate < 40:
-            insights.append(f"Taxa de conclusão baixa ({completion_rate}%). Considere revisar suas prioridades.")
+            insights.append(f"👍 Boa taxa de conclusão: {completion_rate}%. Você está no caminho certo!")
+        elif completion_rate >= 40:
+            insights.append(f"📈 Taxa de conclusão em {completion_rate}%. Com foco, você pode melhorar!")
+        elif completion_rate > 0:
+            insights.append(f"💪 Taxa de conclusão baixa ({completion_rate}%). Revise suas prioridades e foque nas mais importantes.")
 
         # Insights de atraso
-        overdue = report["overdue_analysis"]["total_overdue"]
+        overdue = report.get("overdue_analysis", {}).get("total_overdue", 0)
         if overdue > 0:
-            avg_days = report["overdue_analysis"]["avg_days_overdue"]
-            insights.append(f"ATENÇÃO: {overdue} tarefas atrasadas (média de {avg_days} dias de atraso).")
+            avg_days = report.get("overdue_analysis", {}).get("avg_days_overdue", 0)
+            if overdue >= 5:
+                insights.append(f"🚨 ATENÇÃO: {overdue} tarefas atrasadas (média de {avg_days} dias). Ação urgente necessária!")
+            else:
+                insights.append(f"⚠️ {overdue} tarefas atrasadas precisam de atenção.")
 
         # Insights de prioridade
-        urgent = report["priority_distribution"]["urgente"]
-        high = report["priority_distribution"]["alta"]
+        priority_dist = report.get("priority_distribution", {})
+        urgent = priority_dist.get("urgente", 0)
+        high = priority_dist.get("alta", 0)
         if urgent + high > 5:
-            insights.append(f"Você tem {urgent + high} tarefas de alta prioridade/urgentes. Foque nelas!")
+            insights.append(f"🔴 Você tem {urgent + high} tarefas de alta prioridade/urgentes. Foque nelas primeiro!")
+        elif urgent + high > 0:
+            insights.append(f"📌 {urgent + high} tarefas importantes aguardam sua atenção.")
 
         # Insights de produtividade
-        velocity = report["productivity"]["completion_velocity"]
+        productivity = report.get("productivity", {})
+        velocity = productivity.get("completion_velocity", 0)
+        avg_per_day = productivity.get("avg_tasks_completed_per_day", 0)
+        
         if velocity >= 70:
-            insights.append(f"Ótima velocidade de conclusão: {velocity}%!")
-        elif velocity < 30:
-            insights.append(f"Velocidade de conclusão baixa ({velocity}%). Você pode estar criando muitas tarefas.")
+            insights.append(f"⚡ Ótima velocidade de conclusão: {velocity}%! Produtividade excelente.")
+        elif velocity < 30 and velocity > 0:
+            insights.append(f"📊 Velocidade de conclusão em {velocity}%. Considere focar em menos tarefas por vez.")
+        
+        if avg_per_day >= 3:
+            insights.append(f"🌟 Incrível! Média de {avg_per_day:.1f} tarefas por dia concluídas.")
 
         # Insights de prazo
-        on_time_rate = report["completion"]["on_time_rate"]
+        completion = report.get("completion", {})
+        on_time_rate = completion.get("on_time_rate", 0)
         if on_time_rate >= 80:
-            insights.append(f"Parabéns! {on_time_rate}% das tarefas concluídas no prazo.")
+            insights.append(f"⏰ Parabéns! {on_time_rate}% das tarefas foram concluídas no prazo.")
         elif on_time_rate < 50 and on_time_rate > 0:
-            insights.append(f"Apenas {on_time_rate}% das tarefas foram concluídas no prazo. Revise seus prazos.")
+            insights.append(f"📅 Apenas {on_time_rate}% das tarefas no prazo. Tente definir prazos mais realistas.")
 
-        if not insights:
-            insights.append("Continue mantendo suas tarefas organizadas!")
+        # Insights de tempo
+        time_analysis = report.get("time_analysis", {})
+        due_today = time_analysis.get("due_today_count", 0)
+        due_week = time_analysis.get("due_this_week_count", 0)
+        
+        if due_today > 0:
+            insights.append(f"📆 {due_today} tarefas vencem hoje. Priorize-as!")
+        
+        if due_week > 5:
+            insights.append(f"📅 Semana movimentada: {due_week} tarefas vencem esta semana.")
+
+        # Insights de projetos
+        project_dist = report.get("project_distribution", {})
+        without_project = project_dist.get("tasks_without_project", 0)
+        if without_project > 10:
+            insights.append(f"🗂️ {without_project} tarefas sem projeto. Organize-as para melhor visualização.")
+
+        if len(insights) == 0:
+            insights.append("✨ Continue mantendo suas tarefas organizadas! Você está indo bem.")
 
         return insights

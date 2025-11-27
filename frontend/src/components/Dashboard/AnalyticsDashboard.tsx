@@ -44,39 +44,46 @@ const AnalyticsDashboard: React.FC = () => {
   const fetchAnalyticsData = async () => {
     try {
       setLoading(true);
-
-      // Simulação de dados para desenvolvimento se a API falhar ou não existir
-      // Em produção, remover este bloco try/catch interno ou ajustar conforme necessário
-      try {
-        const [analyticsRes, insightsRes] = await Promise.all([
-            fetch('/api/analytics/report?period_days=30'),
-            fetch('/api/analytics/insights?period_days=30'),
-        ]);
-
-        if (!analyticsRes.ok || !insightsRes.ok) throw new Error('Falha na API');
-
-        const analyticsData = await analyticsRes.json();
-        const insightsData = await insightsRes.json();
-
-        setAnalytics(analyticsData);
-        setInsights(insightsData);
-      } catch (e) {
-          console.warn("Usando dados mockados para analytics devido a erro na API", e);
-          // Mock data fallback
-          setAnalytics({
-              summary: { total_tasks: 45, active_tasks: 12, completed_tasks: 33, completion_rate: 73 },
-              productivity: { completion_velocity: 85, avg_tasks_completed_per_day: 4.2 },
-              time_analysis: { overdue_count: 3, due_today_count: 5, due_this_week_count: 12 },
-              completion: { on_time_rate: 92, completed_on_time: 30, completed_late: 3 }
-          });
-          setInsights({
-              insights: ['Excelente taxa de conclusão esta semana!', 'Você é mais produtivo pela manhã.', '3 tarefas atrasadas precisam de atenção.'],
-              report_summary: { total_tasks: 45, completion_rate: 73 }
-          });
+      
+      const token = localStorage.getItem('access_token');
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+      
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
+
+      const [analyticsRes, insightsRes] = await Promise.all([
+          fetch(`${API_URL}/api/analytics/report?period_days=30`, { headers }),
+          fetch(`${API_URL}/api/analytics/insights?period_days=30`, { headers }),
+      ]);
+
+      if (!analyticsRes.ok || !insightsRes.ok) {
+        throw new Error('Falha ao carregar dados de analytics');
+      }
+
+      const analyticsData = await analyticsRes.json();
+      const insightsData = await insightsRes.json();
+
+      setAnalytics(analyticsData);
+      setInsights(insightsData);
 
     } catch (error) {
       console.error('Erro ao buscar analytics:', error);
+      // Define valores zerados quando não há dados disponíveis
+      setAnalytics({
+          summary: { total_tasks: 0, active_tasks: 0, completed_tasks: 0, completion_rate: 0 },
+          productivity: { completion_velocity: 0, avg_tasks_completed_per_day: 0 },
+          time_analysis: { overdue_count: 0, due_today_count: 0, due_this_week_count: 0 },
+          completion: { on_time_rate: 0, completed_on_time: 0, completed_late: 0 }
+      });
+      setInsights({
+          insights: ['Não foi possível carregar insights. Verifique sua conexão e tente novamente.'],
+          report_summary: { total_tasks: 0, completion_rate: 0 }
+      });
     } finally {
       setLoading(false);
     }
