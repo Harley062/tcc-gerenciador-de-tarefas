@@ -119,7 +119,7 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`min-w-[280px] flex-shrink-0 rounded-xl p-4 ${colorClass} ${
+      className={`w-[320px] max-w-[320px] flex-shrink-0 rounded-xl p-4 ${colorClass} ${
         isOver ? 'ring-4 ring-primary-400 dark:ring-primary-600 scale-105' : ''
       } transition-all duration-200 shadow-soft`}
     >
@@ -337,7 +337,7 @@ const KanbanView: React.FC = () => {
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div className="flex flex-wrap gap-6 items-start pb-4">
+        <div className="flex gap-6 items-start pb-4 overflow-x-auto">
           {Object.entries(columns).map(([columnId, columnTasks]) => (
             <DroppableColumn
               key={columnId}
