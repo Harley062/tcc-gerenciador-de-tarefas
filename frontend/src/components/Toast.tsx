@@ -28,7 +28,6 @@ const Toast: React.FC<ToastProps> = ({ message, type, duration = 3000, onClose, 
     setTimeout(onClose, 300);
   };
 
-  // Configuração usando o design system
   const typeConfig = {
     success: {
       bg: 'bg-green-500/90 dark:bg-green-600/90 backdrop-blur-md border-green-400/50',
@@ -92,17 +91,14 @@ const Toast: React.FC<ToastProps> = ({ message, type, duration = 3000, onClose, 
       aria-atomic="true"
       aria-label={`${config.label}: ${message}`}
     >
-      {/* Ícone */}
       <div className="flex-shrink-0 animate-bounce-subtle" aria-hidden="true">
         {config.icon}
       </div>
 
-      {/* Mensagem */}
       <p className="flex-1 text-sm font-medium leading-relaxed drop-shadow-sm">
         {message}
       </p>
 
-      {/* Botão de ação (opcional) */}
       {action && (
         <button
           onClick={() => {
@@ -116,7 +112,6 @@ const Toast: React.FC<ToastProps> = ({ message, type, duration = 3000, onClose, 
         </button>
       )}
 
-      {/* Botão de fechar */}
       <button
         onClick={handleClose}
         className="flex-shrink-0 p-1.5 hover:bg-white/20 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 opacity-80 hover:opacity-100"

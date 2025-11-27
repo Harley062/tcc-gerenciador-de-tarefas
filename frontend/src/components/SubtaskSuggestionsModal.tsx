@@ -33,7 +33,6 @@ const SubtaskSuggestionsModal: React.FC<SubtaskSuggestionsModalProps> = ({
       setError(null);
       const result = await aiApi.suggestSubtasks(taskTitle, taskDescription);
       setSuggestions(result.subtasks);
-      // Select all by default
       setSelectedSubtasks(new Set(result.subtasks.map((_, index) => index)));
     } catch (err) {
       console.error('Failed to load subtask suggestions:', err);
@@ -63,7 +62,6 @@ const SubtaskSuggestionsModal: React.FC<SubtaskSuggestionsModalProps> = ({
     try {
       const subtasksToCreate = Array.from(selectedSubtasks).map(index => suggestions[index]);
 
-      // Create all selected subtasks
       await Promise.all(
         subtasksToCreate.map(subtask =>
           api.createSubtask(taskId, {

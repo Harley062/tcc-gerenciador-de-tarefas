@@ -14,13 +14,11 @@ const Login: React.FC<LoginProps> = ({ onSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const { login, register, error, isLoading, clearError } = useAuthStore();
 
-  // Limpar erros ao trocar de aba
   useEffect(() => {
     clearError();
     setValidationError(null);
   }, [isLogin, clearError]);
 
-  // Limpar erro de validação quando o usuário digita
   useEffect(() => {
     if (validationError) {
       setValidationError(null);
@@ -28,20 +26,17 @@ const Login: React.FC<LoginProps> = ({ onSuccess }) => {
   }, [email, password, fullName]);
 
   const validateForm = (): boolean => {
-    // Validar email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setValidationError('Por favor, insira um email válido.');
       return false;
     }
 
-    // Validar senha
     if (password.length < 6) {
       setValidationError('A senha deve ter pelo menos 6 caracteres.');
       return false;
     }
 
-    // Validações específicas para registro
     if (!isLogin) {
       if (!fullName || fullName.trim().length < 3) {
         setValidationError('O nome deve ter pelo menos 3 caracteres.');
@@ -53,7 +48,6 @@ const Login: React.FC<LoginProps> = ({ onSuccess }) => {
         return false;
       }
 
-      // Validar força da senha
       const hasUpperCase = /[A-Z]/.test(password);
       const hasLowerCase = /[a-z]/.test(password);
       const hasNumber = /[0-9]/.test(password);
@@ -70,11 +64,9 @@ const Login: React.FC<LoginProps> = ({ onSuccess }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Limpar erros anteriores
     clearError();
     setValidationError(null);
 
-    // Validar formulário
     if (!validateForm()) {
       return;
     }
@@ -87,7 +79,6 @@ const Login: React.FC<LoginProps> = ({ onSuccess }) => {
       }
       onSuccess();
     } catch (error) {
-      // O erro já foi tratado no authStore
       console.error('Authentication failed:', error);
     }
   };
@@ -102,7 +93,6 @@ const Login: React.FC<LoginProps> = ({ onSuccess }) => {
     <div className="min-h-screen flex items-center justify-center bg-gray-900 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-primary-900/50 via-gray-900 to-black pointer-events-none"></div>
       
-      {/* Decorative blobs */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl animate-pulse"></div>
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
 

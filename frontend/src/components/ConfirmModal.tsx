@@ -22,7 +22,6 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Configuração de cores por variante
   const variantConfig = {
     danger: {
       button: 'btn-danger',
@@ -43,14 +42,12 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   const config = variantConfig[variant];
 
-  // Trap focus e suporte a ESC
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onCancel();
       }
 
-      // Focus trap
       if (e.key === 'Tab' && modalRef.current) {
         const focusableElements = modalRef.current.querySelectorAll(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -74,7 +71,6 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [onCancel]);
 
-  // Prevenir scroll do body
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => {
@@ -96,7 +92,6 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full border border-white/20 dark:border-gray-700/50 animate-scale-in overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="p-6 border-b border-gray-200/50 dark:border-gray-700/50 flex justify-between items-start gap-4 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800/50">
           <div className="flex items-center gap-4 flex-1">
             <div className={`p-3 rounded-xl bg-white/50 dark:bg-gray-700/50 shadow-sm ${config.iconColor}`}>
@@ -125,7 +120,6 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-6">
           <p
             id="modal-description"
@@ -135,7 +129,6 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           </p>
         </div>
 
-        {/* Footer */}
         <div className="p-6 border-t border-gray-200/50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/50 backdrop-blur-sm flex justify-end gap-3">
           <button
             onClick={onCancel}

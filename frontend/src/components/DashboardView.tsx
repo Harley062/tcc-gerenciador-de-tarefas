@@ -27,9 +27,8 @@ const DashboardView: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Erro ao carregar resumo:', err);
-      const errorMessage = err?.response?.data?.detail || err?.message || 'Não foi possível carregar o resumo';
+      const errorMessage = err?.response?.data?.detail || err?.message || 'Não foi possivel carregar o resumo';
       setError(errorMessage);
-      // Define um summary vazio como fallback
       setSummary({
         period: period,
         summary: {
@@ -74,7 +73,6 @@ const DashboardView: React.FC = () => {
   return (
     <div className="w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
-        {/* Error Banner */}
         {error && (
           <div className="mb-6 rounded-2xl border border-red-200 dark:border-red-800 bg-red-50/90 dark:bg-red-900/20 backdrop-blur-sm p-4 shadow-lg animate-slide-down">
             <div className="flex items-start gap-3">
@@ -99,7 +97,6 @@ const DashboardView: React.FC = () => {
           </div>
         )}
 
-        {/* Header */}
         <div className="mb-8 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
           <div>
             <h1 className="text-4xl sm:text-5xl font-display font-bold text-gray-900 dark:text-white mb-2 tracking-tight">
@@ -135,7 +132,6 @@ const DashboardView: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Stats Grid */}
         <div className="grid grid-cols-2 gap-6 mb-8">
           <StatsCard
             title="Concluídas"
@@ -183,11 +179,8 @@ const DashboardView: React.FC = () => {
           />
         </div>
 
-        {/* Two Column Layout */}
         <div className="grid grid-cols-1 gap-6 mb-8">
-          {/* Completion Rate - Full width */}
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 shadow-lg border border-white/20 dark:border-gray-700/50 rounded-3xl relative overflow-hidden group">
-            {/* Background Decoration */}
             <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl group-hover:bg-primary-500/20 transition-colors duration-500"></div>
             
             <div className="flex items-center justify-between mb-8 relative z-10">
@@ -237,14 +230,11 @@ const DashboardView: React.FC = () => {
           </div>
         </div>
 
-        {/* Analytics Dashboard Section */}
         <div className="mb-8">
           <AnalyticsDashboard />
         </div>
 
-        {/* Bottom Grid - Insights and Tasks */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* AI Insights */}
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 shadow-lg border border-purple-100 dark:border-purple-900/30 rounded-3xl relative overflow-hidden">
              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
             <h2 className="text-xl font-bold mb-6 flex items-center text-gray-900 dark:text-white relative z-10">
@@ -277,7 +267,6 @@ const DashboardView: React.FC = () => {
             </div>
           </div>
 
-          {/* Top Completed Tasks */}
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 shadow-lg border border-white/20 dark:border-gray-700/50 rounded-3xl relative overflow-hidden">
              <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
             <h2 className="text-xl font-bold mb-6 flex items-center text-gray-900 dark:text-white relative z-10">
@@ -322,9 +311,7 @@ const DashboardView: React.FC = () => {
           </div>
         </div>
 
-        {/* Alert Sections */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* High Priority Pending */}
           <div className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/10 dark:to-orange-900/10 border border-red-100 dark:border-red-800/30 p-6 shadow-lg rounded-3xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
             <h2 className="text-xl font-bold mb-6 flex items-center text-red-800 dark:text-red-200 relative z-10">
@@ -367,7 +354,6 @@ const DashboardView: React.FC = () => {
             </div>
           </div>
 
-          {/* Recommendations */}
           <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/10 dark:to-cyan-900/10 border border-blue-100 dark:border-blue-800/30 p-6 shadow-lg rounded-3xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
             <h2 className="text-xl font-bold mb-6 flex items-center text-blue-800 dark:text-blue-200 relative z-10">
@@ -403,7 +389,6 @@ const DashboardView: React.FC = () => {
         </div>
       </div>
 
-      {/* Task Create Modal */}
       {showCreateModal && (
         <TaskCreateModal
           onClose={() => setShowCreateModal(false)}

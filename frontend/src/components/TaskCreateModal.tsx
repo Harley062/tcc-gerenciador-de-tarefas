@@ -4,11 +4,8 @@ import { useToast } from './ToastContainer';
 import { aiApi } from '../services/aiApi';
 import { TaskStatus, TaskPriority } from '../store/taskStore';
 
-// Função para converter input local para ISO com timezone do Brasil
 const toISOWithBrazilTimezone = (localDatetime: string): string => {
   if (!localDatetime) return '';
-  // O input datetime-local retorna no formato YYYY-MM-DDTHH:MM
-  // Adicionamos o offset de Brasília (-03:00)
   return `${localDatetime}:00-03:00`;
 };
 

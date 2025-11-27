@@ -79,10 +79,8 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ task, onClose, onCrea
         onTaskUpdated();
       }
 
-      // Show success feedback
       showSuccess('Agendamento aplicado com sucesso!');
 
-      // Close modal after success
       onClose();
     } catch (err) {
       console.error('Failed to apply scheduling:', err);
@@ -162,7 +160,6 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ task, onClose, onCrea
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Tabs */}
           <div className="flex p-1 bg-gray-100/50 dark:bg-gray-700/50 rounded-xl backdrop-blur-sm">
             <button
               onClick={() => setActiveTab('subtasks')}
@@ -196,7 +193,6 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ task, onClose, onCrea
             </button>
           </div>
 
-          {/* Content */}
           <div className="min-h-[300px]">
             {activeTab === 'subtasks' && (
               <div className="space-y-4 animate-fade-in">

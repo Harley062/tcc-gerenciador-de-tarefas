@@ -36,12 +36,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToList, o
 
   useEffect(() => {
     fetchNotifications();
-    // Atualizar a cada 5 minutos
     const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Fechar dropdown ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -131,7 +129,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToList, o
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`p-2.5 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-800/50 hover:shadow-sm transition-all duration-200 relative group ${
@@ -155,7 +152,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToList, o
           />
         </svg>
 
-        {/* Badge with notification count */}
         {totalNotifications > 0 && (
           <span
             className={`absolute -top-1 -right-1 ${
@@ -169,10 +165,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToList, o
         )}
       </button>
 
-      {/* Dropdown */}
       {isOpen && (
         <div className="absolute right-0 mt-4 w-96 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/50 z-50 animate-slide-down max-h-[32rem] overflow-hidden origin-top-right">
-          {/* Header */}
           <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50 flex justify-between items-center sticky top-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl z-10">
             <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               Notificações
@@ -188,7 +182,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToList, o
             )}
           </div>
 
-          {/* Content */}
           <div className="max-h-96 overflow-y-auto custom-scrollbar p-2">
             {loading ? (
               <div className="p-8 text-center text-gray-500 dark:text-gray-400">
@@ -209,7 +202,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToList, o
               </div>
             ) : (
               <div className="space-y-3">
-                {/* Tarefas Atrasadas */}
                 {notifications && notifications.overdue.length > 0 && (
                   <div className="bg-red-50/50 dark:bg-red-900/10 rounded-xl overflow-hidden border border-red-100 dark:border-red-900/30">
                     <div className="flex items-center gap-2 px-3 py-2 bg-red-100/50 dark:bg-red-900/30">
@@ -245,7 +237,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToList, o
                   </div>
                 )}
 
-                {/* Vence Hoje */}
                 {notifications && notifications.due_today.length > 0 && (
                   <div className="bg-yellow-50/50 dark:bg-yellow-900/10 rounded-xl overflow-hidden border border-yellow-100 dark:border-yellow-900/30">
                     <div className="flex items-center gap-2 px-3 py-2 bg-yellow-100/50 dark:bg-yellow-900/30">
@@ -281,7 +272,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToList, o
                   </div>
                 )}
 
-                {/* Vence Amanhã */}
                 {notifications && notifications.due_tomorrow.length > 0 && (
                   <div className="bg-blue-50/50 dark:bg-blue-900/10 rounded-xl overflow-hidden border border-blue-100 dark:border-blue-900/30">
                     <div className="flex items-center gap-2 px-3 py-2 bg-blue-100/50 dark:bg-blue-900/30">
@@ -312,7 +302,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToList, o
                   </div>
                 )}
 
-                {/* Alta Prioridade Sem Prazo */}
                 {notifications && notifications.high_priority_pending.length > 0 && (
                   <div className="bg-gray-50/50 dark:bg-gray-700/30 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-600">
                     <div className="flex items-center gap-2 px-3 py-2 bg-gray-100/50 dark:bg-gray-700/50">
@@ -349,7 +338,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToList, o
             )}
           </div>
 
-          {/* Footer */}
           {totalNotifications > 0 && (
             <div className="p-3 border-t border-gray-200/50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/50 backdrop-blur-sm">
               <button

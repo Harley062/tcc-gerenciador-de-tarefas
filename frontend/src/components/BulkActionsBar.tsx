@@ -24,13 +24,11 @@ const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 animate-slide-up">
-      {/* Gradient Line */}
       <div className="h-1 w-full bg-gradient-to-r from-primary-500 via-purple-500 to-pink-500"></div>
       
       <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl border-t border-white/20 dark:border-gray-700/50 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
-            {/* Info */}
             <div className="flex items-center gap-4">
               <button
                 onClick={onClearSelection}
@@ -51,9 +49,7 @@ const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
               </div>
             </div>
 
-            {/* Actions */}
             <div className="flex items-center gap-3 flex-wrap">
-              {/* Mudar Status */}
               <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700/50 rounded-xl p-1 border border-gray-200 dark:border-gray-600">
                 <span className="text-xs font-bold text-gray-500 dark:text-gray-400 px-2 uppercase tracking-wider">Status</span>
                 <button
@@ -79,7 +75,6 @@ const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
                 </button>
               </div>
 
-              {/* Mudar Prioridade */}
               <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700/50 rounded-xl p-1 border border-gray-200 dark:border-gray-600">
                 <span className="text-xs font-bold text-gray-500 dark:text-gray-400 px-2 uppercase tracking-wider">Prioridade</span>
                 <button
@@ -114,7 +109,6 @@ const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
 
               <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-1"></div>
 
-              {/* Deletar */}
               <button
                 onClick={onBulkDelete}
                 className="px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-xl font-bold transition-all flex items-center gap-2 hover:shadow-lg hover:shadow-red-500/10 active:scale-95"

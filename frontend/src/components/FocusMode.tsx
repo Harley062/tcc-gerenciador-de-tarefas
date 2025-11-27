@@ -15,11 +15,9 @@ const FocusMode: React.FC<FocusModeProps> = ({ onClose, initialTask }) => {
   const [isPomodoroRunning, setIsPomodoroRunning] = useState(false);
   const [pomodoroMode, setPomodoroMode] = useState<'work' | 'break'>('work');
 
-  // Filtrar apenas tarefas não concluídas
   const focusTasks = tasks.filter(t => t.status !== 'done' && t.status !== 'cancelled');
   const currentTask = focusTasks[currentTaskIndex];
 
-  // Timer Pomodoro
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
@@ -27,7 +25,6 @@ const FocusMode: React.FC<FocusModeProps> = ({ onClose, initialTask }) => {
       interval = setInterval(() => {
         if (pomodoroSeconds === 0) {
           if (pomodoroMinutes === 0) {
-            // Tempo acabou
             setIsPomodoroRunning(false);
             if (pomodoroMode === 'work') {
               setPomodoroMode('break');
@@ -105,7 +102,6 @@ const FocusMode: React.FC<FocusModeProps> = ({ onClose, initialTask }) => {
     <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col animate-fade-in">
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-900 to-primary-900/20 pointer-events-none"></div>
       
-      {/* Header */}
       <div className="relative flex justify-between items-center p-6 border-b border-white/10 bg-gray-900/50 backdrop-blur-md">
         <div className="flex items-center gap-4">
           <div className="p-2 bg-primary-500/20 rounded-lg">
@@ -129,9 +125,7 @@ const FocusMode: React.FC<FocusModeProps> = ({ onClose, initialTask }) => {
         </button>
       </div>
 
-      {/* Main Content */}
       <div className="relative flex-1 flex flex-col items-center justify-center p-8 overflow-y-auto">
-        {/* Pomodoro Timer */}
         <div className="mb-12 text-center">
           <div className="relative inline-block">
             <div className="text-9xl font-bold font-mono tracking-wider bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400 drop-shadow-2xl">
@@ -165,7 +159,6 @@ const FocusMode: React.FC<FocusModeProps> = ({ onClose, initialTask }) => {
           </p>
         </div>
 
-        {/* Current Task */}
         <div className="max-w-3xl w-full bg-white/5 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl border border-white/10 relative overflow-hidden group">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary-500 to-transparent opacity-50"></div>
           
@@ -232,7 +225,6 @@ const FocusMode: React.FC<FocusModeProps> = ({ onClose, initialTask }) => {
           </div>
         </div>
 
-        {/* Navigation */}
         <div className="mt-8 flex gap-4">
           <button
             onClick={handlePreviousTask}
@@ -252,7 +244,6 @@ const FocusMode: React.FC<FocusModeProps> = ({ onClose, initialTask }) => {
         </div>
       </div>
 
-      {/* Footer - Keyboard Shortcuts */}
       <div className="p-4 border-t border-white/5 bg-black/20 backdrop-blur-sm text-center">
         <div className="flex justify-center gap-8 text-xs font-medium text-gray-500 uppercase tracking-wider">
           <span className="flex items-center gap-2"><kbd className="bg-white/10 px-2 py-1 rounded text-gray-300">Esc</kbd> Sair</span>

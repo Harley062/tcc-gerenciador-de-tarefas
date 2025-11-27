@@ -69,7 +69,6 @@ const App: React.FC = () => {
     <>
       <GlobalStyles />
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-        {/* Skip to main content - Acessibilidade */}
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[60] btn btn-primary"
@@ -99,7 +98,6 @@ const App: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
-              {/* Mobile Quick Add Button (abre modal 'Criar Tarefa com IA') */}
               <button
                 onClick={() => setShowAIModal(true)}
                 className="lg:hidden btn btn-primary p-2"
@@ -111,7 +109,6 @@ const App: React.FC = () => {
                 </svg>
               </button>
 
-              {/* View Navigation */}
               <div
                 className="hidden md:flex gap-1 bg-gray-100/50 dark:bg-gray-800/50 p-1.5 rounded-xl backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50"
                 role="tablist"
@@ -199,7 +196,6 @@ const App: React.FC = () => {
                 </button>
               </div>
 
-              {/* Theme Toggle & User Profile */}
               <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-gray-200 dark:border-gray-700">
                 <button
                   onClick={() => setDarkMode(!darkMode)}

@@ -4,21 +4,16 @@ import apiService from '../services/api';
 import { useToast } from './ToastContainer';
 import SubtaskSuggestionsModal from './SubtaskSuggestionsModal';
 
-// Função para converter data para formato local (input datetime-local)
 const toLocalDatetimeString = (isoDate: string | undefined): string => {
   if (!isoDate) return '';
   const date = new Date(isoDate);
-  // Ajusta para o offset local (Brasília -03:00)
   const offset = date.getTimezoneOffset();
   const localDate = new Date(date.getTime() - offset * 60000);
   return localDate.toISOString().slice(0, 16);
 };
 
-// Função para converter input local para ISO com timezone do Brasil
 const toISOWithBrazilTimezone = (localDatetime: string): string => {
   if (!localDatetime) return '';
-  // O input datetime-local retorna no formato YYYY-MM-DDTHH:MM
-  // Adicionamos o offset de Brasília (-03:00)
   return `${localDatetime}:00-03:00`;
 };
 

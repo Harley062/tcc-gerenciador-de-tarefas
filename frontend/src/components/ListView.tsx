@@ -31,7 +31,6 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  // Abrir modal de edição quando initialEditTaskId for passado
   useEffect(() => {
     if (initialEditTaskId && tasks.length > 0) {
       const taskToEdit = tasks.find(t => t.id === initialEditTaskId);
@@ -80,7 +79,6 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
     setTaskToDelete(null);
   };
 
-  // Extrair todas as tags únicas das tarefas
   const allTags = useMemo(() => {
     const tagsSet = new Set<string>();
     tasks.forEach(task => {
@@ -89,13 +87,11 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
     return Array.from(tagsSet).sort();
   }, [tasks]);
 
-  // Verificar se uma data está atrasada
   const isOverdue = (dueDate: string | undefined): boolean => {
     if (!dueDate) return false;
     return new Date(dueDate) < new Date(new Date().setHours(0, 0, 0, 0));
   };
 
-  // Verificar se uma data é hoje
   const isToday = (dueDate: string | undefined): boolean => {
     if (!dueDate) return false;
     const today = new Date();
@@ -103,7 +99,6 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
     return today.toDateString() === due.toDateString();
   };
 
-  // Verificar se uma data está nesta semana
   const isThisWeek = (dueDate: string | undefined): boolean => {
     if (!dueDate) return false;
     const today = new Date();
@@ -112,7 +107,6 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
     return due >= today && due <= weekFromNow;
   };
 
-  // Verificar se uma data está neste mês
   const isThisMonth = (dueDate: string | undefined): boolean => {
     if (!dueDate) return false;
     const today = new Date();
@@ -120,22 +114,18 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
     return today.getMonth() === due.getMonth() && today.getFullYear() === due.getFullYear();
   };
 
-  // Mapear prioridade para valor numérico (para ordenação)
   const priorityValue = (priority: string): number => {
     const map: { [key: string]: number } = { urgent: 4, high: 3, medium: 2, low: 1 };
     return map[priority] || 0;
   };
 
-  // Filtrar e ordenar tarefas
   const filteredTasks = useMemo(() => {
     let filtered = tasks.filter((task) => {
-      // Filtro de busca (título, descrição e tags)
       const matchesSearch = !searchQuery ||
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      // Filtro de prioridade (usando helpers para suportar pt/en)
       let matchesPriority = true;
       if (priorityFilter === 'urgent') {
         matchesPriority = isPriorityUrgent(task.priority);
@@ -147,11 +137,9 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
         matchesPriority = isPriorityLow(task.priority);
       }
 
-      // Filtro de tags
       const matchesTags = selectedTags.length === 0 ||
         selectedTags.every(tag => task.tags?.includes(tag));
 
-      // Filtro de data de vencimento
       let matchesDueDate = true;
       if (dueDateFilter === 'overdue') {
         matchesDueDate = isOverdue(task.due_date);
@@ -168,7 +156,6 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
       return matchesSearch && matchesPriority && matchesTags && matchesDueDate;
     });
 
-    // Ordenação
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'created_desc':
@@ -199,25 +186,21 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
     return filtered;
   }, [tasks, searchQuery, priorityFilter, selectedTags, dueDateFilter, sortBy]);
 
-  // Contador de tarefas atrasadas
   const overdueCount = useMemo(() =>
     tasks.filter(t => isOverdue(t.due_date) && !isStatusDone(t.status) && !isStatusCancelled(t.status)).length
   , [tasks]);
 
-  // Contador de tarefas de alta prioridade
   const highPriorityCount = useMemo(() =>
     tasks.filter(t => (isPriorityHigh(t.priority) || isPriorityUrgent(t.priority)) &&
       !isStatusDone(t.status) && !isStatusCancelled(t.status)).length
   , [tasks]);
 
-  // Toggle de tag
   const toggleTag = (tag: string) => {
     setSelectedTags(prev =>
       prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
     );
   };
 
-  // Limpar todos os filtros
   const clearFilters = () => {
     setSearchQuery('');
     setPriorityFilter('');
@@ -225,12 +208,10 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
     setSelectedTags([]);
   };
 
-  // Verificar se há filtros ativos
   const hasActiveFilters = searchQuery || priorityFilter || dueDateFilter !== 'all' || selectedTags.length > 0;
 
   return (
     <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 animate-fade-in space-y-8">
-      {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-4xl font-display font-bold text-gray-900 dark:text-white tracking-tight">
@@ -253,7 +234,6 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
         </button>
       </div>
 
-      {/* Status Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[{
           label: 'A Fazer',
@@ -297,10 +277,8 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
         ))}
       </div>
 
-      {/* Controls & Filters Bar */}
       <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/20 dark:border-gray-700/50 transition-all duration-300 hover:shadow-xl">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Search */}
           <div className="relative flex-1 group">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <svg className="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -316,7 +294,6 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
             />
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-3 overflow-x-auto pb-2 lg:pb-0">
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -363,7 +340,6 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
           </div>
         </div>
 
-        {/* Expanded Filters */}
         {showFilters && (
           <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700 animate-slide-down">
             <div className="flex justify-between items-center mb-6">
@@ -471,7 +447,6 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
         )}
       </div>
 
-      {/* Quick Filters Chips */}
       {(overdueCount > 0 || highPriorityCount > 0) && (
         <div className="flex flex-wrap gap-3">
           {overdueCount > 0 && (
@@ -512,7 +487,6 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
         </div>
       )}
 
-      {/* Task Grid */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20">
           <div className="relative w-16 h-16">
@@ -619,7 +593,6 @@ const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) 
         />
       )}
 
-      {/* Task Create Modal */}
       {showCreateModal && (
         <TaskCreateModal
           onClose={() => setShowCreateModal(false)}

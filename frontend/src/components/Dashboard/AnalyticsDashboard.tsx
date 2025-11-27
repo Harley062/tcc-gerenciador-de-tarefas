@@ -73,7 +73,6 @@ const AnalyticsDashboard: React.FC = () => {
 
     } catch (error) {
       console.error('Erro ao buscar analytics:', error);
-      // Define valores zerados quando não há dados disponíveis
       setAnalytics({
           summary: { total_tasks: 0, active_tasks: 0, completed_tasks: 0, completion_rate: 0 },
           productivity: { completion_velocity: 0, avg_tasks_completed_per_day: 0 },
@@ -138,7 +137,6 @@ const AnalyticsDashboard: React.FC = () => {
         </button>
       </header>
 
-      {/* Cards de Estatísticas */}
       <div className="grid grid-cols-2 gap-6 mb-8">
         <StatsCard
           title="Total de Tarefas"
@@ -189,7 +187,6 @@ const AnalyticsDashboard: React.FC = () => {
         />
       </div>
 
-      {/* Insights */}
       {insights && insights.insights.length > 0 && (
         <section className="mb-8">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -214,7 +211,6 @@ const AnalyticsDashboard: React.FC = () => {
         </section>
       )}
 
-      {/* Métricas Detalhadas */}
       <section>
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Métricas Detalhadas</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

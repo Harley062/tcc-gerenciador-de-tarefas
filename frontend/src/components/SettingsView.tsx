@@ -111,7 +111,6 @@ const SettingsView: React.FC = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* OpenAI Configuration */}
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-xl">
@@ -175,7 +174,6 @@ const SettingsView: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* AI Features */}
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
@@ -213,7 +211,6 @@ const SettingsView: React.FC = () => {
             </div>
           </div>
 
-          {/* Task Defaults */}
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">

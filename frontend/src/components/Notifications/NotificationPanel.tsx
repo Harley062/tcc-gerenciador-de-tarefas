@@ -30,7 +30,6 @@ const NotificationPanel: React.FC = () => {
 
   useEffect(() => {
     fetchNotifications();
-    // Atualizar a cada 5 minutos
     const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
@@ -55,7 +54,6 @@ const NotificationPanel: React.FC = () => {
       setNotifications(data);
     } catch (error) {
       console.error('Erro ao buscar notificações:', error);
-      // Define um estado vazio em caso de erro para não quebrar o componente
       setNotifications({
         overdue: [],
         due_today: [],
@@ -150,7 +148,6 @@ const NotificationPanel: React.FC = () => {
 
       {expanded && (
         <div className="p-5 flex flex-col gap-6 animate-slide-down">
-          {/* Tarefas Atrasadas */}
           {notifications.overdue.length > 0 && (
             <div className="rounded-xl overflow-hidden border border-red-100 dark:border-red-900/30">
               <div className="flex items-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500">
@@ -185,7 +182,6 @@ const NotificationPanel: React.FC = () => {
             </div>
           )}
 
-          {/* Vence Hoje */}
           {notifications.due_today.length > 0 && (
             <div className="rounded-xl overflow-hidden border border-yellow-100 dark:border-yellow-900/30">
               <div className="flex items-center gap-2 px-4 py-3 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500">
@@ -220,7 +216,6 @@ const NotificationPanel: React.FC = () => {
             </div>
           )}
 
-          {/* Vence Amanhã */}
           {notifications.due_tomorrow.length > 0 && (
             <div className="rounded-xl overflow-hidden border border-blue-100 dark:border-blue-900/30">
               <div className="flex items-center gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500">
@@ -248,7 +243,6 @@ const NotificationPanel: React.FC = () => {
             </div>
           )}
 
-          {/* Alta Prioridade Sem Prazo */}
           {notifications.high_priority_pending.length > 0 && (
             <div className="rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700/50">
               <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-700/30 border-l-4 border-gray-500">

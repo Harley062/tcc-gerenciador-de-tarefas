@@ -13,7 +13,6 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   fullScreen = false,
   text,
 }) => {
-  // Mapeamento de tamanhos
   const sizeConfig = {
     sm: 'w-4 h-4 border-2',
     md: 'w-8 h-8 border-2',
@@ -21,7 +20,6 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     xl: 'w-16 h-16 border-4',
   };
 
-  // Mapeamento de cores
   const colorConfig = {
     primary: 'border-primary-500 border-t-transparent',
     success: 'border-green-500 border-t-transparent',

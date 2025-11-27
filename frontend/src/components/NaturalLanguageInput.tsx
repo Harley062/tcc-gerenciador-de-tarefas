@@ -26,7 +26,6 @@ const NaturalLanguageInput: React.FC<NaturalLanguageInputProps> = ({ onTaskCreat
       setCreatedTask(task);
       setInput('');
 
-      // Show subtask suggestions modal after a short delay
       setTimeout(() => {
         setShowSubtaskModal(true);
       }, 500);
@@ -178,7 +177,6 @@ const NaturalLanguageInput: React.FC<NaturalLanguageInputProps> = ({ onTaskCreat
         </div>
       </div>
 
-      {/* Subtask Suggestions Modal */}
       {showSubtaskModal && createdTask && (
         <SubtaskSuggestionsModal
           taskId={createdTask.id}

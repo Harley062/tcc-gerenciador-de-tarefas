@@ -5,7 +5,7 @@ import { useTaskStore, Task } from '../store/taskStore';
 import TaskCard from './TaskCard';
 import TaskEditModal from './TaskEditModal';
 import ConfirmModal from './ConfirmModal';
-// Helper para normalizar datas (zerar horas) para comparação correta
+
 const normalizeDate = (dateStr: string | Date) => {
   const d = new Date(dateStr);
   d.setHours(0, 0, 0, 0);
@@ -16,7 +16,6 @@ const CalendarView: React.FC = () => {
   const { tasks, fetchTasks, updateTask, deleteTask, isLoading } = useTaskStore();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   
-  // Controle de Modais
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Partial<Task> | null>(null);
   
@@ -27,7 +26,6 @@ const CalendarView: React.FC = () => {
     fetchTasks({});
   }, [fetchTasks]);
 
-  // OTIMIZAÇÃO: Cria um mapa de tarefas por data para não filtrar o array inteiro a cada renderização de dia
   const tasksByDateMap = useMemo(() => {
     const map: Record<string, Task[]> = {};
     tasks.forEach((task) => {
@@ -39,12 +37,10 @@ const CalendarView: React.FC = () => {
     return map;
   }, [tasks]);
 
-  // Tarefas da data selecionada
   const tasksForSelectedDate = useMemo(() => {
     return tasksByDateMap[normalizeDate(selectedDate)] || [];
   }, [selectedDate, tasksByDateMap]);
 
-  // Estatísticas rápidas do dia
   const stats = useMemo(() => {
     const total = tasksForSelectedDate.length;
     const completed = tasksForSelectedDate.filter(t => t.status === 'done').length;
@@ -60,7 +56,6 @@ const CalendarView: React.FC = () => {
   };
 
   const handleCreateNewTaskForDate = () => {
-    // Abre o modal já com a data selecionada pré-preenchida
     setEditingTask({ due_date: selectedDate.toISOString() });
     setIsEditModalOpen(true);
   };
@@ -87,7 +82,6 @@ const CalendarView: React.FC = () => {
     }
   };
 
-  // Renderização das bolinhas no calendário
   const tileContent = ({ date, view }: { date: Date; view: string }) => {
     if (view === 'month') {
       const dateKey = normalizeDate(date);
@@ -138,7 +132,6 @@ const CalendarView: React.FC = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* Coluna Esquerda: Calendário */}
         <div className="lg:col-span-5 xl:col-span-4">
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-primary-900/5 border border-white/20 dark:border-gray-700/50 p-8 sticky top-6">
             <style>{`
@@ -236,10 +229,8 @@ const CalendarView: React.FC = () => {
           </div>
         </div>
 
-        {/* Coluna Direita: Lista de Tarefas */}
         <div className="lg:col-span-7 xl:col-span-8 space-y-6">
           
-          {/* Cabeçalho da Lista */}
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-lg border border-white/20 dark:border-gray-700/50 p-8 flex flex-col sm:flex-row justify-between items-center gap-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
             
@@ -277,7 +268,6 @@ const CalendarView: React.FC = () => {
             </button>
           </div>
 
-          {/* Lista de Cards */}
           <div className="space-y-4 min-h-[400px]">
             {tasksForSelectedDate.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full py-20 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-700 group hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
@@ -316,7 +306,6 @@ const CalendarView: React.FC = () => {
         </div>
       </div>
 
-      {/* Modais */}
       {isEditModalOpen && (
         <TaskEditModal
           task={editingTask as Task}

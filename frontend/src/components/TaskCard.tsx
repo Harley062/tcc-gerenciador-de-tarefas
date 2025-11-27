@@ -8,7 +8,6 @@ interface TaskCardProps {
   onStatusChange?: (taskId: string, status: Task['status']) => void;
 }
 
-// Helper para obter configuração de prioridade (suporta PT e EN)
 const getPriorityConfig = (priority: string) => {
   if (isPriorityLow(priority)) {
     return {
@@ -42,7 +41,6 @@ const getPriorityConfig = (priority: string) => {
       label: 'Urgente'
     };
   }
-  // Default
   return {
     bg: 'bg-gray-50 dark:bg-gray-900/20',
     text: 'text-gray-700 dark:text-gray-300',
@@ -51,7 +49,6 @@ const getPriorityConfig = (priority: string) => {
   };
 };
 
-// Helper para obter configuração de status (suporta PT e EN)
 const getStatusConfig = (status: string) => {
   if (isStatusTodo(status)) {
     return {
@@ -81,7 +78,6 @@ const getStatusConfig = (status: string) => {
       label: 'Cancelada'
     };
   }
-  // Default
   return {
     bg: 'bg-gray-100 dark:bg-gray-700',
     text: 'text-gray-700 dark:text-gray-300',
@@ -114,7 +110,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
     >
       <div className={`absolute top-0 left-0 w-1.5 h-full ${priorityConfig.bg.replace('bg-', 'bg-').replace(' dark:bg-', ' dark:bg-').split(' ')[0].replace('50', '500')}`}></div>
       
-      {/* Cabeçalho */}
       <div className="flex justify-between items-start mb-3 gap-3 pl-3">
         <h3
           className="text-lg font-bold text-gray-900 dark:text-gray-100 flex-1 leading-tight line-clamp-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors"
@@ -150,7 +145,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
         </div>
       </div>
 
-      {/* Descrição */}
       {task.description && (
         <p
           className="text-gray-600 dark:text-gray-400 text-sm mb-4 leading-relaxed line-clamp-2 pl-3"
@@ -160,7 +154,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
         </p>
       )}
 
-      {/* Badges */}
       <div className="flex flex-wrap gap-2 mb-4 pl-3" role="group" aria-label="Informações da tarefa">
         <span
           className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${priorityConfig.bg} ${priorityConfig.text} ${priorityConfig.border}`}
@@ -192,7 +185,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
         )}
       </div>
 
-      {/* Tags */}
       {task.tags && task.tags.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4 pl-3" role="group" aria-label="Tags da tarefa">
           {task.tags.map((tag, index) => (
@@ -207,7 +199,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
         </div>
       )}
 
-      {/* Botões de ação */}
       {onStatusChange && (
         <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50 pl-3">
           <button

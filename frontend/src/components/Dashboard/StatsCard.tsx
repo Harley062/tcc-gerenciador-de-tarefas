@@ -20,7 +20,6 @@ const StatsCard: React.FC<StatsCardProps> = ({
   trend,
   color = 'primary',
 }) => {
-  // Mapeamento de cores usando o design system
   const colorConfig = {
     primary: {
       bg: 'bg-primary-50/50 dark:bg-primary-900/10',
@@ -62,10 +61,8 @@ const StatsCard: React.FC<StatsCardProps> = ({
       role="region"
       aria-label={`Estatística: ${title}`}
     >
-      {/* Background Decoration */}
       <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full ${config.icon} opacity-20 blur-2xl group-hover:opacity-30 transition-opacity`}></div>
 
-      {/* Cabeçalho com título e ícone */}
       <div className="flex justify-between items-start mb-4 relative z-10">
         <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
           {title}
@@ -80,19 +77,16 @@ const StatsCard: React.FC<StatsCardProps> = ({
         )}
       </div>
 
-      {/* Valor principal */}
       <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2 leading-none font-display relative z-10">
         {value}
       </div>
 
-      {/* Subtítulo */}
       {subtitle && (
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 relative z-10 font-medium">
           {subtitle}
         </p>
       )}
 
-      {/* Indicador de tendência */}
       {trend && (
         <div
           className={`flex items-center gap-1 text-sm font-bold relative z-10 ${

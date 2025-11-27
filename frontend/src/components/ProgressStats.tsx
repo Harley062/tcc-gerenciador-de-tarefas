@@ -15,13 +15,11 @@ const ProgressStats: React.FC<ProgressStatsProps> = ({ tasks }) => {
 
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    // Tarefas por prioridade
     const urgent = tasks.filter(t => t.priority === 'urgent' && t.status !== 'done' && t.status !== 'cancelled').length;
     const high = tasks.filter(t => t.priority === 'high' && t.status !== 'done' && t.status !== 'cancelled').length;
     const medium = tasks.filter(t => t.priority === 'medium' && t.status !== 'done' && t.status !== 'cancelled').length;
     const low = tasks.filter(t => t.priority === 'low' && t.status !== 'done' && t.status !== 'cancelled').length;
 
-    // Tarefas atrasadas
     const now = new Date();
     const overdue = tasks.filter(t =>
       t.due_date &&
@@ -30,7 +28,6 @@ const ProgressStats: React.FC<ProgressStatsProps> = ({ tasks }) => {
       t.status !== 'cancelled'
     ).length;
 
-    // Tarefas concluídas hoje
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const completedToday = tasks.filter(t =>
@@ -38,7 +35,6 @@ const ProgressStats: React.FC<ProgressStatsProps> = ({ tasks }) => {
       new Date(t.completed_at) >= today
     ).length;
 
-    // Média de duração
     const tasksWithDuration = tasks.filter(t => t.actual_duration);
     const avgDuration = tasksWithDuration.length > 0
       ? Math.round(tasksWithDuration.reduce((sum, t) => sum + (t.actual_duration || 0), 0) / tasksWithDuration.length)
@@ -68,7 +64,6 @@ const ProgressStats: React.FC<ProgressStatsProps> = ({ tasks }) => {
         Estatísticas
       </h2>
 
-      {/* Barra de Progresso Global */}
       <div className="mb-8 bg-white/50 dark:bg-gray-700/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
         <div className="flex justify-between items-end mb-3">
           <div>
@@ -95,7 +90,6 @@ const ProgressStats: React.FC<ProgressStatsProps> = ({ tasks }) => {
         </div>
       </div>
 
-      {/* Grid de Estatísticas */}
       <div className="grid grid-cols-2 gap-4 mb-8">
         <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 rounded-xl p-4 hover:scale-[1.02] transition-transform">
           <div className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-2">
@@ -134,7 +128,6 @@ const ProgressStats: React.FC<ProgressStatsProps> = ({ tasks }) => {
         </div>
       </div>
 
-      {/* Tarefas por Prioridade */}
       <div className="mb-6">
         <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2">
           <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,7 +167,6 @@ const ProgressStats: React.FC<ProgressStatsProps> = ({ tasks }) => {
         </div>
       </div>
 
-      {/* Informações Adicionais */}
       {stats.avgDuration > 0 && (
         <div className="pt-4 border-t border-gray-200 dark:border-gray-700/50 mt-4">
           <div className="flex items-center justify-between text-sm">

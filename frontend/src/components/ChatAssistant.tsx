@@ -89,7 +89,6 @@ const ChatAssistant: React.FC = () => {
 
       let errorText = 'Desculpe, ocorreu um erro ao processar sua mensagem.';
 
-      // Extract specific error message from API response
       if (error?.response?.data?.detail) {
         errorText = error.response.data.detail;
       } else if (error?.response?.status === 401) {
@@ -137,7 +136,6 @@ const ChatAssistant: React.FC = () => {
         timestamp: new Date().toISOString(),
       }]);
 
-      // Dispatch event to refresh task list
       window.dispatchEvent(new CustomEvent('tasksUpdated'));
     } catch (error: any) {
       console.error('Action error:', error);
@@ -199,7 +197,6 @@ const ChatAssistant: React.FC = () => {
 
   return (
     <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-2xl flex flex-col z-50 border border-white/20 dark:border-gray-700/50 animate-slide-up overflow-hidden">
-      {/* Header */}
       <div className="bg-gradient-to-r from-primary-600 to-primary-500 text-white p-4 flex justify-between items-center shadow-lg z-10">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
@@ -230,7 +227,6 @@ const ChatAssistant: React.FC = () => {
         </div>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-gray-50/50 dark:bg-gray-900/50">
         {messages.map((message, index) => (
           <div
@@ -246,7 +242,6 @@ const ChatAssistant: React.FC = () => {
             >
               <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
               
-              {/* Action Buttons */}
               {message.action_buttons && message.action_buttons.length > 0 && (
                 <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-2">
                   {message.action_buttons.map((btn, btnIndex) => (
@@ -266,7 +261,6 @@ const ChatAssistant: React.FC = () => {
                 </div>
               )}
               
-              {/* Task list count */}
               {message.data && message.action === 'list' && (
                 <div className="mt-3 pt-3 border-t border-white/20 dark:border-gray-700">
                   <div className="flex items-center gap-2 text-xs opacity-90">
@@ -302,7 +296,6 @@ const ChatAssistant: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Suggestions */}
       {messages.length < 2 && !loading && (
         <div className="px-4 pb-2 flex gap-2 overflow-x-auto custom-scrollbar">
           {suggestions.map((suggestion, index) => (
@@ -317,7 +310,6 @@ const ChatAssistant: React.FC = () => {
         </div>
       )}
 
-      {/* Input */}
       <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200/50 dark:border-gray-700/50 backdrop-blur-xl">
         <div className="flex gap-2 relative">
           <input

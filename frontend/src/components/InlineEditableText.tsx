@@ -51,7 +51,6 @@ const InlineEditableText: React.FC<InlineEditableTextProps> = ({
   };
 
   const handleBlur = () => {
-    // Pequeno delay para permitir que o botão de salvar seja clicado
     setTimeout(() => {
       if (isEditing) {
         handleSave();
