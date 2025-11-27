@@ -71,6 +71,30 @@ export interface ChatMessage {
   message: string;
   action: string | null;
   data: any;
+  requires_confirmation?: boolean;
+  action_buttons?: Array<{
+    label: string;
+    action: string;
+    data: any;
+  }>;
+}
+
+export interface ChatActionRequest {
+  action: string;
+  task_id?: string;
+  task_data?: Record<string, any>;
+}
+
+export interface ChatActionResponse {
+  success: boolean;
+  message: string;
+  task?: {
+    id: string;
+    title: string;
+    status?: string;
+    priority?: string;
+    due_date?: string;
+  };
 }
 
 export interface ParsedTask {
@@ -129,6 +153,11 @@ export const aiApi = {
 
   sendChatMessage: async (message: string): Promise<ChatMessage> => {
     const response = await apiClient.post('/ai/chat', { message });
+    return response.data;
+  },
+
+  executeChatAction: async (request: ChatActionRequest): Promise<ChatActionResponse> => {
+    const response = await apiClient.post('/ai/chat/action', request);
     return response.data;
   },
 

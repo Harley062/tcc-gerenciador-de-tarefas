@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { aiApi, ChatMessage } from '../services/aiApi';
+import { aiApi, ChatMessage, ChatActionRequest } from '../services/aiApi';
+
+interface ActionButton {
+  label: string;
+  action: string;
+  data: any;
+}
 
 interface Message {
   role: 'user' | 'assistant';
@@ -7,6 +13,8 @@ interface Message {
   timestamp: string;
   action?: string | null;
   data?: any;
+  requires_confirmation?: boolean;
+  action_buttons?: ActionButton[];
 }
 
 const ChatAssistant: React.FC = () => {
@@ -18,10 +26,12 @@ const ChatAssistant: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const suggestions = [
-    "📋 Listar minhas tarefas",
-    "⚠️ Tarefas atrasadas",
-    "📅 O que tenho para hoje?",
-    "📊 Resumo de produtividade"
+    "📋 Listar tarefas",
+    "➕ Criar nova tarefa",
+    "✅ Concluir tarefa",
+    "🗑️ Deletar tarefa",
+    "📊 Status das tarefas",
+    "⏰ Tarefas de hoje"
   ];
 
   const scrollToBottom = () => {
@@ -40,7 +50,7 @@ const ChatAssistant: React.FC = () => {
       setMessages([
         {
           role: 'assistant',
-          content: '👋 Olá! Sou seu assistente de tarefas com IA. Como posso ajudar?\n\nVocê pode:\n• Listar suas tarefas\n• Criar novas tarefas\n• Verificar status\n• Pedir ajuda\n\nDigite "ajuda" para ver todos os comandos.',
+          content: '👋 Olá! Sou um **Agente de IA** integrado ao seu sistema de tarefas.\n\n🚀 **Posso executar ações diretamente:**\n• ➕ Criar tarefas automaticamente\n• ✅ Concluir tarefas por você\n• 🗑️ Deletar tarefas\n• 📋 Listar e filtrar tarefas\n• 📊 Mostrar seu progresso\n\n💡 Basta me pedir em linguagem natural!\nEx: "Crie uma tarefa para revisar o código amanhã"',
           timestamp: new Date().toISOString(),
         },
       ]);
@@ -69,6 +79,8 @@ const ChatAssistant: React.FC = () => {
         timestamp: new Date().toISOString(),
         action: response.action,
         data: response.data,
+        requires_confirmation: response.requires_confirmation,
+        action_buttons: response.action_buttons,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -94,6 +106,46 @@ const ChatAssistant: React.FC = () => {
         timestamp: new Date().toISOString(),
       };
       setMessages((prev: Message[]) => [...prev, errorMessage]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const executeAction = async (actionButton: ActionButton) => {
+    if (actionButton.action === 'cancel') {
+      setMessages((prev: Message[]) => [...prev, {
+        role: 'assistant',
+        content: '❌ Ação cancelada.',
+        timestamp: new Date().toISOString(),
+      }]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const request: ChatActionRequest = {
+        action: actionButton.action,
+        task_id: actionButton.data?.task_id,
+        task_data: actionButton.data,
+      };
+
+      const response = await aiApi.executeChatAction(request);
+
+      setMessages((prev: Message[]) => [...prev, {
+        role: 'assistant',
+        content: response.message,
+        timestamp: new Date().toISOString(),
+      }]);
+
+      // Dispatch event to refresh task list
+      window.dispatchEvent(new CustomEvent('tasksUpdated'));
+    } catch (error: any) {
+      console.error('Action error:', error);
+      setMessages((prev: Message[]) => [...prev, {
+        role: 'assistant',
+        content: `❌ Erro ao executar ação: ${error?.response?.data?.detail || error.message}`,
+        timestamp: new Date().toISOString(),
+      }]);
     } finally {
       setLoading(false);
     }
@@ -154,10 +206,10 @@ const ChatAssistant: React.FC = () => {
             <span className="text-xl">🤖</span>
           </div>
           <div>
-            <h3 className="font-bold text-lg">Assistente de IA</h3>
+            <h3 className="font-bold text-lg">Agente de IA</h3>
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              <p className="text-xs text-white/90">Online</p>
+              <p className="text-xs text-white/90">Pronto para executar</p>
             </div>
           </div>
         </div>
@@ -193,6 +245,28 @@ const ChatAssistant: React.FC = () => {
               }`}
             >
               <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
+              
+              {/* Action Buttons */}
+              {message.action_buttons && message.action_buttons.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-2">
+                  {message.action_buttons.map((btn, btnIndex) => (
+                    <button
+                      key={btnIndex}
+                      onClick={() => executeAction(btn)}
+                      disabled={loading}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                        btn.action === 'cancel'
+                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          : 'bg-primary-500 text-white hover:bg-primary-600'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {btn.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {/* Task list count */}
               {message.data && message.action === 'list' && (
                 <div className="mt-3 pt-3 border-t border-white/20 dark:border-gray-700">
                   <div className="flex items-center gap-2 text-xs opacity-90">
@@ -202,6 +276,7 @@ const ChatAssistant: React.FC = () => {
                   </div>
                 </div>
               )}
+              
               <p className={`text-[10px] mt-2 text-right ${
                 message.role === 'user' ? 'text-white/70' : 'text-gray-400'
               }`}>

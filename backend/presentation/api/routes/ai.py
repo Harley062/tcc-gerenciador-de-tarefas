@@ -2,7 +2,7 @@
 AI Features API Routes
 """
 import logging
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -103,10 +103,18 @@ class ChatMessageRequest(BaseModel):
     message: str
 
 
+class ChatActionRequest(BaseModel):
+    action: str  # "create", "complete", "delete", "update_status"
+    task_id: Optional[str] = None
+    task_data: Optional[dict] = None
+
+
 class ChatMessageResponse(BaseModel):
     message: str
     action: Optional[str]
-    data: Optional[dict]
+    data: Optional[Any] = None  # Pode ser dict ou list dependendo da ação
+    requires_confirmation: bool = False  # Se precisa de confirmação do usuário
+    action_buttons: Optional[List[dict]] = None  # Botões de ação rápida
 
 
 class TaskParseRequest(BaseModel):
@@ -173,13 +181,19 @@ async def get_ai_insights_service(
     )
 
 
+# Store chat service instances per user for context persistence
+_chat_services: Dict[str, ChatAssistantService] = {}
+
+
 async def get_chat_assistant_service(
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
 ) -> ChatAssistantService:
-    """Get chat assistant service with user's settings"""
+    """Get chat assistant service with user's settings - maintains context per user"""
     from infrastructure.database.user_settings_repository import UserSettingsRepository
     from infrastructure.gpt.openai_adapter import OpenAIAdapter
+    
+    user_id_str = str(current_user.id)
     
     settings_repo = UserSettingsRepository(session)
     settings = await settings_repo.get_or_create(current_user.id)
@@ -190,11 +204,25 @@ async def get_chat_assistant_service(
             detail="Configure sua chave OpenAI em Configurações para usar recursos de IA"
         )
     
-    openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4o-mini")
+    # Reuse existing service to maintain conversation context
+    if user_id_str in _chat_services:
+        service = _chat_services[user_id_str]
+        # Update repository reference for this session
+        repo = PostgreSQLTaskRepository(session)
+        service.set_repository(repo, current_user.id)
+        return service
     
-    return ChatAssistantService(
-        openai_adapter=openai_adapter
+    openai_adapter = OpenAIAdapter(api_key=settings.openai_api_key, model="gpt-4o-mini")
+    repo = PostgreSQLTaskRepository(session)
+    
+    service = ChatAssistantService(
+        openai_adapter=openai_adapter,
+        task_repository=repo,
+        user_id=current_user.id
     )
+    
+    _chat_services[user_id_str] = service
+    return service
 
 
 @router.post("/subtasks/suggest", response_model=SubtaskSuggestionsResponse)
@@ -436,6 +464,21 @@ async def chat_message(
         )
 
 
+@router.get("/agent/status")
+async def get_agent_status(
+    current_user: User = Depends(get_current_user),
+    chat_service: ChatAssistantService = Depends(get_chat_assistant_service),
+):
+    """Get agent status including executed actions and context"""
+    return {
+        "agent_mode": chat_service.agent_mode,
+        "pending_action": chat_service.last_action_context,
+        "pending_tasks_count": len(chat_service.pending_tasks_list),
+        "executed_actions": chat_service.executed_actions,
+        "history_size": len(chat_service.conversation_history),
+    }
+
+
 @router.get("/chat/history")
 async def get_chat_history(
     current_user: User = Depends(get_current_user),
@@ -453,6 +496,150 @@ async def clear_chat_history(
     """Clear chat conversation history"""
     chat_service.clear_history()
     return {"message": "Chat history cleared"}
+
+
+@router.post("/chat/action")
+async def execute_chat_action(
+    request: ChatActionRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
+    gpt_service = Depends(get_gpt_service),
+):
+    """Execute an action from the chat (create, complete, delete, update)"""
+    from uuid import UUID
+    from domain.entities.task import Task
+    from domain.value_objects.priority import Priority
+    from domain.value_objects.task_status import TaskStatus
+    from domain.utils.datetime_utils import now_brazil
+    
+    repo = PostgreSQLTaskRepository(session)
+    
+    # Helper to convert priority string to Priority enum
+    def get_priority(priority_str: str) -> Priority:
+        priority_map = {
+            "baixa": Priority.BAIXA,
+            "low": Priority.BAIXA,
+            "media": Priority.MEDIA,
+            "medium": Priority.MEDIA,
+            "alta": Priority.ALTA,
+            "high": Priority.ALTA,
+            "urgente": Priority.URGENTE,
+            "urgent": Priority.URGENTE,
+        }
+        return priority_map.get(priority_str.lower(), Priority.MEDIA)
+    
+    try:
+        if request.action == "create":
+            # Criar tarefa usando o GPT para parsear
+            if not request.task_data or not request.task_data.get("text"):
+                raise HTTPException(status_code=400, detail="Texto da tarefa é obrigatório")
+            
+            parsed_task, _ = await gpt_service.parse_task(request.task_data["text"])
+            
+            task = Task(
+                user_id=current_user.id,
+                title=parsed_task.title,
+                description=parsed_task.description,
+                status=TaskStatus.TODO,
+                priority=get_priority(parsed_task.priority),
+                due_date=parsed_task.due_date,
+                estimated_duration=parsed_task.estimated_duration,
+                tags=parsed_task.tags,
+            )
+            
+            created_task = await repo.create(task)
+            
+            return {
+                "success": True,
+                "message": f"✅ Tarefa '{created_task.title}' criada com sucesso!",
+                "task": {
+                    "id": str(created_task.id),
+                    "title": created_task.title,
+                    "status": created_task.status.value if hasattr(created_task.status, 'value') else str(created_task.status),
+                    "priority": created_task.priority.value if hasattr(created_task.priority, 'value') else str(created_task.priority),
+                    "due_date": created_task.due_date.isoformat() if created_task.due_date else None
+                }
+            }
+        
+        elif request.action == "complete":
+            if not request.task_id:
+                raise HTTPException(status_code=400, detail="ID da tarefa é obrigatório")
+            
+            task = await repo.get_by_id(UUID(request.task_id))
+            if not task or task.user_id != current_user.id:
+                raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+            
+            task.status = TaskStatus.DONE
+            task.completed_at = now_brazil()
+            updated_task = await repo.update(task)
+            
+            return {
+                "success": True,
+                "message": f"✅ Tarefa '{updated_task.title}' marcada como concluída!",
+                "task": {
+                    "id": str(updated_task.id),
+                    "title": updated_task.title,
+                    "status": "done"
+                }
+            }
+        
+        elif request.action == "delete":
+            if not request.task_id:
+                raise HTTPException(status_code=400, detail="ID da tarefa é obrigatório")
+            
+            task = await repo.get_by_id(UUID(request.task_id))
+            if not task or task.user_id != current_user.id:
+                raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+            
+            title = task.title
+            await repo.delete(UUID(request.task_id))
+            
+            return {
+                "success": True,
+                "message": f"🗑️ Tarefa '{title}' deletada com sucesso!"
+            }
+        
+        elif request.action == "update_status":
+            if not request.task_id or not request.task_data:
+                raise HTTPException(status_code=400, detail="ID e dados da tarefa são obrigatórios")
+            
+            task = await repo.get_by_id(UUID(request.task_id))
+            if not task or task.user_id != current_user.id:
+                raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+            
+            new_status = request.task_data.get("status", "in_progress")
+            task.status = TaskStatus.from_string(new_status)
+            
+            if new_status == "done":
+                task.completed_at = now_brazil()
+            
+            updated_task = await repo.update(task)
+            
+            status_labels = {
+                "todo": "A Fazer",
+                "in_progress": "Em Progresso", 
+                "done": "Concluída",
+                "pending": "Pendente"
+            }
+            
+            return {
+                "success": True,
+                "message": f"✅ Status de '{updated_task.title}' alterado para {status_labels.get(new_status, new_status)}!",
+                "task": {
+                    "id": str(updated_task.id),
+                    "title": updated_task.title,
+                    "status": new_status
+                }
+            }
+        
+        else:
+            raise HTTPException(status_code=400, detail=f"Ação desconhecida: {request.action}")
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Chat action failed: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Erro ao executar ação: {str(e)}")
 
 
 @router.post("/tasks/parse", response_model=TaskParseResponse)

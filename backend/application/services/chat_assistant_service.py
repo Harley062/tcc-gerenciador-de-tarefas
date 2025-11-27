@@ -1,27 +1,127 @@
 """
-Chat Assistant Service - Natural language interface for task management
+Chat Assistant Service - AI Agent for autonomous task management
 """
 import logging
-from typing import Any, Optional, List, Dict
+from typing import Any, Optional, List, Dict, Callable, Awaitable
 from datetime import datetime, timedelta, timezone
+from uuid import UUID
 
 from domain.entities.task import Task
+from domain.utils.datetime_utils import now_brazil, to_brazil_tz, BRAZIL_TZ
 from infrastructure.gpt.openai_adapter import OpenAIAdapter
 
 logger = logging.getLogger("taskmaster")
 
 
 class ChatAssistantService:
-    """AI-powered chat assistant for natural language task management - GPT-4 only"""
+    """
+    AI Agent for autonomous task management.
+    
+    This agent can:
+    - Execute actions directly (create, complete, delete tasks)
+    - Chain multiple actions in a single conversation
+    - Maintain context across messages
+    - Use natural language understanding via GPT
+    """
 
-    MAX_HISTORY_SIZE = 20  # Maximum number of messages to keep in history
+    MAX_HISTORY_SIZE = 30  # Maximum number of messages to keep in history
 
     def __init__(
         self,
         openai_adapter: OpenAIAdapter,
+        task_repository = None,  # Optional: for direct execution
+        user_id: UUID = None,
     ):
         self.openai_adapter = openai_adapter
+        self.task_repository = task_repository
+        self.user_id = user_id
         self.conversation_history = []
+        self.last_action_context = None  # Store context of last action for follow-up
+        self.pending_tasks_list = []  # Store task list for selection
+        self.agent_mode = True  # Agent executes actions directly when possible
+        self.executed_actions = []  # Track actions executed in current session
+    
+    def set_repository(self, repository, user_id: UUID):
+        """Set the task repository for direct execution"""
+        self.task_repository = repository
+        self.user_id = user_id
+    
+    async def execute_action(self, action: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute an action directly.
+        
+        Actions:
+        - create: Create a new task
+        - complete: Mark task as done  
+        - delete: Delete a task
+        - update_status: Update task status
+        """
+        if not self.task_repository or not self.user_id:
+            return {
+                "success": False,
+                "message": "❌ Repositório não configurado para execução direta.",
+                "requires_manual_action": True
+            }
+        
+        try:
+            from domain.value_objects.task_status import TaskStatus
+            
+            if action == "complete":
+                task_id = data.get("task_id")
+                if not task_id:
+                    return {"success": False, "message": "ID da tarefa não fornecido"}
+                
+                task = await self.task_repository.get_by_id(UUID(task_id))
+                if not task or task.user_id != self.user_id:
+                    return {"success": False, "message": "Tarefa não encontrada"}
+                
+                task.status = TaskStatus.DONE
+                task.completed_at = now_brazil()
+                await self.task_repository.update(task)
+                
+                self.executed_actions.append({
+                    "action": "complete",
+                    "task_id": task_id,
+                    "task_title": task.title,
+                    "timestamp": now_brazil().isoformat()
+                })
+                
+                return {
+                    "success": True,
+                    "message": f"✅ Tarefa '{task.title}' concluída com sucesso!",
+                    "task": {"id": task_id, "title": task.title, "status": "done"}
+                }
+            
+            elif action == "delete":
+                task_id = data.get("task_id")
+                if not task_id:
+                    return {"success": False, "message": "ID da tarefa não fornecido"}
+                
+                task = await self.task_repository.get_by_id(UUID(task_id))
+                if not task or task.user_id != self.user_id:
+                    return {"success": False, "message": "Tarefa não encontrada"}
+                
+                title = task.title
+                await self.task_repository.delete(UUID(task_id))
+                
+                self.executed_actions.append({
+                    "action": "delete",
+                    "task_id": task_id,
+                    "task_title": title,
+                    "timestamp": now_brazil().isoformat()
+                })
+                
+                return {
+                    "success": True,
+                    "message": f"🗑️ Tarefa '{title}' deletada!",
+                }
+            
+            else:
+                return {"success": False, "message": f"Ação '{action}' não suportada para execução direta"}
+                
+        except Exception as e:
+            logger.error(f"Agent action execution failed: {e}", exc_info=True)
+            return {"success": False, "message": f"Erro ao executar ação: {str(e)}"}
     
     async def process_message(
         self,
@@ -44,7 +144,7 @@ class ChatAssistantService:
             self.conversation_history.append({
                 "role": "user",
                 "content": message,
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "timestamp": now_brazil().isoformat()
             })
 
             message_lower = message.lower()
@@ -60,10 +160,24 @@ class ChatAssistantService:
                 response = await self._handle_list_tasks(message_lower, user_tasks)
             elif intent == "create_task":
                 response = await self._handle_create_task(message, user_tasks)
+            elif intent == "complete_task":
+                response = await self._handle_complete_task(message_lower, user_tasks)
+                # Save context for follow-up selection
+                if response.get("action") == "select_complete":
+                    self.last_action_context = "complete"
+                    self.pending_tasks_list = response.get("data", [])
+            elif intent == "select_complete":
+                response = await self._handle_task_selection(message_lower, user_tasks, "complete")
             elif intent == "update_task":
                 response = await self._handle_update_task(message_lower, user_tasks)
             elif intent == "delete_task":
                 response = await self._handle_delete_task(message_lower, user_tasks)
+                # Save context for follow-up selection
+                if response.get("action") == "select_delete":
+                    self.last_action_context = "delete"
+                    self.pending_tasks_list = response.get("data", [])
+            elif intent == "select_delete":
+                response = await self._handle_task_selection(message_lower, user_tasks, "delete")
             elif intent == "task_status":
                 response = await self._handle_task_status(message_lower, user_tasks)
             elif intent == "help":
@@ -74,7 +188,7 @@ class ChatAssistantService:
             self.conversation_history.append({
                 "role": "assistant",
                 "content": response.get("message", ""),
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "timestamp": now_brazil().isoformat()
             })
 
             # Trim history to prevent unlimited growth
@@ -100,17 +214,25 @@ class ChatAssistantService:
     def _detect_intent(self, message: str) -> str:
         """Detect user intent from message with improved accuracy"""
 
+        # Check if user is responding with a number (selection from previous list)
+        message_stripped = message.strip()
+        if message_stripped.isdigit() and self.last_action_context:
+            # User is selecting from a list
+            return f"select_{self.last_action_context}"
+
         # Keywords for each intent with priority order
         list_keywords = ["listar", "mostrar", "quais", "ver", "exibir", "list", "show", "what", "display", "me mostre", "me mostra", "tenho", "tem", "há"]
         task_keywords = ["tarefa", "tarefas", "task", "tasks", "todo", "todos", "atividade", "atividades", "fazer", "pendente", "pendentes"]
         time_keywords = ["hoje", "amanhã", "semana", "mês", "today", "tomorrow", "week", "month", "agora", "próximo", "próxima"]
-        status_filter_keywords = ["pendente", "pendentes", "progresso", "concluída", "concluídas", "pending", "done", "completed", "in progress"]
+        status_filter_keywords = ["pendente", "pendentes", "progresso", "concluída", "concluídas", "pending", "done", "completed", "in progress", "atrasada", "atrasadas"]
         priority_keywords = ["alta", "high", "urgente", "urgent", "prioridade", "priority", "importante", "important"]
 
-        create_keywords = ["criar", "adicionar", "nova", "novo", "create", "add", "new", "cadastrar", "registrar"]
+        # EXPANDED create keywords with verb conjugations
+        create_keywords = ["criar", "crie", "cria", "adicionar", "adicione", "nova", "novo", "create", "add", "new", "cadastrar", "registrar", "agendar", "agende", "marcar", "marque"]
         update_keywords = ["atualizar", "modificar", "mudar", "alterar", "editar", "update", "modify", "change", "edit"]
-        delete_keywords = ["deletar", "remover", "excluir", "apagar", "delete", "remove"]
-        status_keywords = ["status", "andamento", "progress", "situação", "resumo", "overview", "como está", "como estão"]
+        delete_keywords = ["deletar", "remover", "excluir", "apagar", "delete", "remove", "exclua", "apague", "remova", "delete"]
+        complete_keywords = ["concluir", "conclua", "finalizar", "finalize", "terminar", "termine", "completar", "complete", "finish", "done", "feito", "terminei", "finalizei", "concluí", "marcar como concluída", "marcar como feita"]
+        status_keywords = ["status", "andamento", "progress", "situação", "resumo", "overview", "como está", "como estão", "produtividade"]
         help_keywords = ["ajuda", "help", "como", "how", "comandos", "commands", "o que você faz", "o que faz"]
 
         # Priority-based detection (specific intents first)
@@ -120,19 +242,23 @@ class ChatAssistantService:
             if "tarefa" not in message and "task" not in message:
                 return "help"
 
+        # Create task - HIGHEST PRIORITY (before time keywords)
+        # Check if message starts with create keywords or contains them prominently
+        if any(word in message for word in create_keywords):
+            return "create_task"
+
+        # Complete task - must have complete keyword
+        if any(word in message for word in complete_keywords):
+            return "complete_task"
+
+        # Delete task - must have delete keyword
+        if any(word in message for word in delete_keywords):
+            return "delete_task"
+
         # Status - check for status queries
         if any(word in message for word in status_keywords):
             if any(word in message for word in task_keywords) or "minha" in message or "meu" in message:
                 return "task_status"
-
-        # Create task - must have create keyword
-        if any(word in message for word in create_keywords):
-            return "create_task"
-
-        # Delete task - must have delete keyword AND task reference
-        if any(word in message for word in delete_keywords):
-            if any(word in message for word in task_keywords) or len(message.split()) > 3:
-                return "delete_task"
 
         # Update task - must have update keyword AND task reference
         if any(word in message for word in update_keywords):
@@ -172,21 +298,21 @@ class ChatAssistantService:
         filtered_tasks = tasks
 
         if "hoje" in message or "today" in message:
-            today = datetime.now(timezone.utc).date()
+            today = now_brazil().date()
             filtered_tasks = [
                 t for t in tasks
-                if t.due_date and t.due_date.date() == today
+                if t.due_date and to_brazil_tz(t.due_date).date() == today
             ]
             period = "hoje"
         elif "amanhã" in message or "tomorrow" in message:
-            tomorrow = (datetime.now(timezone.utc) + timedelta(days=1)).date()
+            tomorrow = (now_brazil() + timedelta(days=1)).date()
             filtered_tasks = [
                 t for t in tasks
-                if t.due_date and t.due_date.date() == tomorrow
+                if t.due_date and to_brazil_tz(t.due_date).date() == tomorrow
             ]
             period = "amanhã"
         elif "semana" in message or "week" in message:
-            week_end = datetime.now(timezone.utc) + timedelta(days=7)
+            week_end = now_brazil() + timedelta(days=7)
             filtered_tasks = [
                 t for t in tasks
                 if t.due_date and t.due_date <= week_end
@@ -221,17 +347,19 @@ class ChatAssistantService:
         def format_date(due_date) -> str:
             if not due_date:
                 return ""
-            now = datetime.now(timezone.utc)
-            date_diff = (due_date.date() - now.date()).days
+            now = now_brazil()
+            # Converter para timezone do Brasil
+            due_date_brazil = to_brazil_tz(due_date)
+            date_diff = (due_date_brazil.date() - now.date()).days
 
             if date_diff < 0:
                 return f" [ATRASADA {abs(date_diff)}d]"
             elif date_diff == 0:
-                return f" [HOJE {due_date.strftime('%H:%M')}]"
+                return f" [HOJE {due_date_brazil.strftime('%H:%M')}]"
             elif date_diff == 1:
-                return f" [AMANHÃ {due_date.strftime('%H:%M')}]"
+                return f" [AMANHÃ {due_date_brazil.strftime('%H:%M')}]"
             else:
-                return f" [{due_date.strftime('%d/%m %H:%M')}]"
+                return f" [{due_date_brazil.strftime('%d/%m %H:%M')}]"
 
         def format_status(status: str) -> str:
             return {
@@ -282,12 +410,14 @@ class ChatAssistantService:
         message: str,
         tasks: List[Task]
     ) -> Dict[str, Any]:
-        """Handle request to create a task"""
+        """Handle request to create a task - returns action for frontend to execute"""
 
         task_text = message
         message_lower = message.lower()
 
-        for prefix in ["nova tarefa", "new task", "criar", "adicionar", "create", "add"]:
+        # Extrair o texto da tarefa removendo prefixos
+        prefixes = ["nova tarefa", "new task", "criar tarefa", "criar", "adicionar tarefa", "adicionar", "create task", "create", "add task", "add"]
+        for prefix in prefixes:
             prefix_with_colon = prefix + ":"
             prefix_with_space = prefix + " "
 
@@ -297,17 +427,226 @@ class ChatAssistantService:
             elif message_lower.startswith(prefix_with_space):
                 task_text = message[len(prefix_with_space):].strip()
                 break
-            elif message_lower.startswith(prefix):
-                task_text = message[len(prefix):].strip()
-                break
+
+        if not task_text or len(task_text) < 3:
+            return {
+                "message": "Por favor, descreva a tarefa que você quer criar. Por exemplo:\n\n'Criar reunião com cliente amanhã às 14h'\n'Nova tarefa: revisar código do projeto'",
+                "action": None,
+                "data": None
+            }
 
         return {
-            "message": f"Vou criar a tarefa: '{task_text}'. Use o parser de linguagem natural para extrair os detalhes.",
-            "action": "create",
+            "message": f"🆕 Vou criar a tarefa:\n\n\"{task_text}\"\n\nClique em 'Confirmar' para criar ou 'Cancelar' para desistir.",
+            "action": "confirm_create",
             "data": {
                 "text": task_text
-            }
+            },
+            "requires_confirmation": True,
+            "action_buttons": [
+                {"label": "✅ Confirmar", "action": "create", "data": {"text": task_text}},
+                {"label": "❌ Cancelar", "action": "cancel", "data": None}
+            ]
         }
+    
+    def _format_status(self, status) -> str:
+        """Format task status to Portuguese"""
+        status_str = str(status).lower().replace("taskstatus.", "")
+        status_map = {
+            "todo": "A Fazer",
+            "pending": "Pendente", 
+            "in_progress": "Em Progresso",
+            "done": "Concluída",
+            "cancelled": "Cancelada"
+        }
+        return status_map.get(status_str, status_str)
+    
+    async def _handle_task_selection(
+        self,
+        message: str,
+        tasks: List[Task],
+        action_type: str
+    ) -> Dict[str, Any]:
+        """Handle numeric selection from a previously shown task list"""
+        
+        message_stripped = message.strip()
+        
+        if not message_stripped.isdigit():
+            return {
+                "message": "Por favor, digite o número da tarefa que deseja selecionar.",
+                "action": None,
+                "data": None
+            }
+        
+        task_index = int(message_stripped) - 1
+        
+        # Try to find task from pending list first
+        if self.pending_tasks_list and 0 <= task_index < len(self.pending_tasks_list):
+            task_data = self.pending_tasks_list[task_index]
+            task_id = task_data.get("id")
+            task_title = task_data.get("title", "Tarefa")
+            
+            # Clear context after selection
+            self.last_action_context = None
+            self.pending_tasks_list = []
+            
+            if action_type == "complete":
+                return {
+                    "message": f"✅ Marcar como concluída:\n\n\"{task_title}\"\n\nConfirmar?",
+                    "action": "confirm_complete",
+                    "data": {
+                        "task_id": str(task_id),
+                        "task_title": task_title
+                    },
+                    "requires_confirmation": True,
+                    "action_buttons": [
+                        {"label": "✅ Confirmar", "action": "complete", "data": {"task_id": str(task_id)}},
+                        {"label": "❌ Cancelar", "action": "cancel", "data": None}
+                    ]
+                }
+            elif action_type == "delete":
+                return {
+                    "message": f"🗑️ Excluir tarefa:\n\n\"{task_title}\"\n\n⚠️ Esta ação não pode ser desfeita. Confirmar?",
+                    "action": "confirm_delete",
+                    "data": {
+                        "task_id": str(task_id),
+                        "task_title": task_title
+                    },
+                    "requires_confirmation": True,
+                    "action_buttons": [
+                        {"label": "🗑️ Excluir", "action": "delete", "data": {"task_id": str(task_id)}},
+                        {"label": "❌ Cancelar", "action": "cancel", "data": None}
+                    ]
+                }
+        
+        # Fallback: try to find from current tasks
+        pending_tasks = [t for t in tasks if str(t.status).lower().replace("taskstatus.", "") != "done"]
+        
+        if 0 <= task_index < len(pending_tasks):
+            task = pending_tasks[task_index]
+            
+            # Clear context
+            self.last_action_context = None
+            self.pending_tasks_list = []
+            
+            if action_type == "complete":
+                return {
+                    "message": f"✅ Marcar como concluída:\n\n\"{task.title}\"\n\nConfirmar?",
+                    "action": "confirm_complete",
+                    "data": {
+                        "task_id": str(task.id),
+                        "task_title": task.title
+                    },
+                    "requires_confirmation": True,
+                    "action_buttons": [
+                        {"label": "✅ Confirmar", "action": "complete", "data": {"task_id": str(task.id)}},
+                        {"label": "❌ Cancelar", "action": "cancel", "data": None}
+                    ]
+                }
+            elif action_type == "delete":
+                return {
+                    "message": f"🗑️ Excluir tarefa:\n\n\"{task.title}\"\n\n⚠️ Esta ação não pode ser desfeita. Confirmar?",
+                    "action": "confirm_delete",
+                    "data": {
+                        "task_id": str(task.id),
+                        "task_title": task.title
+                    },
+                    "requires_confirmation": True,
+                    "action_buttons": [
+                        {"label": "🗑️ Excluir", "action": "delete", "data": {"task_id": str(task.id)}},
+                        {"label": "❌ Cancelar", "action": "cancel", "data": None}
+                    ]
+                }
+        
+        return {
+            "message": f"❌ Número inválido. Por favor, escolha um número válido da lista.",
+            "action": None,
+            "data": None
+        }
+    
+    async def _handle_complete_task(
+        self,
+        message: str,
+        tasks: List[Task]
+    ) -> Dict[str, Any]:
+        """Handle request to mark a task as complete"""
+        
+        # Filtrar apenas tarefas não concluídas
+        pending_tasks = [t for t in tasks if str(t.status).lower().replace("taskstatus.", "") != "done"]
+        
+        if not pending_tasks:
+            return {
+                "message": "🎉 Parabéns! Você não tem tarefas pendentes para concluir!",
+                "action": None,
+                "data": None
+            }
+        
+        # Verificar se o usuário digitou um número (seleção de tarefa)
+        message_stripped = message.strip()
+        if message_stripped.isdigit():
+            task_index = int(message_stripped) - 1
+            if 0 <= task_index < len(pending_tasks):
+                task = pending_tasks[task_index]
+                return {
+                    "message": f"✅ Marcar como concluída:\n\n\"{task.title}\"\n\nConfirmar?",
+                    "action": "confirm_complete",
+                    "data": {
+                        "task_id": str(task.id),
+                        "task_title": task.title
+                    },
+                    "requires_confirmation": True,
+                    "action_buttons": [
+                        {"label": "✅ Confirmar", "action": "complete", "data": {"task_id": str(task.id)}},
+                        {"label": "❌ Cancelar", "action": "cancel", "data": None}
+                    ]
+                }
+        
+        # Extrair palavras-chave da mensagem
+        task_keywords = []
+        exclude_words = ["concluir", "finalizar", "terminar", "completar", "complete", "finish", "done", "feito", "terminei", "tarefa", "tarefas", "marcar", "como", "concluída", "feita"]
+        for word in message.split():
+            if len(word) > 2 and word not in exclude_words:
+                task_keywords.append(word)
+        
+        matching_tasks = []
+        if task_keywords:
+            for task in pending_tasks:
+                if any(keyword in task.title.lower() for keyword in task_keywords):
+                    matching_tasks.append(task)
+        
+        if not task_keywords or not matching_tasks:
+            # Listar tarefas pendentes para o usuário escolher
+            task_list = "\n".join([f"{i+1}. {t.title} ({self._format_status(t.status)})" for i, t in enumerate(pending_tasks[:8])])
+            return {
+                "message": f"✅ Qual tarefa você quer marcar como concluída?\n\n{task_list}\n\nDigite o nome ou número da tarefa.",
+                "action": "select_complete",
+                "data": [{"id": str(t.id), "title": t.title, "status": self._format_status(t.status)} for t in pending_tasks[:8]]
+            }
+        
+        if len(matching_tasks) == 1:
+            task = matching_tasks[0]
+            return {
+                "message": f"✅ Marcar como concluída:\n\n\"{task.title}\"\n\nConfirmar?",
+                "action": "confirm_complete",
+                "data": {
+                    "task_id": str(task.id),
+                    "task_title": task.title
+                },
+                "requires_confirmation": True,
+                "action_buttons": [
+                    {"label": "✅ Confirmar", "action": "complete", "data": {"task_id": str(task.id)}},
+                    {"label": "❌ Cancelar", "action": "cancel", "data": None}
+                ]
+            }
+        else:
+            task_list = "\n".join([f"{i+1}. {t.title}" for i, t in enumerate(matching_tasks[:5])])
+            return {
+                "message": f"Encontrei {len(matching_tasks)} tarefas:\n\n{task_list}\n\nQual você quer marcar como concluída?",
+                "action": "select_complete",
+                "data": [
+                    {"id": str(t.id), "title": t.title}
+                    for t in matching_tasks[:5]
+                ]
+            }
     
     async def _handle_update_task(
         self, 
@@ -370,12 +709,20 @@ class ChatAssistantService:
         
         task_keywords = []
         for word in message.split():
-            if len(word) > 3 and word not in ["deletar", "remover", "excluir", "delete", "remove"]:
+            if len(word) > 3 and word not in ["deletar", "remover", "excluir", "delete", "remove", "apagar"]:
                 task_keywords.append(word)
         
         if not task_keywords:
+            # Listar tarefas para o usuário escolher
+            if tasks:
+                task_list = "\n".join([f"{i+1}. {t.title}" for i, t in enumerate(tasks[:8])])
+                return {
+                    "message": f"Qual tarefa você quer deletar?\n\n{task_list}\n\nDigite o nome ou número da tarefa.",
+                    "action": "select_delete",
+                    "data": [{"id": str(t.id), "title": t.title} for t in tasks[:8]]
+                }
             return {
-                "message": "Qual tarefa você quer deletar? Por favor, seja mais específico.",
+                "message": "Você não tem tarefas para deletar.",
                 "action": None,
                 "data": None
             }
@@ -387,7 +734,7 @@ class ChatAssistantService:
         
         if not matching_tasks:
             return {
-                "message": f"Não encontrei nenhuma tarefa com '{' '.join(task_keywords[:3])}'.",
+                "message": f"Não encontrei nenhuma tarefa com '{' '.join(task_keywords[:3])}'. Tente ser mais específico.",
                 "action": None,
                 "data": None
             }
@@ -395,18 +742,23 @@ class ChatAssistantService:
         if len(matching_tasks) == 1:
             task = matching_tasks[0]
             return {
-                "message": f"Tem certeza que quer deletar '{task.title}'?",
-                "action": "delete",
+                "message": f"🗑️ Tem certeza que quer deletar a tarefa:\n\n\"{task.title}\"?\n\nEssa ação não pode ser desfeita.",
+                "action": "confirm_delete",
                 "data": {
                     "task_id": str(task.id),
                     "task_title": task.title
-                }
+                },
+                "requires_confirmation": True,
+                "action_buttons": [
+                    {"label": "🗑️ Sim, deletar", "action": "delete", "data": {"task_id": str(task.id)}},
+                    {"label": "❌ Cancelar", "action": "cancel", "data": None}
+                ]
             }
         else:
-            task_list = "\n".join([f"• {t.title}" for t in matching_tasks[:5]])
+            task_list = "\n".join([f"{i+1}. {t.title}" for i, t in enumerate(matching_tasks[:5])])
             return {
-                "message": f"Encontrei {len(matching_tasks)} tarefas:\n\n{task_list}\n\nQual delas você quer deletar?",
-                "action": "select",
+                "message": f"Encontrei {len(matching_tasks)} tarefas:\n\n{task_list}\n\nQual delas você quer deletar? Digite o número.",
+                "action": "select_delete",
                 "data": [
                     {"id": str(t.id), "title": t.title}
                     for t in matching_tasks[:5]
@@ -457,35 +809,36 @@ A fazer: {todo}
     def _handle_help(self) -> Dict[str, Any]:
         """Handle help request"""
 
-        help_text = """Assistente de Tarefas - Comandos e Perguntas:
+        help_text = """🤖 **Agente de IA - Gerenciador de Tarefas**
 
-CONSULTAR TAREFAS (busco no sistema):
-- "O que tenho para hoje?"
-- "Tarefas pendentes"
-- "Tarefas de alta prioridade"
-- "O que tenho para amanhã?"
-- "Mostre tarefas atrasadas"
-- "Tarefas da semana"
+Sou um agente autônomo que executa ações diretamente no seu sistema!
 
-CRIAR TAREFAS:
-- "Criar reunião com cliente amanhã às 14h"
-- "Adicionar tarefa: desenvolver API"
-- "Nova tarefa: revisar código"
+📋 **LISTAR TAREFAS:**
+• "Listar tarefas" / "Minhas tarefas"
+• "Tarefas de hoje" / "O que tenho para amanhã?"
+• "Tarefas pendentes" / "Tarefas atrasadas"
+• "Tarefas de alta prioridade"
 
-ATUALIZAR TAREFAS:
-- "Atualizar tarefa de reunião"
-- "Modificar prazo da apresentação"
+➕ **CRIAR TAREFAS (executo automaticamente):**
+• "Criar reunião com cliente amanhã às 14h"
+• "Nova tarefa: revisar código do projeto"
+• "Adicionar: enviar relatório até sexta"
 
-DELETAR TAREFAS:
-- "Deletar tarefa de backup"
-- "Remover reunião cancelada"
+✅ **CONCLUIR TAREFAS (executo para você):**
+• "Concluir tarefa de reunião"
+• "Finalizar apresentação"
+• Digite o número da tarefa quando eu listar
 
-STATUS E ANÁLISE:
-- "Qual o status das minhas tarefas?"
-- "Como está meu progresso?"
-- "Quantas tarefas tenho?"
+🗑️ **DELETAR TAREFAS (executo com confirmação):**
+• "Deletar tarefa de backup"
+• "Remover reunião cancelada"
 
-Dica: Seja natural! Eu analiso suas tarefas REAIS do sistema e respondo com informações precisas."""
+📊 **STATUS E ANÁLISE:**
+• "Status das tarefas"
+• "Como está meu progresso?"
+• "Quantas tarefas tenho?"
+
+🚀 **Como funciono:** Entendo linguagem natural, identifico a ação, e executo diretamente após sua confirmação!"""
 
         return {
             "message": help_text,
@@ -508,9 +861,8 @@ Dica: Seja natural! Eu analiso suas tarefas REAIS do sistema e respondo com info
     ) -> Dict[str, Any]:
         """Handle query using GPT-4 with improved prompting and context"""
 
-        # Get current date for temporal context
-        from datetime import datetime, timedelta
-        now = datetime.now()
+        # Get current date for temporal context (using Brazil timezone)
+        now = now_brazil()
         today = now.date()
         tomorrow = (now + timedelta(days=1)).date()
 
@@ -520,7 +872,7 @@ Dica: Seja natural! Eu analiso suas tarefas REAIS do sistema e respondo com info
             # Add temporal context
             temporal_tag = ""
             if t.due_date:
-                task_date = t.due_date.date()
+                task_date = to_brazil_tz(t.due_date).date()
                 if task_date < today:
                     temporal_tag = " [ATRASADA]"
                 elif task_date == today:
@@ -578,9 +930,8 @@ Resposta: "Você tem 1 tarefa urgente:
 Se perguntarem algo fora do escopo, responda: "Só posso ajudar com questões relacionadas às suas tarefas. Digite 'ajuda' para ver os comandos."
 """
 
-        # Add current date/time context for better filtering
-        from datetime import datetime
-        current_datetime = datetime.now()
+        # Add current date/time context for better filtering (using Brazil timezone)
+        current_datetime = now_brazil()
         today_str = current_datetime.strftime("%d/%m/%Y")
         time_str = current_datetime.strftime("%H:%M")
 
