@@ -433,19 +433,19 @@ class ChatAssistantService:
             overdue_tasks.sort(key=lambda t: (t.due_date, self._priority_order(t.priority)))
             suggested_task = overdue_tasks[0]
             days_overdue = (today - to_brazil_tz(suggested_task.due_date).date()).days
-            reason = f"⚠️ Esta tarefa está **atrasada há {days_overdue} dia(s)**. Resolva-a imediatamente para evitar mais atrasos."
+            reason = f"⚠️ Esta tarefa está atrasada há {days_overdue} dia(s). Resolva-a imediatamente para evitar mais atrasos."
         elif urgent_tasks:
             urgent_tasks.sort(key=lambda t: t.due_date if t.due_date else datetime.max.replace(tzinfo=timezone.utc))
             suggested_task = urgent_tasks[0]
-            reason = "🚨 Esta tarefa tem **prioridade URGENTE**. Deve ser resolvida o mais rápido possível."
+            reason = "🚨 Esta tarefa tem prioridade URGENTE. Deve ser resolvida o mais rápido possível."
         elif today_tasks:
             today_tasks.sort(key=lambda t: (self._priority_order(t.priority), t.due_date))
             suggested_task = today_tasks[0]
-            reason = "📅 Esta tarefa **vence hoje**. Priorize para não atrasar."
+            reason = "📅 Esta tarefa vence hoje. Priorize para não atrasar."
         elif high_priority_tasks:
             high_priority_tasks.sort(key=lambda t: t.due_date if t.due_date else datetime.max.replace(tzinfo=timezone.utc))
             suggested_task = high_priority_tasks[0]
-            reason = "🔴 Esta tarefa tem **alta prioridade**. É importante resolvê-la logo."
+            reason = "🔴 Esta tarefa tem alta prioridade. É importante resolvê-la logo."
         else:
             # Get oldest pending task or first in list
             other_tasks.sort(key=lambda t: t.created_at if t.created_at else datetime.max.replace(tzinfo=timezone.utc))
@@ -460,21 +460,20 @@ class ChatAssistantService:
             due_date_br = to_brazil_tz(suggested_task.due_date)
             due_info = f"\n📆 Prazo: {due_date_br.strftime('%d/%m/%Y às %H:%M')}"
         
-        message = f"""🎯 **Recomendo que você trabalhe nesta tarefa agora:**
+        message = f"""🎯 Recomendo que você trabalhe nesta tarefa agora:
 
-**{suggested_task.title}**
+{suggested_task.title}
 • Status: {status_label}
 • Prioridade: {priority_label}{due_info}
 
 {reason}
 
----
 📊 Resumo das suas tarefas pendentes:
-• ⚠️ Atrasadas: {len(overdue_tasks)}
-• 📅 Para hoje: {len(today_tasks)}
-• 🚨 Urgentes: {len(urgent_tasks)}
-• 🔴 Alta prioridade: {len(high_priority_tasks)}
-• 📋 Outras: {len(other_tasks)}
+• Atrasadas: {len(overdue_tasks)}
+• Para hoje: {len(today_tasks)}
+• Urgentes: {len(urgent_tasks)}
+• Alta prioridade: {len(high_priority_tasks)}
+• Outras: {len(other_tasks)}
 
 Quer que eu marque esta tarefa como concluída quando terminar? Basta dizer "concluir {suggested_task.title[:30]}..."."""
 
