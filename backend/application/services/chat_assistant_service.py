@@ -704,43 +704,123 @@ Quer que eu marque esta tarefa como concluída quando terminar? Basta dizer "con
         message: str,
         tasks: List[Task]
     ) -> Dict[str, Any]:
-        """Handle request to create a task - returns action for frontend to execute"""
+        """Handle request to create a task - uses GPT to extract task details"""
 
-        task_text = message
-        message_lower = message.lower()
-
-        # Extrair o texto da tarefa removendo prefixos
-        prefixes = ["nova tarefa", "new task", "criar tarefa", "criar", "adicionar tarefa", "adicionar", "create task", "create", "add task", "add"]
-        for prefix in prefixes:
-            prefix_with_colon = prefix + ":"
-            prefix_with_space = prefix + " "
-
-            if message_lower.startswith(prefix_with_colon):
-                task_text = message[len(prefix_with_colon):].strip()
-                break
-            elif message_lower.startswith(prefix_with_space):
-                task_text = message[len(prefix_with_space):].strip()
-                break
-
-        if not task_text or len(task_text) < 3:
+        # Use GPT to extract task title and date intelligently
+        task_info = await self._extract_task_info_with_gpt(message)
+        
+        task_title = task_info.get("title", "").strip()
+        due_date = task_info.get("due_date")
+        priority = task_info.get("priority", "medium")
+        
+        if not task_title or len(task_title) < 3:
             return {
                 "message": "Por favor, descreva a tarefa que você quer criar. Por exemplo:\n\n'Criar reunião com cliente amanhã às 14h'\n'Nova tarefa: revisar código do projeto'",
                 "action": None,
                 "data": None
             }
 
+        # Build confirmation message
+        confirm_msg = f"🆕 Vou criar a tarefa:\n\n📌 {task_title}"
+        
+        if due_date:
+            confirm_msg += f"\n📅 Data: {due_date}"
+        
+        priority_labels = {"high": "Alta", "medium": "Média", "low": "Baixa", "urgent": "Urgente"}
+        priority_label = priority_labels.get(priority, "Média")
+        confirm_msg += f"\n🎯 Prioridade: {priority_label}"
+        
+        confirm_msg += "\n\nClique em Confirmar para criar ou Cancelar para desistir."
+
         return {
-            "message": f"🆕 Vou criar a tarefa:\n\n📌 {task_text}\n\nClique em Confirmar para criar ou Cancelar para desistir.",
+            "message": confirm_msg,
             "action": "confirm_create",
             "data": {
-                "text": task_text
+                "title": task_title,
+                "text": task_title,  # Keep for compatibility
+                "due_date": due_date,
+                "priority": priority
             },
             "requires_confirmation": True,
             "action_buttons": [
-                {"label": "✅ Confirmar", "action": "create", "data": {"text": task_text}},
+                {"label": "✅ Confirmar", "action": "create", "data": {"title": task_title, "text": task_title, "due_date": due_date, "priority": priority}},
                 {"label": "❌ Cancelar", "action": "cancel", "data": None}
             ]
         }
+    
+    async def _extract_task_info_with_gpt(self, message: str) -> Dict[str, Any]:
+        """Use GPT to intelligently extract task title, date, and priority from user message"""
+        
+        now = now_brazil()
+        today_str = now.strftime("%Y-%m-%d")
+        tomorrow_str = (now + timedelta(days=1)).strftime("%Y-%m-%d")
+        
+        system_prompt = f"""Você é um extrator de informações de tarefas. Analise a mensagem do usuário e extraia:
+
+1. TÍTULO: O nome/descrição da tarefa (limpo, sem palavras como "criar", "amanhã", "para")
+2. DATA: Se mencionou quando (hoje, amanhã, próxima semana, data específica)
+3. PRIORIDADE: Se mencionou urgência (alta, média, baixa, urgente)
+
+REGRAS:
+- Hoje é {today_str}
+- Amanhã é {tomorrow_str}
+- O título deve ser APENAS a descrição da tarefa, sem datas ou comandos
+- Remova palavras como "criar", "tarefa", "para", "amanhã", "hoje" do título
+- O título deve fazer sentido sozinho (ex: "Reunião com a diretoria", não "para amanhã ter uma reunião")
+
+RESPONDA APENAS em formato JSON válido:
+{{"title": "título limpo da tarefa", "due_date": "YYYY-MM-DD HH:MM ou null", "priority": "high/medium/low/urgent"}}
+
+EXEMPLOS:
+Entrada: "criar tarefa para amanhã ter uma reunião com a diretoria"
+Saída: {{"title": "Reunião com a diretoria", "due_date": "{tomorrow_str}", "priority": "medium"}}
+
+Entrada: "adicionar revisar código do projeto urgente"
+Saída: {{"title": "Revisar código do projeto", "due_date": null, "priority": "urgent"}}
+
+Entrada: "nova tarefa: ligar para o cliente às 15h"
+Saída: {{"title": "Ligar para o cliente", "due_date": "{today_str} 15:00", "priority": "medium"}}"""
+
+        user_prompt = f"Mensagem do usuário: \"{message}\"\n\nExtraia as informações em JSON:"
+
+        try:
+            result = await self.openai_adapter.generate_completion(
+                prompt=user_prompt,
+                system_prompt=system_prompt,
+                temperature=0.1,
+                max_tokens=150
+            )
+            
+            response_text = result.get("content", "").strip()
+            
+            # Try to parse JSON from response
+            import json
+            
+            # Clean up response if needed
+            if "```json" in response_text:
+                response_text = response_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in response_text:
+                response_text = response_text.split("```")[1].split("```")[0].strip()
+            
+            task_info = json.loads(response_text)
+            
+            logger.info(f"GPT extracted task info: {task_info}")
+            return task_info
+            
+        except Exception as e:
+            logger.error(f"Failed to extract task info with GPT: {e}")
+            # Fallback: use original message as title with basic cleanup
+            task_text = message.lower()
+            prefixes = ["nova tarefa", "criar tarefa", "criar", "adicionar tarefa", "adicionar", "agendar", "marcar"]
+            for prefix in prefixes:
+                if task_text.startswith(prefix + ":"):
+                    task_text = message[len(prefix) + 1:].strip()
+                    break
+                elif task_text.startswith(prefix + " "):
+                    task_text = message[len(prefix) + 1:].strip()
+                    break
+            
+            return {"title": task_text, "due_date": None, "priority": "medium"}
     
     def _format_status(self, status) -> str:
         """Format task status to Portuguese"""
