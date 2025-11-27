@@ -4,6 +4,7 @@ import 'react-calendar/dist/Calendar.css';
 import { useTaskStore, Task } from '../store/taskStore';
 import TaskCard from './TaskCard';
 import TaskEditModal from './TaskEditModal';
+import TaskCreateModal from './TaskCreateModal';
 import ConfirmModal from './ConfirmModal';
 
 const normalizeDate = (dateStr: string | Date) => {
@@ -17,7 +18,8 @@ const CalendarView: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Partial<Task> | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
   const [showConfirm, setShowConfirm] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
@@ -56,8 +58,7 @@ const CalendarView: React.FC = () => {
   };
 
   const handleCreateNewTaskForDate = () => {
-    setEditingTask({ due_date: selectedDate.toISOString() });
-    setIsEditModalOpen(true);
+    setIsCreateModalOpen(true);
   };
 
   const handleEditTask = (task: Task) => {
@@ -306,9 +307,9 @@ const CalendarView: React.FC = () => {
         </div>
       </div>
 
-      {isEditModalOpen && (
+      {isEditModalOpen && editingTask && (
         <TaskEditModal
-          task={editingTask as Task}
+          task={editingTask}
           onClose={() => {
             setIsEditModalOpen(false);
             setEditingTask(null);
@@ -317,6 +318,16 @@ const CalendarView: React.FC = () => {
             fetchTasks({});
             setIsEditModalOpen(false);
             setEditingTask(null);
+          }}
+        />
+      )}
+
+      {isCreateModalOpen && (
+        <TaskCreateModal
+          onClose={() => setIsCreateModalOpen(false)}
+          onCreated={() => {
+            fetchTasks({});
+            setIsCreateModalOpen(false);
           }}
         />
       )}
