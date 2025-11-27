@@ -5,7 +5,7 @@ Sistema completo de gerenciamento de tarefas com IA integrada, suportando múlti
 ## 🚀 Funcionalidades
 
 ### IA e Parsing Inteligente
-- **Multi-LLM Support**: Escolha entre GPT-4 e Llama (via Ollama)
+- **Suporte a GPT-4**: Integração com OpenAI GPT-4
 - **Tarefas Recorrentes**: Detecção automática de padrões como "toda semana", "diariamente", "mensalmente"
 - **Parsing em Português**: Suporte completo para linguagem natural em português
 - **Sugestão Automática**: Tags, prioridades e estimativas de duração
@@ -29,7 +29,6 @@ Sistema completo de gerenciamento de tarefas com IA integrada, suportando múlti
 - PostgreSQL 15 (banco de dados)
 - Redis 7 (cache)
 - SQLAlchemy (ORM async)
-- Ollama (Llama local)
 
 **Frontend:**
 - React 18 com TypeScript
@@ -40,7 +39,6 @@ Sistema completo de gerenciamento de tarefas com IA integrada, suportando múlti
 
 **IA:**
 - OpenAI GPT-4 (opcional)
-- Ollama/Llama2 (incluído)
 
 ## 📦 Instalação e Uso
 
@@ -55,19 +53,14 @@ Sistema completo de gerenciamento de tarefas com IA integrada, suportando múlti
 git clone https://github.com/Harley062/tcc-gerenciador-de-tarefas.git
 cd tcc-gerenciador-de-tarefas
 
-# Inicie todos os serviços (inclui Ollama/Llama automático)
+# Inicie todos os serviços
 docker compose up -d --build
 
 # Aguarde ~3-5 minutos para:
 # - PostgreSQL inicializar (✅ automático)
 # - Redis inicializar (✅ automático)
-# - Ollama inicializar (✅ automático)
-# - Llama2 model baixar (~4GB) (✅ automático)
 # - Backend inicializar (✅ automático)
 # - Frontend compilar (✅ automático)
-
-# Acompanhe o progresso do download do Llama2:
-docker compose logs ollama-init -f
 ```
 
 ### Acesso
@@ -75,7 +68,6 @@ docker compose logs ollama-init -f
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs
-- **Ollama**: http://localhost:11434
 
 ### Primeiro Uso
 
@@ -83,9 +75,7 @@ docker compose logs ollama-init -f
 2. Clique em "Registrar" e crie uma conta
 3. Faça login
 4. Clique em "⚙️ Configurações" para configurar a IA
-5. Escolha seu provedor:
-    - **Llama**: Já funciona (incluído no Docker)
-    - **GPT-4**: Insira sua API key da OpenAI
+5. Insira sua API key da OpenAI (GPT-4)
 
 ### Testando Tarefas Recorrentes
 
@@ -131,9 +121,7 @@ backend/
 ### Componentes Principais
 
 **Multi-LLM System:**
-- `EnhancedGPTService`: Orquestra múltiplos provedores
 - `OpenAIAdapter`: Integração GPT-4
-- `LlamaAdapter`: Integração Ollama/Llama
 
 
 **Recurring Tasks:**
@@ -158,9 +146,6 @@ REDIS_URL=redis://redis:6379
 # OpenAI (opcional)
 OPENAI_API_KEY=sk-...
 
-# Ollama
-OLLAMA_ENDPOINT=http://localhost:11434
-
 # JWT
 JWT_SECRET_KEY=your-secret-key-here
 ACCESS_TOKEN_EXPIRE_MINUTES=30
@@ -173,38 +158,7 @@ CORS_ORIGINS=http://localhost:3000
 LOG_LEVEL=INFO
 ```
 
-### Configurar Ollama
-
-O Ollama é **instalado automaticamente** no Docker Compose com o modelo Llama2. 
-
-**Verificar instalação:**
-```bash
-# Ver status do Ollama
-docker compose ps ollama
-
-# Ver logs da inicialização (download do modelo)
-docker compose logs ollama-init
-
-# Verificar modelos instalados
-docker compose exec ollama ollama list
-
-# Testar Ollama
-curl http://localhost:11434/api/tags
 ```
-
-**Instalar modelos adicionais:**
-```bash
-# Entrar no container Ollama
-docker compose exec ollama bash
-
-# Baixar outro modelo (ex: llama3, mistral, codellama)
-ollama pull llama3
-
-# Sair
-exit
-```
-
-**Nota:** O primeiro `docker compose up` pode demorar 3-5 minutos enquanto o modelo Llama2 (~4GB) é baixado automaticamente. Acompanhe o progresso com `docker compose logs ollama-init -f`.
 
 ## 📊 Banco de Dados
 
@@ -279,21 +233,6 @@ docker compose down
 docker compose up -d --build backend
 ```
 
-### Ollama não responde
-```bash
-# Verificar status
-docker compose ps ollama
-
-# Ver logs
-docker compose logs ollama
-
-# Reiniciar
-docker compose restart ollama
-
-# Verificar se o modelo foi baixado
-docker compose exec ollama ollama list
-```
-
 ### Frontend não compila
 ```bash
 # Limpar e reconstruir
@@ -315,7 +254,6 @@ docker compose up -d
 
 - **API Docs**: http://localhost:8000/docs (Swagger UI)
 - **ReDoc**: http://localhost:8000/redoc
-- **Ollama Docs**: https://ollama.ai/docs
 
 ## 🤝 Contribuindo
 
@@ -338,5 +276,4 @@ Este projeto foi desenvolvido como TCC (Trabalho de Conclusão de Curso).
 ## 🙏 Agradecimentos
 
 - OpenAI pela API GPT-4
-- Ollama pelo runtime de LLM local
 - FastAPI e React pelas excelentes frameworks
