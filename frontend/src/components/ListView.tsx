@@ -9,7 +9,12 @@ import TaskCreateModal from './TaskCreateModal';
 type SortOption = 'created_desc' | 'created_asc' | 'priority_desc' | 'priority_asc' | 'due_date_asc' | 'due_date_desc' | 'title_asc' | 'title_desc';
 type DueDateFilter = 'all' | 'overdue' | 'today' | 'this_week' | 'this_month' | 'no_date';
 
-const ListView: React.FC = () => {
+interface ListViewProps {
+  initialEditTaskId?: string | null;
+  onTaskEdited?: () => void;
+}
+
+const ListView: React.FC<ListViewProps> = ({ initialEditTaskId, onTaskEdited }) => {
   const { tasks, fetchTasks, updateTask, deleteTask, isLoading } = useTaskStore();
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
@@ -25,6 +30,17 @@ const ListView: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+
+  // Abrir modal de edição quando initialEditTaskId for passado
+  useEffect(() => {
+    if (initialEditTaskId && tasks.length > 0) {
+      const taskToEdit = tasks.find(t => t.id === initialEditTaskId);
+      if (taskToEdit) {
+        setSelectedTaskForEdit(taskToEdit);
+        onTaskEdited?.();
+      }
+    }
+  }, [initialEditTaskId, tasks, onTaskEdited]);
 
   useEffect(() => {
     setCurrentPage(1);

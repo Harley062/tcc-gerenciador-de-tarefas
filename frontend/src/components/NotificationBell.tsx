@@ -23,7 +23,12 @@ interface NotificationsData {
   message: string;
 }
 
-const NotificationBell: React.FC = () => {
+interface NotificationBellProps {
+  onNavigateToList?: () => void;
+  onNavigateToTask?: (taskId: string) => void;
+}
+
+const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToList, onNavigateToTask }) => {
   const [notifications, setNotifications] = useState<NotificationsData | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -217,7 +222,11 @@ const NotificationBell: React.FC = () => {
                       {notifications.overdue.slice(0, 3).map((task) => (
                         <div
                           key={task.id}
-                          className="group flex items-start gap-3 p-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all shadow-sm hover:shadow-md border border-transparent hover:border-red-100 dark:hover:border-red-900/30"
+                          onClick={() => {
+                            setIsOpen(false);
+                            onNavigateToTask?.(task.id);
+                          }}
+                          className="group flex items-start gap-3 p-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all shadow-sm hover:shadow-md border border-transparent hover:border-red-100 dark:hover:border-red-900/30 cursor-pointer"
                         >
                           <div className={`w-1.5 h-1.5 mt-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
                           <div className="flex-1 min-w-0">
@@ -249,7 +258,11 @@ const NotificationBell: React.FC = () => {
                       {notifications.due_today.slice(0, 3).map((task) => (
                         <div
                           key={task.id}
-                          className="group flex items-start gap-3 p-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all shadow-sm hover:shadow-md border border-transparent hover:border-yellow-100 dark:hover:border-yellow-900/30"
+                          onClick={() => {
+                            setIsOpen(false);
+                            onNavigateToTask?.(task.id);
+                          }}
+                          className="group flex items-start gap-3 p-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all shadow-sm hover:shadow-md border border-transparent hover:border-yellow-100 dark:hover:border-yellow-900/30 cursor-pointer"
                         >
                           <div className={`w-1.5 h-1.5 mt-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
                           <div className="flex-1 min-w-0">
@@ -281,7 +294,11 @@ const NotificationBell: React.FC = () => {
                       {notifications.due_tomorrow.slice(0, 2).map((task) => (
                         <div
                           key={task.id}
-                          className="group flex items-start gap-3 p-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all shadow-sm hover:shadow-md border border-transparent hover:border-blue-100 dark:hover:border-blue-900/30"
+                          onClick={() => {
+                            setIsOpen(false);
+                            onNavigateToTask?.(task.id);
+                          }}
+                          className="group flex items-start gap-3 p-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all shadow-sm hover:shadow-md border border-transparent hover:border-blue-100 dark:hover:border-blue-900/30 cursor-pointer"
                         >
                           <div className={`w-1.5 h-1.5 mt-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
                           <div className="flex-1 min-w-0">
@@ -308,7 +325,11 @@ const NotificationBell: React.FC = () => {
                       {notifications.high_priority_pending.slice(0, 2).map((task) => (
                         <div
                           key={task.id}
-                          className="group flex items-start gap-3 p-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all shadow-sm hover:shadow-md border border-transparent hover:border-gray-200 dark:hover:border-gray-600"
+                          onClick={() => {
+                            setIsOpen(false);
+                            onNavigateToTask?.(task.id);
+                          }}
+                          className="group flex items-start gap-3 p-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all shadow-sm hover:shadow-md border border-transparent hover:border-gray-200 dark:hover:border-gray-600 cursor-pointer"
                         >
                           <div className={`w-1.5 h-1.5 mt-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
                           <div className="flex-1 min-w-0">
@@ -334,7 +355,7 @@ const NotificationBell: React.FC = () => {
               <button
                 onClick={() => {
                   setIsOpen(false);
-                  // Navegar para visualização de lista (opcional)
+                  onNavigateToList?.();
                 }}
                 className="w-full py-2 text-center text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-bold hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
               >

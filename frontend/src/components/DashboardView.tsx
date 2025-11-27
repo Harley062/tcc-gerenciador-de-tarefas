@@ -4,6 +4,7 @@ import TaskCreateModal from './TaskCreateModal';
 import AnalyticsDashboard from './Dashboard/AnalyticsDashboard';
 import StatsCard from './Dashboard/StatsCard';
 import LoadingSpinner from './LoadingSpinner';
+import { useTaskStore } from '../store/taskStore';
 
 const DashboardView: React.FC = () => {
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
@@ -11,6 +12,7 @@ const DashboardView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { fetchTasks } = useTaskStore();
 
   const loadSummary = async () => {
     setLoading(true);
@@ -407,6 +409,7 @@ const DashboardView: React.FC = () => {
           onClose={() => setShowCreateModal(false)}
           onCreated={() => {
             setShowCreateModal(false);
+            fetchTasks({});
             loadSummary();
           }}
         />

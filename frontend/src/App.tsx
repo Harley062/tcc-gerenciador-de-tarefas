@@ -22,6 +22,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [showInput, setShowInput] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
+  const [editTaskId, setEditTaskId] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
@@ -217,7 +218,13 @@ const App: React.FC = () => {
                   )}
                 </button>
 
-                <NotificationBell />
+                <NotificationBell 
+                  onNavigateToList={() => setCurrentView('list')} 
+                  onNavigateToTask={(taskId) => {
+                    setEditTaskId(taskId);
+                    setCurrentView('list');
+                  }}
+                />
 
                 <div className="flex items-center gap-3">
                   <div className="hidden sm:block text-right">
@@ -244,7 +251,12 @@ const App: React.FC = () => {
 
         <div className="animate-fade-in">
           {currentView === 'dashboard' && <DashboardView />}
-          {currentView === 'list' && <ListView />}
+          {currentView === 'list' && (
+            <ListView 
+              initialEditTaskId={editTaskId} 
+              onTaskEdited={() => setEditTaskId(null)} 
+            />
+          )}
           {currentView === 'kanban' && <KanbanView />}
           {currentView === 'calendar' && <CalendarView />}
           {currentView === 'settings' && <SettingsView />}

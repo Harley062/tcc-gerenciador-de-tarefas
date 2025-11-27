@@ -16,7 +16,7 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useTaskStore, Task } from '../store/taskStore';
+import { useTaskStore, Task, isStatusTodo, isStatusInProgress, isStatusDone } from '../store/taskStore';
 import TaskCard from './TaskCard';
 import TaskEditModal from './TaskEditModal';
 import TaskCreateModal from './TaskCreateModal';
@@ -193,9 +193,9 @@ const KanbanView: React.FC = () => {
 
   useEffect(() => {
     const newColumns = {
-      todo: tasks.filter((t) => t.status === 'todo' || t.status === 'pending'),
-      in_progress: tasks.filter((t) => t.status === 'in_progress'),
-      done: tasks.filter((t) => t.status === 'done'),
+      todo: tasks.filter((t) => isStatusTodo(t.status)),
+      in_progress: tasks.filter((t) => isStatusInProgress(t.status)),
+      done: tasks.filter((t) => isStatusDone(t.status)),
     };
     setColumns(newColumns);
   }, [tasks]);
