@@ -78,12 +78,12 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const step = steps[currentStep];
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden animate-scale-in">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-white/20 dark:border-gray-700/50 animate-slide-up">
         {/* Progress Bar */}
-        <div className="h-2 bg-gray-200 dark:bg-gray-700">
+        <div className="h-1.5 bg-gray-200/50 dark:bg-gray-700/50">
           <div
-            className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-300"
+            className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-500 ease-out"
             style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
           />
         </div>
@@ -91,32 +91,32 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         {/* Content */}
         <div className="p-8 md:p-12">
           {/* Icon */}
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 rounded-full text-6xl mb-4 animate-bounce-soft">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-28 h-28 bg-gradient-to-br from-primary-100 to-white dark:from-primary-900/30 dark:to-gray-800 rounded-3xl shadow-lg shadow-primary-500/10 text-7xl mb-4 animate-bounce-soft border border-white/50 dark:border-white/10">
               {step.icon}
             </div>
           </div>
 
           {/* Title & Description */}
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4 text-center">
+          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300">
             {step.title}
           </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 text-center leading-relaxed">
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-10 text-center leading-relaxed max-w-lg mx-auto">
             {step.description}
           </p>
 
           {/* Step Indicators */}
-          <div className="flex justify-center gap-2 mb-8">
+          <div className="flex justify-center gap-3 mb-10">
             {steps.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentStep(index)}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                className={`h-2 rounded-full transition-all duration-300 ${
                   index === currentStep
                     ? 'w-8 bg-primary-500'
                     : index < currentStep
-                    ? 'bg-primary-300 dark:bg-primary-700'
-                    : 'bg-gray-300 dark:bg-gray-600'
+                    ? 'w-2 bg-primary-300 dark:bg-primary-700'
+                    : 'w-2 bg-gray-300 dark:bg-gray-600'
                 }`}
                 aria-label={`Ir para passo ${index + 1}`}
               />
@@ -127,7 +127,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           <div className="flex items-center justify-between gap-4">
             <button
               onClick={handleSkip}
-              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors font-medium"
+              className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors font-medium px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50"
             >
               Pular Tutorial
             </button>
@@ -136,14 +136,14 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               {currentStep > 0 && (
                 <button
                   onClick={handlePrevious}
-                  className="px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
+                  className="px-6 py-3 bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors font-medium"
                 >
                   Anterior
                 </button>
               )}
               <button
                 onClick={handleNext}
-                className="px-8 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg hover:from-primary-600 hover:to-primary-700 transition-all font-medium shadow-md hover:shadow-lg transform hover:scale-105"
+                className="px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-500 hover:to-primary-400 transition-all font-bold shadow-lg shadow-primary-500/30 transform hover:-translate-y-0.5"
               >
                 {currentStep === steps.length - 1 ? 'Começar!' : 'Próximo'}
               </button>
@@ -152,9 +152,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         </div>
 
         {/* Keyboard Hint */}
-        <div className="px-8 py-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-600 dark:text-gray-400">
-          <span className="mr-4">← → para navegar</span>
-          <span>Esc para pular</span>
+        <div className="px-8 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-200/50 dark:border-gray-700/50 text-center text-sm text-gray-500 dark:text-gray-400 backdrop-blur-sm">
+          <div className="flex justify-center gap-6">
+            <span className="flex items-center gap-2"><kbd className="bg-white/50 dark:bg-gray-800 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-700 text-xs">←</kbd> <kbd className="bg-white/50 dark:bg-gray-800 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-700 text-xs">→</kbd> Navegar</span>
+            <span className="flex items-center gap-2"><kbd className="bg-white/50 dark:bg-gray-800 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-700 text-xs">Esc</kbd> Pular</span>
+          </div>
         </div>
       </div>
     </div>

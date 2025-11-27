@@ -23,11 +23,11 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 
   // Mapeamento de cores
   const colorConfig = {
-    primary: 'border-primary-600 border-t-transparent',
-    success: 'border-success-600 border-t-transparent',
-    warning: 'border-warning-600 border-t-transparent',
-    danger: 'border-danger-600 border-t-transparent',
-    gray: 'border-gray-600 border-t-transparent',
+    primary: 'border-primary-500 border-t-transparent',
+    success: 'border-green-500 border-t-transparent',
+    warning: 'border-yellow-500 border-t-transparent',
+    danger: 'border-red-500 border-t-transparent',
+    gray: 'border-gray-500 border-t-transparent',
     white: 'border-white border-t-transparent',
   };
 
@@ -42,17 +42,25 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   if (fullScreen) {
     return (
       <div
-        className="fixed inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 animate-fade-in"
+        className="fixed inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md flex flex-col items-center justify-center z-50 animate-fade-in"
         role="alert"
         aria-live="polite"
         aria-busy="true"
       >
-        <div className="card p-8 flex flex-col items-center gap-4 border border-gray-200 dark:border-gray-700">
-          {spinner}
+        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-6 border border-white/20 dark:border-gray-700/50 animate-scale-in max-w-sm w-full mx-4">
+          <div className="relative">
+            <div className="absolute inset-0 bg-primary-500/20 rounded-full blur-xl animate-pulse"></div>
+            {spinner}
+          </div>
           {text && (
-            <p className="text-gray-700 dark:text-gray-300 font-medium text-center">
-              {text}
-            </p>
+            <div className="text-center space-y-2">
+              <p className="text-lg font-bold text-gray-900 dark:text-white animate-pulse">
+                {text}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Por favor, aguarde...
+              </p>
+            </div>
           )}
         </div>
       </div>

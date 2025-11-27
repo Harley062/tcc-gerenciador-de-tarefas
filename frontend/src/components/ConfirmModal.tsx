@@ -84,7 +84,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
       onClick={onCancel}
       role="dialog"
       aria-modal="true"
@@ -93,19 +93,21 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     >
       <div
         ref={modalRef}
-        className="card max-w-md w-full border border-gray-200 dark:border-gray-700 animate-scale-in"
+        className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full border border-white/20 dark:border-gray-700/50 animate-scale-in overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-start gap-4">
-          <div className="flex items-start gap-3 flex-1">
-            <span className={`text-2xl ${config.iconColor}`} aria-hidden="true">
-              {config.icon}
-            </span>
+        <div className="p-6 border-b border-gray-200/50 dark:border-gray-700/50 flex justify-between items-start gap-4 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800/50">
+          <div className="flex items-center gap-4 flex-1">
+            <div className={`p-3 rounded-xl bg-white/50 dark:bg-gray-700/50 shadow-sm ${config.iconColor}`}>
+              <span className="text-2xl" aria-hidden="true">
+                {config.icon}
+              </span>
+            </div>
             <div className="flex-1">
               <h3
                 id="modal-title"
-                className="text-lg font-semibold text-gray-900 dark:text-gray-100"
+                className="text-xl font-bold text-gray-900 dark:text-gray-100"
               >
                 {title}
               </h3>
@@ -113,7 +115,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           </div>
           <button
             onClick={onCancel}
-            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
             aria-label="Fechar modal"
             title="Fechar (Esc)"
           >
@@ -124,20 +126,20 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-5">
+        <div className="p-6">
           <p
             id="modal-description"
-            className="text-gray-700 dark:text-gray-300 leading-relaxed"
+            className="text-gray-600 dark:text-gray-300 leading-relaxed text-lg"
           >
             {message}
           </p>
         </div>
 
         {/* Footer */}
-        <div className="p-5 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 rounded-b-lg">
+        <div className="p-6 border-t border-gray-200/50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/50 backdrop-blur-sm flex justify-end gap-3">
           <button
             onClick={onCancel}
-            className="btn btn-secondary"
+            className="px-6 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded-xl transition-colors font-medium"
             aria-label={cancelLabel}
           >
             {cancelLabel}
@@ -145,7 +147,13 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             ref={confirmButtonRef}
             onClick={onConfirm}
-            className={`btn ${config.button}`}
+            className={`px-8 py-2.5 rounded-xl font-bold shadow-lg transform hover:-translate-y-0.5 transition-all text-white ${
+              variant === 'danger' 
+                ? 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 shadow-red-500/30' 
+                : variant === 'warning'
+                ? 'bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-400 hover:to-yellow-300 shadow-yellow-500/30 text-gray-900'
+                : 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 shadow-primary-500/30'
+            }`}
             aria-label={confirmLabel}
           >
             {confirmLabel}

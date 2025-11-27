@@ -76,148 +76,194 @@ const SettingsView: React.FC = () => {
     }
   };
 
-  
-
   if (loading) {
-    return <div className="p-4 text-gray-600 dark:text-gray-400">Carregando configurações...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-2xl">
-      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-gray-100">Configurações</h1>
+    <div className="container mx-auto p-6 max-w-3xl animate-fade-in">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-400 dark:from-primary-400 dark:to-primary-200">
+          Configurações
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
+          Gerencie suas preferências e integrações de IA
+        </p>
+      </div>
 
       {message && (
         <div
-          className={`mb-4 p-4 rounded ${
-            message.type === 'success' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800' : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800'
+          className={`mb-6 p-4 rounded-xl backdrop-blur-sm border ${
+            message.type === 'success' 
+              ? 'bg-green-100/80 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800' 
+              : 'bg-red-100/80 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800'
           }`}
         >
-          {message.text}
+          <div className="flex items-center gap-2">
+            <span>{message.type === 'success' ? '✅' : '⚠️'}</span>
+            {message.text}
+          </div>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* OpenAI Configuration */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Configuração OpenAI GPT-4</h2>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-              OpenAI API Key
-            </label>
-            {hasApiKey && !formData.openai_api_key && (
-              <div className="mb-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-sm text-green-700 dark:text-green-300">
-                ✓ Chave configurada
-              </div>
-            )}
-            <input
-              type="password"
-              value={formData.openai_api_key}
-              onChange={(e) => setFormData({ ...formData, openai_api_key: e.target.value })}
-              placeholder={hasApiKey ? "Digite uma nova chave para atualizar" : "sk-..."}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
-            />
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Obtenha sua chave em{' '}
-              <a
-                href="https://platform.openai.com/api-keys"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                platform.openai.com
-              </a>
-            </p>
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-xl">
+              <span className="text-2xl">🤖</span>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Integração OpenAI</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Configure sua chave de API para recursos de IA</p>
+            </div>
           </div>
 
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                API Key
+              </label>
+              <div className="relative">
+                <input
+                  type="password"
+                  value={formData.openai_api_key}
+                  onChange={(e) => setFormData({ ...formData, openai_api_key: e.target.value })}
+                  placeholder={hasApiKey ? "••••••••••••••••" : "sk-..."}
+                  className="w-full px-4 py-3 bg-white/50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
+                />
+                {hasApiKey && !formData.openai_api_key && (
+                  <div className="absolute right-3 top-3 text-green-500 flex items-center gap-1 text-sm font-medium">
+                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    Ativa
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Sua chave é armazenada de forma segura. Obtenha em{' '}
+                <a
+                  href="https://platform.openai.com/api-keys"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary-600 hover:text-primary-700 hover:underline"
+                >
+                  platform.openai.com
+                </a>
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={testProvider}
+              disabled={testingProvider === 'gpt4' || (!hasApiKey && !formData.openai_api_key)}
+              className="w-full sm:w-auto px-6 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
+            >
+              {testingProvider === 'gpt4' ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                  Testando Conexão...
+                </>
+              ) : (
+                <>⚡ Testar Conexão</>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* AI Features */}
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
+                <span className="text-2xl">✨</span>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Automação</h2>
+            </div>
+
+            <div className="space-y-4">
+              {{
+                key: 'enable_auto_subtasks', label: 'Sugerir subtarefas', desc: 'Quebra tarefas complexas automaticamente' },
+                { key: 'enable_auto_priority', label: 'Detectar prioridade', desc: 'Define urgência baseada no contexto' },
+                { key: 'enable_auto_tags', label: 'Sugerir tags', desc: 'Categoriza tarefas automaticamente' },
+              ].map((item) => (
+                <label key={item.key} className="flex items-start space-x-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group">
+                  <div className="relative flex items-center mt-1">
+                    <input
+                      type="checkbox"
+                      checked={formData[item.key as keyof UpdateSettingsRequest] as boolean}
+                      onChange={(e) => setFormData({ ...formData, [item.key]: e.target.checked })}
+                      className="peer sr-only"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                  </div>
+                  <div>
+                    <span className="block font-medium text-gray-900 dark:text-gray-100 group-hover:text-primary-600 transition-colors">
+                      {item.label}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {item.desc}
+                    </span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Task Defaults */}
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+                <span className="text-2xl">⏱️</span>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Padrões</h2>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                Duração Padrão (minutos)
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  value={formData.default_task_duration}
+                  onChange={(e) => setFormData({ ...formData, default_task_duration: parseInt(e.target.value) })}
+                  min="15"
+                  max="480"
+                  step="15"
+                  className="w-full px-4 py-3 bg-white/50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
+                />
+                <div className="absolute right-4 top-3 text-gray-400 pointer-events-none">
+                  min
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Tempo sugerido para novas tarefas sem duração definida
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-6">
           <button
-            type="button"
-            onClick={testProvider}
-            disabled={testingProvider === 'gpt4' || (!hasApiKey && !formData.openai_api_key)}
-            className="px-4 py-2 bg-green-500 dark:bg-green-600 text-white rounded hover:bg-green-600 dark:hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            type="submit"
+            disabled={saving}
+            className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white font-bold rounded-xl shadow-lg shadow-primary-500/30 transform hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
-            {testingProvider === 'gpt4' ? 'Testando...' : '🧪 Testar GPT-4'}
+            {saving ? (
+              <span className="flex items-center justify-center gap-2">
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                Salvando Alterações...
+              </span>
+            ) : (
+              'Salvar Configurações'
+            )}
           </button>
         </div>
-
-        {/* AI Features */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Funcionalidades de IA</h2>
-
-          <div className="space-y-3">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.enable_auto_subtasks}
-                onChange={(e) => setFormData({ ...formData, enable_auto_subtasks: e.target.checked })}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-              />
-              <span className="text-gray-700 dark:text-gray-300">Sugerir subtarefas automaticamente</span>
-            </label>
-
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.enable_auto_priority}
-                onChange={(e) => setFormData({ ...formData, enable_auto_priority: e.target.checked })}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-              />
-              <span className="text-gray-700 dark:text-gray-300">Detectar prioridade automaticamente</span>
-            </label>
-
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.enable_auto_tags}
-                onChange={(e) => setFormData({ ...formData, enable_auto_tags: e.target.checked })}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-              />
-              <span className="text-gray-700 dark:text-gray-300">Sugerir tags automaticamente</span>
-            </label>
-          </div>
-        </div>
-
-        {/* Task Defaults */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Padrões de Tarefas</h2>
-
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-              Duração padrão (minutos)
-            </label>
-            <input
-              type="number"
-              value={formData.default_task_duration}
-              onChange={(e) => setFormData({ ...formData, default_task_duration: parseInt(e.target.value) })}
-              min="15"
-              max="480"
-              step="15"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-            />
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          disabled={saving}
-          className="w-full bg-blue-600 dark:bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
-        >
-          {saving ? 'Salvando...' : 'Salvar Configurações'}
-        </button>
       </form>
-
-      {/* Info Box */}
-      {/* <div className="mt-6 bg-blue-50 p-4 rounded-lg">
-        <h3 className="font-semibold mb-2">💡 Dica: Tarefas Recorrentes</h3>
-        <p className="text-sm text-gray-700">
-          O sistema agora detecta tarefas recorrentes automaticamente! Experimente:
-        </p>
-        <ul className="text-sm text-gray-700 mt-2 space-y-1">
-          <li>• "planning toda semana" - Cria 8 tarefas semanais</li>
-          <li>• "backup diário" - Cria 8 tarefas diárias</li>
-          <li>• "reunião mensal" - Cria 8 tarefas mensais</li>
-        </ul>
-      </div> */}
     </div>
   );
 };

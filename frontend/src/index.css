@@ -40,6 +40,14 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-400 dark:bg-gray-500;
   }
+
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.gray.300') theme('colors.transparent');
+  }
+  .dark .custom-scrollbar {
+    scrollbar-color: theme('colors.gray.600') theme('colors.transparent');
+  }
 }
 
 @layer components {
@@ -115,7 +123,7 @@
 
   /* Glass morphism */
   .glass {
-    @apply bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm;
+    @apply bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-white/20 dark:border-gray-700/50;
   }
 
   /* Text gradients */

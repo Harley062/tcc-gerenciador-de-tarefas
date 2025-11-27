@@ -129,14 +129,15 @@ const NotificationBell: React.FC = () => {
       {/* Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 relative ${
+        className={`p-2.5 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-800/50 hover:shadow-sm transition-all duration-200 relative group ${
           hasUrgent ? 'animate-pulse' : ''
         }`}
         aria-label="Notificações"
         title="Notificações"
       >
+        <div className={`absolute inset-0 bg-primary-500/10 dark:bg-primary-400/10 rounded-xl scale-0 group-hover:scale-100 transition-transform duration-200`}></div>
         <svg
-          className="w-6 h-6"
+          className={`w-6 h-6 transition-transform duration-200 ${isOpen ? 'rotate-12 scale-110' : 'group-hover:rotate-12'}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -153,8 +154,10 @@ const NotificationBell: React.FC = () => {
         {totalNotifications > 0 && (
           <span
             className={`absolute -top-1 -right-1 ${
-              hasUrgent ? 'bg-danger-500 animate-pulse' : 'bg-primary-500'
-            } text-white text-xs font-bold rounded-full min-w-[1.25rem] h-5 flex items-center justify-center px-1`}
+              hasUrgent 
+                ? 'bg-gradient-to-r from-red-500 to-pink-600 animate-pulse shadow-red-500/50' 
+                : 'bg-gradient-to-r from-primary-500 to-primary-600 shadow-primary-500/50'
+            } text-white text-[10px] font-bold rounded-full min-w-[1.25rem] h-5 flex items-center justify-center px-1.5 shadow-lg border-2 border-white dark:border-gray-900`}
           >
             {totalNotifications > 99 ? '99+' : totalNotifications}
           </span>
@@ -163,65 +166,67 @@ const NotificationBell: React.FC = () => {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 animate-slide-down max-h-[32rem] overflow-y-auto">
+        <div className="absolute right-0 mt-4 w-96 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/50 z-50 animate-slide-down max-h-[32rem] overflow-hidden origin-top-right">
           {/* Header */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800 z-10">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50 flex justify-between items-center sticky top-0 bg-white/50 dark:bg-gray-800/50 backdrop-blur-md z-10">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               Notificações
             </h3>
             {totalNotifications > 0 && (
-              <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
                 hasUrgent
-                  ? 'bg-danger-100 text-danger-700 dark:bg-danger-900 dark:text-danger-300'
-                  : 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300'
+                  ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
+                  : 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800'
               }`}>
-                {totalNotifications}
+                {totalNotifications} novas
               </span>
             )}
           </div>
 
           {/* Content */}
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-96 overflow-y-auto custom-scrollbar p-2">
             {loading ? (
               <div className="p-8 text-center text-gray-500 dark:text-gray-400">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary-200 border-t-primary-600 dark:border-primary-800 dark:border-t-primary-400 mb-2"></div>
-                <p className="text-sm">Carregando...</p>
+                <p className="text-sm font-medium">Atualizando...</p>
               </div>
             ) : totalNotifications === 0 ? (
               <div className="p-8 text-center">
-                <div className="text-5xl mb-3">✨</div>
-                <p className="text-gray-700 dark:text-gray-300 font-medium mb-1">
+                <div className="w-16 h-16 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-scale-in">
+                  <span className="text-3xl">✨</span>
+                </div>
+                <p className="text-gray-900 dark:text-gray-100 font-bold mb-1">
                   Tudo em ordem!
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Você não tem tarefas urgentes no momento.
+                  Você não tem tarefas pendentes urgentes.
                 </p>
               </div>
             ) : (
-              <div className="p-2">
+              <div className="space-y-3">
                 {/* Tarefas Atrasadas */}
                 {notifications && notifications.overdue.length > 0 && (
-                  <div className="mb-3">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-danger-50 dark:bg-danger-900/20 rounded-t-lg border-l-4 border-danger-500">
-                      <span className="text-lg">⚠️</span>
-                      <h4 className="text-sm font-semibold text-danger-700 dark:text-danger-300 uppercase">
-                        {notifications.overdue.length} Atrasada(s)
+                  <div className="bg-red-50/50 dark:bg-red-900/10 rounded-xl overflow-hidden border border-red-100 dark:border-red-900/30">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-red-100/50 dark:bg-red-900/30">
+                      <span className="text-lg animate-bounce">⚠️</span>
+                      <h4 className="text-xs font-bold text-red-700 dark:text-red-300 uppercase tracking-wider">
+                        Atrasadas ({notifications.overdue.length})
                       </h4>
                     </div>
-                    <div className="space-y-2 mt-2">
+                    <div className="p-2 space-y-1">
                       {notifications.overdue.slice(0, 3).map((task) => (
                         <div
                           key={task.id}
-                          className="flex items-start gap-3 p-3 hover:bg-danger-50 dark:hover:bg-danger-900/10 rounded-lg transition-colors"
+                          className="group flex items-start gap-3 p-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all shadow-sm hover:shadow-md border border-transparent hover:border-red-100 dark:hover:border-red-900/30"
                         >
-                          <div className={`w-1 h-full min-h-[2rem] rounded-full ${getPriorityColor(task.priority)}`}></div>
+                          <div className={`w-1.5 h-1.5 mt-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
                               {task.title}
                             </p>
                             {task.due_date && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                Prazo: {formatDate(task.due_date)}
+                              <p className="text-xs text-red-500 dark:text-red-400 mt-0.5 font-medium">
+                                Venceu em {formatDate(task.due_date)}
                               </p>
                             )}
                           </div>
@@ -233,27 +238,27 @@ const NotificationBell: React.FC = () => {
 
                 {/* Vence Hoje */}
                 {notifications && notifications.due_today.length > 0 && (
-                  <div className="mb-3">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-warning-50 dark:bg-warning-900/20 rounded-t-lg border-l-4 border-warning-500">
+                  <div className="bg-yellow-50/50 dark:bg-yellow-900/10 rounded-xl overflow-hidden border border-yellow-100 dark:border-yellow-900/30">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-yellow-100/50 dark:bg-yellow-900/30">
                       <span className="text-lg">📅</span>
-                      <h4 className="text-sm font-semibold text-warning-700 dark:text-warning-300 uppercase">
+                      <h4 className="text-xs font-bold text-yellow-700 dark:text-yellow-300 uppercase tracking-wider">
                         Vence Hoje ({notifications.due_today.length})
                       </h4>
                     </div>
-                    <div className="space-y-2 mt-2">
+                    <div className="p-2 space-y-1">
                       {notifications.due_today.slice(0, 3).map((task) => (
                         <div
                           key={task.id}
-                          className="flex items-start gap-3 p-3 hover:bg-warning-50 dark:hover:bg-warning-900/10 rounded-lg transition-colors"
+                          className="group flex items-start gap-3 p-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all shadow-sm hover:shadow-md border border-transparent hover:border-yellow-100 dark:hover:border-yellow-900/30"
                         >
-                          <div className={`w-1 h-full min-h-[2rem] rounded-full ${getPriorityColor(task.priority)}`}></div>
+                          <div className={`w-1.5 h-1.5 mt-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors">
                               {task.title}
                             </p>
                             {task.due_date && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                {formatTime(task.due_date)}
+                              <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-0.5 font-medium">
+                                Até às {formatTime(task.due_date)}
                               </p>
                             )}
                           </div>
@@ -265,22 +270,22 @@ const NotificationBell: React.FC = () => {
 
                 {/* Vence Amanhã */}
                 {notifications && notifications.due_tomorrow.length > 0 && (
-                  <div className="mb-3">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 dark:bg-primary-900/20 rounded-t-lg border-l-4 border-primary-500">
+                  <div className="bg-blue-50/50 dark:bg-blue-900/10 rounded-xl overflow-hidden border border-blue-100 dark:border-blue-900/30">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-blue-100/50 dark:bg-blue-900/30">
                       <span className="text-lg">🔔</span>
-                      <h4 className="text-sm font-semibold text-primary-700 dark:text-primary-300 uppercase">
-                        Vence Amanhã ({notifications.due_tomorrow.length})
+                      <h4 className="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider">
+                        Amanhã ({notifications.due_tomorrow.length})
                       </h4>
                     </div>
-                    <div className="space-y-2 mt-2">
+                    <div className="p-2 space-y-1">
                       {notifications.due_tomorrow.slice(0, 2).map((task) => (
                         <div
                           key={task.id}
-                          className="flex items-start gap-3 p-3 hover:bg-primary-50 dark:hover:bg-primary-900/10 rounded-lg transition-colors"
+                          className="group flex items-start gap-3 p-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all shadow-sm hover:shadow-md border border-transparent hover:border-blue-100 dark:hover:border-blue-900/30"
                         >
-                          <div className={`w-1 h-full min-h-[2rem] rounded-full ${getPriorityColor(task.priority)}`}></div>
+                          <div className={`w-1.5 h-1.5 mt-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                               {task.title}
                             </p>
                           </div>
@@ -292,25 +297,25 @@ const NotificationBell: React.FC = () => {
 
                 {/* Alta Prioridade Sem Prazo */}
                 {notifications && notifications.high_priority_pending.length > 0 && (
-                  <div className="mb-3">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-t-lg border-l-4 border-gray-500">
+                  <div className="bg-gray-50/50 dark:bg-gray-700/30 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-600">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-gray-100/50 dark:bg-gray-700/50">
                       <span className="text-lg">🔴</span>
-                      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase">
+                      <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                         Alta Prioridade ({notifications.high_priority_pending.length})
                       </h4>
                     </div>
-                    <div className="space-y-2 mt-2">
+                    <div className="p-2 space-y-1">
                       {notifications.high_priority_pending.slice(0, 2).map((task) => (
                         <div
                           key={task.id}
-                          className="flex items-start gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                          className="group flex items-start gap-3 p-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-all shadow-sm hover:shadow-md border border-transparent hover:border-gray-200 dark:hover:border-gray-600"
                         >
-                          <div className={`w-1 h-full min-h-[2rem] rounded-full ${getPriorityColor(task.priority)}`}></div>
+                          <div className={`w-1.5 h-1.5 mt-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                               {task.title}
                             </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                               Sem prazo definido
                             </p>
                           </div>
@@ -325,13 +330,13 @@ const NotificationBell: React.FC = () => {
 
           {/* Footer */}
           {totalNotifications > 0 && (
-            <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-b-lg">
+            <div className="p-3 border-t border-gray-200/50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/50 backdrop-blur-sm">
               <button
                 onClick={() => {
                   setIsOpen(false);
                   // Navegar para visualização de lista (opcional)
                 }}
-                className="w-full text-center text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
+                className="w-full py-2 text-center text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-bold hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
               >
                 Ver todas as tarefas
               </button>

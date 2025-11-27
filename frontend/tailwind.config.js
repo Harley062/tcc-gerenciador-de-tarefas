@@ -70,6 +70,7 @@ module.exports = {
         'slide-down': 'slideDown 0.4s ease-out',
         'scale-in': 'scaleIn 0.2s ease-out',
         'bounce-soft': 'bounceSoft 0.6s ease-in-out',
+        'shimmer': 'shimmer 2s infinite',
       },
       keyframes: {
         fadeIn: {
@@ -91,6 +92,10 @@ module.exports = {
         bounceSoft: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-10px)' },
+        },
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
         },
       },
       backdropBlur: {

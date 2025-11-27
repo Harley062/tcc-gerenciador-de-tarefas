@@ -31,38 +31,50 @@ const Toast: React.FC<ToastProps> = ({ message, type, duration = 3000, onClose, 
   // Configuração usando o design system
   const typeConfig = {
     success: {
-      bg: 'bg-success-600 dark:bg-success-500',
+      bg: 'bg-green-500/90 dark:bg-green-600/90 backdrop-blur-md border-green-400/50',
+      text: 'text-white',
       icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-        </svg>
+        <div className="bg-white/20 rounded-full p-1">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
       ),
       label: 'Sucesso'
     },
     error: {
-      bg: 'bg-danger-600 dark:bg-danger-500',
+      bg: 'bg-red-500/90 dark:bg-red-600/90 backdrop-blur-md border-red-400/50',
+      text: 'text-white',
       icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-        </svg>
+        <div className="bg-white/20 rounded-full p-1">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
       ),
       label: 'Erro'
     },
     info: {
-      bg: 'bg-primary-600 dark:bg-primary-500',
+      bg: 'bg-blue-500/90 dark:bg-blue-600/90 backdrop-blur-md border-blue-400/50',
+      text: 'text-white',
       icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-        </svg>
+        <div className="bg-white/20 rounded-full p-1">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
       ),
       label: 'Informação'
     },
     warning: {
-      bg: 'bg-warning-600 dark:bg-warning-500',
+      bg: 'bg-yellow-500/90 dark:bg-yellow-600/90 backdrop-blur-md border-yellow-400/50',
+      text: 'text-white',
       icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-        </svg>
+        <div className="bg-white/20 rounded-full p-1">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
       ),
       label: 'Aviso'
     },
@@ -72,8 +84,8 @@ const Toast: React.FC<ToastProps> = ({ message, type, duration = 3000, onClose, 
 
   return (
     <div
-      className={`${config.bg} text-white px-4 py-3 rounded-lg shadow-soft-lg flex items-center gap-3 min-w-[300px] max-w-[500px] transition-all duration-300 ${
-        isExiting ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0 animate-slide-up'
+      className={`${config.bg} ${config.text} px-4 py-3 rounded-xl shadow-lg border flex items-center gap-3 min-w-[320px] max-w-[500px] transition-all duration-500 transform hover:scale-[1.02] hover:shadow-xl ${
+        isExiting ? 'opacity-0 translate-y-4 scale-95' : 'opacity-100 translate-y-0 scale-100 animate-slide-up'
       }`}
       role="alert"
       aria-live="polite"
@@ -81,12 +93,12 @@ const Toast: React.FC<ToastProps> = ({ message, type, duration = 3000, onClose, 
       aria-label={`${config.label}: ${message}`}
     >
       {/* Ícone */}
-      <div className="flex-shrink-0" aria-hidden="true">
+      <div className="flex-shrink-0 animate-bounce-subtle" aria-hidden="true">
         {config.icon}
       </div>
 
       {/* Mensagem */}
-      <p className="flex-1 text-sm font-medium leading-relaxed">
+      <p className="flex-1 text-sm font-medium leading-relaxed drop-shadow-sm">
         {message}
       </p>
 
@@ -97,7 +109,7 @@ const Toast: React.FC<ToastProps> = ({ message, type, duration = 3000, onClose, 
             action.onClick();
             handleClose();
           }}
-          className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-md transition-all duration-200 text-sm font-medium whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white/50"
+          className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-all duration-200 text-xs font-bold uppercase tracking-wide whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white/50 shadow-sm"
           aria-label={action.label}
         >
           {action.label}
@@ -107,7 +119,7 @@ const Toast: React.FC<ToastProps> = ({ message, type, duration = 3000, onClose, 
       {/* Botão de fechar */}
       <button
         onClick={handleClose}
-        className="flex-shrink-0 p-1 hover:bg-white/20 rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+        className="flex-shrink-0 p-1.5 hover:bg-white/20 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 opacity-80 hover:opacity-100"
         aria-label="Fechar notificação"
         title="Fechar"
       >

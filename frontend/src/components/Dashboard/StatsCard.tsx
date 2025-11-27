@@ -23,29 +23,34 @@ const StatsCard: React.FC<StatsCardProps> = ({
   // Mapeamento de cores usando o design system
   const colorConfig = {
     primary: {
-      bg: 'bg-primary-100 dark:bg-primary-900/30',
+      bg: 'bg-primary-50/50 dark:bg-primary-900/10',
       text: 'text-primary-600 dark:text-primary-400',
-      icon: 'bg-primary-50 dark:bg-primary-900/50'
+      icon: 'bg-primary-100 dark:bg-primary-900/30',
+      border: 'border-primary-100 dark:border-primary-800/30'
     },
     success: {
-      bg: 'bg-success-100 dark:bg-success-900/30',
-      text: 'text-success-600 dark:text-success-400',
-      icon: 'bg-success-50 dark:bg-success-900/50'
+      bg: 'bg-green-50/50 dark:bg-green-900/10',
+      text: 'text-green-600 dark:text-green-400',
+      icon: 'bg-green-100 dark:bg-green-900/30',
+      border: 'border-green-100 dark:border-green-800/30'
     },
     warning: {
-      bg: 'bg-warning-100 dark:bg-warning-900/30',
-      text: 'text-warning-600 dark:text-warning-400',
-      icon: 'bg-warning-50 dark:bg-warning-900/50'
+      bg: 'bg-yellow-50/50 dark:bg-yellow-900/10',
+      text: 'text-yellow-600 dark:text-yellow-400',
+      icon: 'bg-yellow-100 dark:bg-yellow-900/30',
+      border: 'border-yellow-100 dark:border-yellow-800/30'
     },
     error: {
-      bg: 'bg-danger-100 dark:bg-danger-900/30',
-      text: 'text-danger-600 dark:text-danger-400',
-      icon: 'bg-danger-50 dark:bg-danger-900/50'
+      bg: 'bg-red-50/50 dark:bg-red-900/10',
+      text: 'text-red-600 dark:text-red-400',
+      icon: 'bg-red-100 dark:bg-red-900/30',
+      border: 'border-red-100 dark:border-red-800/30'
     },
     gray: {
-      bg: 'bg-gray-100 dark:bg-gray-700',
+      bg: 'bg-gray-50/50 dark:bg-gray-800/50',
       text: 'text-gray-600 dark:text-gray-400',
-      icon: 'bg-gray-50 dark:bg-gray-800'
+      icon: 'bg-gray-100 dark:bg-gray-700',
+      border: 'border-gray-200 dark:border-gray-700'
     }
   };
 
@@ -53,18 +58,21 @@ const StatsCard: React.FC<StatsCardProps> = ({
 
   return (
     <article
-      className="card p-6 border border-gray-200 dark:border-gray-700 animate-fade-in hover:scale-[1.02] transition-all duration-300"
+      className={`relative overflow-hidden rounded-2xl p-6 border ${config.border} ${config.bg} backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-lg group`}
       role="region"
       aria-label={`Estatística: ${title}`}
     >
+      {/* Background Decoration */}
+      <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full ${config.icon} opacity-20 blur-2xl group-hover:opacity-30 transition-opacity`}></div>
+
       {/* Cabeçalho com título e ícone */}
-      <div className="flex justify-between items-start mb-4">
-        <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+      <div className="flex justify-between items-start mb-4 relative z-10">
+        <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
           {title}
         </h3>
         {icon && (
           <div
-            className={`w-10 h-10 ${config.icon} ${config.text} rounded-lg flex items-center justify-center text-xl transition-all duration-200`}
+            className={`w-10 h-10 ${config.icon} ${config.text} rounded-xl flex items-center justify-center text-xl shadow-sm group-hover:scale-110 transition-transform duration-300`}
             aria-hidden="true"
           >
             {icon}
@@ -73,13 +81,13 @@ const StatsCard: React.FC<StatsCardProps> = ({
       </div>
 
       {/* Valor principal */}
-      <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2 leading-none font-display">
+      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2 leading-none font-display relative z-10">
         {value}
       </div>
 
       {/* Subtítulo */}
       {subtitle && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 relative z-10 font-medium">
           {subtitle}
         </p>
       )}
@@ -87,20 +95,20 @@ const StatsCard: React.FC<StatsCardProps> = ({
       {/* Indicador de tendência */}
       {trend && (
         <div
-          className={`flex items-center gap-1 text-sm font-medium ${
+          className={`flex items-center gap-1 text-sm font-bold relative z-10 ${
             trend.isPositive
-              ? 'text-success-600 dark:text-success-400'
-              : 'text-danger-600 dark:text-danger-400'
+              ? 'text-green-600 dark:text-green-400'
+              : 'text-red-600 dark:text-red-400'
           }`}
           role="status"
           aria-label={`Tendência: ${trend.isPositive ? 'Aumento' : 'Diminuição'} de ${Math.abs(trend.value)}%`}
         >
-          <span className="text-base font-bold" aria-hidden="true">
+          <span className="text-lg" aria-hidden="true">
             {trend.isPositive ? '↑' : '↓'}
           </span>
           <span>{Math.abs(trend.value)}%</span>
-          <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">
-            vs período anterior
+          <span className="ml-1 text-gray-400 dark:text-gray-500 font-medium text-xs uppercase">
+            vs anterior
           </span>
         </div>
       )}

@@ -62,24 +62,33 @@ const DashboardView: React.FC = () => {
     ? (summary.summary.completed / (summary.summary.completed + summary.summary.in_progress + summary.summary.todo)) * 100
     : 0;
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Bom dia';
+    if (hour < 18) return 'Boa tarde';
+    return 'Boa noite';
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 card border-l-4 border-warning-500 bg-warning-50 dark:bg-warning-900/20 p-4 animate-slide-down">
+          <div className="mb-6 rounded-2xl border border-red-200 dark:border-red-800 bg-red-50/90 dark:bg-red-900/20 backdrop-blur-sm p-4 shadow-lg animate-slide-down">
             <div className="flex items-start gap-3">
-              <svg className="w-5 h-5 text-warning-600 dark:text-warning-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-warning-800 dark:text-warning-200">Aviso</h3>
-                <p className="text-sm text-warning-700 dark:text-warning-300 mt-1">
+              <div className="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
+                <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="flex-1 pt-1">
+                <h3 className="text-sm font-bold text-red-800 dark:text-red-200">Atenção</h3>
+                <p className="text-sm text-red-700 dark:text-red-300 mt-1">
                   {error}. Exibindo dados em cache ou valores padrão.
                 </p>
                 <button
                   onClick={loadSummary}
-                  className="mt-2 text-xs font-medium text-warning-600 dark:text-warning-400 hover:text-warning-800 dark:hover:text-warning-200 underline"
+                  className="mt-2 text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 underline transition-colors uppercase tracking-wide"
                 >
                   Tentar novamente
                 </button>
@@ -89,55 +98,38 @@ const DashboardView: React.FC = () => {
         )}
 
         {/* Header */}
-        <div className="mb-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div className="mb-8 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
           <div>
-            <h1 className="text-4xl font-display font-bold text-gray-900 dark:text-white mb-2">
-              Dashboard
+            <h1 className="text-4xl sm:text-5xl font-display font-bold text-gray-900 dark:text-white mb-2 tracking-tight">
+              {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-purple-600 dark:from-primary-400 dark:to-purple-400">Bem-vindo!</span>
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">Visão geral do seu desempenho e produtividade</p>
+            <p className="text-gray-600 dark:text-gray-400 text-lg font-medium">Aqui está o resumo da sua produtividade.</p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+            <div className="flex bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-1.5 rounded-2xl shadow-sm border border-white/20 dark:border-gray-700/50">
+              {(['daily', 'weekly', 'monthly'] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPeriod(p)}
+                  className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 capitalize ${
+                    period === p
+                      ? 'bg-gradient-to-r from-primary-600 to-purple-600 text-white shadow-lg shadow-primary-500/30 transform scale-105'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                  }`}
+                >
+                  {p === 'daily' ? 'Hoje' : p === 'weekly' ? 'Semana' : 'Mês'}
+                </button>
+              ))}
+            </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-5 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center gap-2 transform hover:scale-105"
+              className="px-8 py-3 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white rounded-2xl transition-all duration-300 font-bold shadow-lg hover:shadow-primary-500/40 flex items-center justify-center gap-2 active:scale-95 transform hover:-translate-y-0.5"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
               <span>Nova Tarefa</span>
             </button>
-            <div className="flex gap-1 bg-white dark:bg-gray-800 p-1 rounded-lg shadow-md">
-              <button
-                onClick={() => setPeriod('daily')}
-                className={`px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 ${
-                  period === 'daily'
-                    ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-              >
-                Hoje
-              </button>
-              <button
-                onClick={() => setPeriod('weekly')}
-                className={`px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 ${
-                  period === 'weekly'
-                    ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-              >
-                Semana
-              </button>
-              <button
-                onClick={() => setPeriod('monthly')}
-                className={`px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 ${
-                  period === 'monthly'
-                    ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-              >
-                Mês
-              </button>
-            </div>
           </div>
         </div>
 
@@ -160,7 +152,7 @@ const DashboardView: React.FC = () => {
             subtitle="Em andamento"
             icon={
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             }
             color="primary"
@@ -192,59 +184,97 @@ const DashboardView: React.FC = () => {
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Completion Rate - Takes 2 columns */}
-          <div className="lg:col-span-2 card p-6 bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="lg:col-span-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 shadow-lg border border-white/20 dark:border-gray-700/50 rounded-3xl relative overflow-hidden group">
+            {/* Background Decoration */}
+            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl group-hover:bg-primary-500/20 transition-colors duration-500"></div>
+            
+            <div className="flex items-center justify-between mb-8 relative z-10">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-500/20 transform group-hover:rotate-6 transition-transform duration-300">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
-                <span>Taxa de Conclusão</span>
+                <div>
+                  <span className="block">Taxa de Conclusão</span>
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400 font-normal">Performance geral</span>
+                </div>
               </h2>
               <div className="text-right">
-                <div className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
-                  {completionRate.toFixed(1)}%
+                <div className="text-6xl font-bold bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent font-display">
+                  {completionRate.toFixed(0)}%
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Do período</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">Do período selecionado</p>
               </div>
             </div>
-            <div className="relative">
-              <div className="overflow-hidden h-6 mb-4 text-xs flex rounded-full bg-gray-200 dark:bg-gray-700 shadow-inner">
+            <div className="relative pt-4 z-10">
+              <div className="overflow-hidden h-6 mb-4 text-xs flex rounded-full bg-gray-100 dark:bg-gray-700/50 shadow-inner border border-gray-200 dark:border-gray-600">
                 <div
                   style={{ width: `${completionRate}%` }}
-                  className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-1000 ease-out rounded-full relative overflow-hidden"
+                  className="shadow-lg shadow-primary-500/30 flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-primary-500 via-purple-500 to-pink-500 transition-all duration-1000 ease-out rounded-full relative overflow-hidden"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                  <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
                 </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">
-                  <span className="font-semibold text-gray-900 dark:text-white">{summary?.summary.completed || 0}</span> concluídas
-                </span>
-                <span className="text-gray-600 dark:text-gray-400">
-                  Total: <span className="font-semibold text-gray-900 dark:text-white">{(summary?.summary.completed || 0) + (summary?.summary.in_progress || 0) + (summary?.summary.todo || 0)}</span>
-                </span>
+              <div className="flex justify-between text-sm mt-6">
+                <div className="flex items-center gap-3 bg-white/50 dark:bg-gray-700/30 px-4 py-2 rounded-xl border border-gray-100 dark:border-gray-600">
+                  <div className="w-3 h-3 rounded-full bg-primary-500 shadow-sm shadow-primary-500/50"></div>
+                  <span className="text-gray-600 dark:text-gray-300 font-medium">
+                    <span className="font-bold text-gray-900 dark:text-white text-lg mr-1">{summary?.summary.completed || 0}</span> concluídas
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 bg-white/50 dark:bg-gray-700/30 px-4 py-2 rounded-xl border border-gray-100 dark:border-gray-600">
+                  <div className="w-3 h-3 rounded-full bg-gray-300 dark:bg-gray-500"></div>
+                  <span className="text-gray-600 dark:text-gray-300 font-medium">
+                    Total: <span className="font-bold text-gray-900 dark:text-white text-lg ml-1">{(summary?.summary.completed || 0) + (summary?.summary.in_progress || 0) + (summary?.summary.todo || 0)}</span>
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Quick Actions */}
-          <div className="card p-6 bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-xl">
-            <h3 className="text-xl font-bold mb-4">Ações Rápidas</h3>
-            <div className="space-y-3">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white shadow-2xl rounded-3xl relative overflow-hidden group p-8 flex flex-col justify-between border border-gray-700">
+            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-primary-500/30 rounded-full blur-3xl group-hover:bg-primary-500/40 transition-all duration-500"></div>
+            <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-purple-500/30 rounded-full blur-3xl group-hover:bg-purple-500/40 transition-all duration-500"></div>
+            
+            <h3 className="text-2xl font-bold mb-6 relative z-10 flex items-center gap-2">
+              <span className="p-2 bg-white/10 rounded-lg">⚡</span>
+              Ações Rápidas
+            </h3>
+            
+            <div className="space-y-4 relative z-10">
               <button
-                onClick={() => setShowCreateModal(true)}
-                className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg p-3 text-left transition-all duration-200 flex items-center gap-3 border border-white/20"
+                onClick={() => setShowCreateModal(true)
+                }
+                className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl p-4 text-left transition-all duration-300 flex items-center gap-4 border border-white/10 hover:scale-[1.02] active:scale-[0.98] shadow-lg group/btn"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                <span className="font-medium">Criar Nova Tarefa</span>
+                <div className="bg-gradient-to-br from-primary-500 to-purple-600 p-3 rounded-xl shadow-lg shadow-primary-500/30 group-hover/btn:scale-110 transition-transform">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </div>
+                <div>
+                  <span className="font-bold block text-lg">Criar Nova Tarefa</span>
+                  <span className="text-sm opacity-70">Adicione ao seu fluxo</span>
+                </div>
               </button>
-              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                <p className="text-sm opacity-90 mb-2">Produtividade</p>
-                <p className="text-2xl font-bold">{summary?.summary.completed || 0}/{(summary?.summary.completed || 0) + (summary?.summary.in_progress || 0) + (summary?.summary.todo || 0)}</p>
+              
+              <div className="bg-black/30 backdrop-blur-md rounded-2xl p-5 border border-white/5">
+                <div className="flex justify-between items-center mb-3">
+                  <p className="text-sm font-bold opacity-80 uppercase tracking-wider">Produtividade Hoje</p>
+                  <svg className="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-4xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">{summary?.summary.completed || 0}</p>
+                  <p className="text-sm opacity-60 font-medium">/ {(summary?.summary.completed || 0) + (summary?.summary.in_progress || 0) + (summary?.summary.todo || 0)} tarefas</p>
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-1.5 mt-3 overflow-hidden">
+                    <div className="bg-white h-full rounded-full" style={{ width: `${completionRate}%` }}></div>
+                </div>
               </div>
             </div>
           </div>
@@ -258,74 +288,106 @@ const DashboardView: React.FC = () => {
         {/* Bottom Grid - Insights and Tasks */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* AI Insights */}
-          {summary && summary.insights && summary.insights.length > 0 && (
-            <div className="card bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-purple-900/20 dark:via-blue-900/20 dark:to-indigo-900/20 p-6 shadow-xl border border-purple-200 dark:border-purple-800">
-              <h2 className="text-xl font-bold mb-6 flex items-center text-gray-900 dark:text-white">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                </div>
-                <span>Insights de IA</span>
-              </h2>
-              <div className="space-y-3 max-h-80 overflow-y-auto">
-                {summary.insights.map((insight, index) => (
-                  <div key={index} className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 border border-purple-100 dark:border-purple-700">
-                    <p className="text-gray-800 dark:text-gray-200 leading-relaxed text-sm">{insight}</p>
-                  </div>
-                ))}
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 shadow-lg border border-purple-100 dark:border-purple-900/30 rounded-3xl relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+            <h2 className="text-xl font-bold mb-6 flex items-center text-gray-900 dark:text-white relative z-10">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg shadow-purple-500/20">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
               </div>
+              <div>
+                <span className="block">Insights de IA</span>
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">Análise inteligente</span>
+              </div>
+            </h2>
+            <div className="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar relative z-10">
+              {summary && summary.insights && summary.insights.length > 0 ? (
+                summary.insights.map((insight, index) => (
+                  <div key={index} className="bg-white/60 dark:bg-gray-700/40 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200 border border-purple-100 dark:border-purple-800/30 group hover:bg-white dark:hover:bg-gray-700">
+                    <div className="flex gap-3">
+                        <span className="text-xl">✨</span>
+                        <p className="text-gray-700 dark:text-gray-200 leading-relaxed text-sm font-medium group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">{insight}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-gray-700/30 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600">
+                  <p className="font-medium">Nenhum insight disponível no momento.</p>
+                  <p className="text-xs mt-2 opacity-70">Continue usando o app para gerar análises.</p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Top Completed Tasks */}
-          {summary && summary.top_completed && summary.top_completed.length > 0 && (
-            <div className="card p-6 bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-bold mb-6 flex items-center text-gray-900 dark:text-white">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                  </svg>
-                </div>
-                <span>Tarefas Concluídas</span>
-              </h2>
-              <div className="space-y-3 max-h-80 overflow-y-auto">
-                {summary.top_completed.map((task, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-                    <span className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">{task.title}</span>
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ml-2 flex-shrink-0 ${
-                      task.priority === 'high' ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/50 dark:text-danger-300' :
-                      task.priority === 'medium' ? 'bg-warning-100 text-warning-700 dark:bg-warning-900/50 dark:text-warning-300' :
-                      'bg-success-100 text-success-700 dark:bg-success-900/50 dark:text-success-300'
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 shadow-lg border border-white/20 dark:border-gray-700/50 rounded-3xl relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+            <h2 className="text-xl font-bold mb-6 flex items-center text-gray-900 dark:text-white relative z-10">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg shadow-green-500/20">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
+              <div>
+                <span className="block">Tarefas Concluídas</span>
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">Destaques recentes</span>
+              </div>
+            </h2>
+            <div className="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar relative z-10">
+              {summary && summary.top_completed && summary.top_completed.length > 0 ? (
+                summary.top_completed.map((task, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50/80 dark:bg-gray-700/30 rounded-2xl hover:bg-white dark:hover:bg-gray-700 transition-all duration-200 border border-transparent hover:border-gray-200 dark:hover:border-gray-600 shadow-sm hover:shadow-md group">
+                    <div className="flex items-center gap-4 overflow-hidden">
+                      <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 group-hover:scale-110 transition-transform">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"></path></svg>
+                      </div>
+                      <span className="font-bold text-gray-700 dark:text-gray-200 text-sm truncate group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{task.title}</span>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ml-2 flex-shrink-0 shadow-sm ${
+                      task.priority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                      task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' :
+                      'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
                     }`}>
                       {task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Média' : 'Baixa'}
                     </span>
                   </div>
-                ))}
-              </div>
+                ))
+              ) : (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-gray-700/30 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600">
+                  <p className="font-medium">Nenhuma tarefa concluída neste período.</p>
+                  <button onClick={() => setShowCreateModal(true)} className="text-primary-600 hover:text-primary-700 text-sm font-bold mt-3 hover:underline">
+                    Começar uma tarefa
+                  </button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
         {/* Alert Sections */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* High Priority Pending */}
-          {summary && summary.high_priority_pending && summary.high_priority_pending.length > 0 && (
-            <div className="card bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-2 border-red-200 dark:border-red-800 p-6 shadow-xl">
-              <h2 className="text-xl font-bold mb-6 flex items-center text-red-800 dark:text-red-200">
-                <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-600 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-                <span>Alta Prioridade Pendente</span>
-              </h2>
-              <div className="space-y-3 max-h-64 overflow-y-auto">
-                {summary.high_priority_pending.map((task, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
-                    <span className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">{task.title}</span>
+          <div className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/10 dark:to-orange-900/10 border border-red-100 dark:border-red-800/30 p-6 shadow-lg rounded-3xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
+            <h2 className="text-xl font-bold mb-6 flex items-center text-red-800 dark:text-red-200 relative z-10">
+              <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg shadow-red-500/20">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div>
+                <span className="block">Alta Prioridade</span>
+                <span className="text-sm font-normal opacity-80">Tarefas pendentes urgentes</span>
+              </div>
+            </h2>
+            <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar relative z-10">
+              {summary && summary.high_priority_pending && summary.high_priority_pending.length > 0 ? (
+                summary.high_priority_pending.map((task, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-red-500 group">
+                    <span className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate group-hover:text-red-700 dark:group-hover:text-red-400 transition-colors">{task.title}</span>
                     {task.due_date && (
-                      <span className="text-xs text-gray-600 dark:text-gray-400 flex items-center ml-2 flex-shrink-0">
+                      <span className="text-xs text-red-600 dark:text-red-400 flex items-center ml-2 flex-shrink-0 font-bold bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg">
                         <svg className="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                         </svg>
@@ -333,34 +395,54 @@ const DashboardView: React.FC = () => {
                       </span>
                     )}
                   </div>
-                ))}
-              </div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center bg-white/40 dark:bg-gray-800/40 rounded-2xl border border-dashed border-red-200 dark:border-red-900/30">
+                  <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-3 shadow-sm">
+                    <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-800 dark:text-gray-200 font-bold">Tudo sob controle!</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Nenhuma tarefa urgente pendente.</p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Recommendations */}
-          {summary && summary.recommendations && summary.recommendations.length > 0 && (
-            <div className="card bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 dark:border-blue-800 p-6 shadow-xl">
-              <h2 className="text-xl font-bold mb-6 flex items-center text-blue-800 dark:text-blue-200">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <span>Recomendações</span>
-              </h2>
-              <ul className="space-y-3 max-h-64 overflow-y-auto">
-                {summary.recommendations.map((rec, index) => (
-                  <li key={index} className="flex items-start p-3 bg-white/70 dark:bg-gray-800/70 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                    <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm">{rec}</span>
+          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/10 dark:to-cyan-900/10 border border-blue-100 dark:border-blue-800/30 p-6 shadow-lg rounded-3xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
+            <h2 className="text-xl font-bold mb-6 flex items-center text-blue-800 dark:text-blue-200 relative z-10">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg shadow-blue-500/20">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div>
+                <span className="block">Recomendações</span>
+                <span className="text-sm font-normal opacity-80">Dicas personalizadas</span>
+              </div>
+            </h2>
+            <ul className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar relative z-10">
+              {summary && summary.recommendations && summary.recommendations.length > 0 ? (
+                summary.recommendations.map((rec, index) => (
+                  <li key={index} className="flex items-start p-4 bg-white/70 dark:bg-gray-800/70 rounded-2xl hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 border border-transparent hover:border-blue-200 dark:hover:border-blue-700 shadow-sm hover:shadow-md">
+                    <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-3 flex-shrink-0 mt-0.5">
+                        <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                    </div>
+                    <span className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm font-medium">{rec}</span>
                   </li>
-                ))}
-              </ul>
-            </div>
-          )}
+                ))
+              ) : (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400 bg-white/40 dark:bg-gray-800/40 rounded-2xl border border-dashed border-blue-200 dark:border-blue-900/30">
+                  <p className="font-medium">Sem recomendações no momento.</p>
+                </div>
+              )}
+            </ul>
+          </div>
         </div>
       </div>
 

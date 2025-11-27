@@ -81,22 +81,24 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
 
   return (
     <article
-      className="card p-5 border border-gray-200 dark:border-gray-700 animate-fade-in group"
+      className="group relative overflow-hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-white/20 dark:border-gray-700/50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-5"
       aria-label={`Tarefa: ${task.title}`}
     >
+      <div className={`absolute top-0 left-0 w-1.5 h-full ${priorityConfig[task.priority].bg.replace('bg-', 'bg-').replace(' dark:bg-', ' dark:bg-').split(' ')[0].replace('50', '500')}`}></div>
+      
       {/* Cabeçalho */}
-      <div className="flex justify-between items-start mb-3 gap-3">
+      <div className="flex justify-between items-start mb-3 gap-3 pl-3">
         <h3
-          className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex-1 leading-tight line-clamp-1 overflow-hidden text-ellipsis"
+          className="text-lg font-bold text-gray-900 dark:text-gray-100 flex-1 leading-tight line-clamp-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors"
           title={task.title}
         >
           {task.title}
         </h3>
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
           {onEdit && (
             <button
               onClick={() => onEdit(task)}
-              className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
               aria-label={`Editar tarefa ${task.title}`}
               title="Editar tarefa"
             >
@@ -108,7 +110,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
           {onDelete && (
             <button
               onClick={() => onDelete(task.id)}
-              className="p-2 text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-danger-500"
+              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
               aria-label={`Deletar tarefa ${task.title}`}
               title="Deletar tarefa"
             >
@@ -123,7 +125,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
       {/* Descrição */}
       {task.description && (
         <p
-          className="text-gray-600 dark:text-gray-400 text-sm mb-4 leading-relaxed line-clamp-2 overflow-hidden text-ellipsis"
+          className="text-gray-600 dark:text-gray-400 text-sm mb-4 leading-relaxed line-clamp-2 pl-3"
           title={task.description}
         >
           {task.description}
@@ -131,44 +133,44 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
       )}
 
       {/* Badges */}
-      <div className="flex flex-wrap gap-2 mb-3" role="group" aria-label="Informações da tarefa">
+      <div className="flex flex-wrap gap-2 mb-4 pl-3" role="group" aria-label="Informações da tarefa">
         <span
-          className={`px-3 py-1 rounded-full text-xs font-medium border ${priorityConfig[task.priority].bg} ${priorityConfig[task.priority].text} ${priorityConfig[task.priority].border}`}
+          className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${priorityConfig[task.priority].bg} ${priorityConfig[task.priority].text} ${priorityConfig[task.priority].border}`}
           aria-label={`Prioridade: ${priorityConfig[task.priority].label}`}
         >
           {priorityConfig[task.priority].label}
         </span>
         <span
-          className={`px-3 py-1 rounded-full text-xs font-medium ${statusConfig[task.status].bg} ${statusConfig[task.status].text}`}
+          className={`px-2.5 py-1 rounded-lg text-xs font-bold ${statusConfig[task.status].bg} ${statusConfig[task.status].text}`}
           aria-label={`Status: ${statusConfig[task.status].label}`}
         >
           {statusConfig[task.status].label}
         </span>
         {task.due_date && (
           <span
-            className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${
+            className={`px-2.5 py-1 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 ${
               isOverdue
-                ? 'bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-300 border border-danger-200 dark:border-danger-800'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
+                : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600'
             }`}
             aria-label={`Data: ${formatDate(task.due_date)}${isOverdue ? ' (Atrasada)' : ''}`}
           >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             {formatDate(task.due_date)}
-            {isOverdue && <span className="font-bold">!</span>}
+            {isOverdue && <span className="font-bold animate-pulse">!</span>}
           </span>
         )}
       </div>
 
       {/* Tags */}
       {task.tags && task.tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-3" role="group" aria-label="Tags da tarefa">
+        <div className="flex flex-wrap gap-2 mb-4 pl-3" role="group" aria-label="Tags da tarefa">
           {task.tags.map((tag, index) => (
             <span
               key={index}
-              className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md text-xs font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-200 dark:border-gray-600"
               aria-label={`Tag: ${tag}`}
             >
               #{tag}
@@ -179,10 +181,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
 
       {/* Botões de ação */}
       {onStatusChange && (
-        <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50 pl-3">
           <button
             onClick={() => onStatusChange(task.id, 'in_progress')}
-            className="flex-1 btn bg-warning-500 hover:bg-warning-600 text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
+            className="flex-1 px-4 py-2 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 rounded-lg text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={task.status === 'in_progress'}
             aria-label="Marcar como em progresso"
           >
@@ -190,7 +192,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
           </button>
           <button
             onClick={() => onStatusChange(task.id, 'done')}
-            className="flex-1 btn bg-success-500 hover:bg-success-600 text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
+            className="flex-1 px-4 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-700 dark:text-green-400 rounded-lg text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={task.status === 'done'}
             aria-label="Marcar como concluída"
           >

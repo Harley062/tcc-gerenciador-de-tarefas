@@ -106,11 +106,11 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
   const getHeaderColor = () => {
     switch(id) {
       case 'todo':
-        return 'text-warning-700 dark:text-warning-300';
+        return 'text-gray-700 dark:text-gray-200';
       case 'in_progress':
-        return 'text-primary-700 dark:text-primary-300';
+        return 'text-blue-700 dark:text-blue-200';
       case 'done':
-        return 'text-success-700 dark:text-success-300';
+        return 'text-green-700 dark:text-green-200';
       default:
         return 'text-gray-700 dark:text-gray-300';
     }
@@ -119,20 +119,20 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`w-[320px] max-w-[320px] flex-shrink-0 rounded-xl p-4 ${colorClass} ${
-        isOver ? 'ring-4 ring-primary-400 dark:ring-primary-600 scale-105' : ''
-      } transition-all duration-200 shadow-soft`}
+      className={`w-[350px] max-w-[350px] flex-shrink-0 rounded-3xl p-5 ${colorClass} ${
+        isOver ? 'ring-4 ring-primary-400/50 dark:ring-primary-600/50 scale-[1.02] shadow-2xl' : 'shadow-xl'
+      } transition-all duration-300 backdrop-blur-xl flex flex-col h-full max-h-[calc(100vh-12rem)] border border-white/20 dark:border-gray-700/30`}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className={getHeaderColor()}>
+      <div className="flex items-center justify-between mb-6 px-2">
+        <div className="flex items-center gap-3">
+          <div className={`p-2.5 rounded-xl bg-white/80 dark:bg-gray-800/80 shadow-sm backdrop-blur-sm ${getHeaderColor()}`}>
             {getColumnIcon()}
           </div>
-          <h2 className={`text-lg font-bold ${getHeaderColor()}`}>
+          <h2 className={`text-xl font-bold tracking-tight ${getHeaderColor()}`}>
             {title}
           </h2>
         </div>
-        <span className={`px-3 py-1 rounded-full text-sm font-bold ${getHeaderColor()} bg-white/50 dark:bg-gray-800/50`}>
+        <span className={`px-3 py-1 rounded-full text-sm font-bold ${getHeaderColor()} bg-white/60 dark:bg-gray-800/60 shadow-sm backdrop-blur-sm`}>
           {tasks.length}
         </span>
       </div>
@@ -141,10 +141,16 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
         items={tasks.map(t => t.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="min-h-[400px] space-y-3">
+        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4 min-h-[150px] pb-4">
           {tasks.length === 0 ? (
-            <div className="flex items-center justify-center h-32 text-gray-400 dark:text-gray-600 text-sm">
-              <p>Arraste tarefas aqui</p>
+            <div className="flex flex-col items-center justify-center h-48 text-gray-400 dark:text-gray-500 border-2 border-dashed border-gray-300/50 dark:border-gray-700/50 rounded-2xl bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm transition-colors hover:bg-white/30 dark:hover:bg-gray-800/30">
+              <div className="p-3 bg-white/30 dark:bg-gray-800/30 rounded-full mb-3">
+                <svg className="w-8 h-8 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <p className="text-sm font-bold opacity-80">Sem tarefas</p>
+              <p className="text-xs opacity-60 mt-1">Arraste itens para cá</p>
             </div>
           ) : (
             tasks.map((task) => (
@@ -245,20 +251,25 @@ const KanbanView: React.FC = () => {
     // show a simple DOM modal instead of window.confirm
     const confirmed = await new Promise<boolean>((resolve) => {
       const overlay = document.createElement('div');
-      overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50';
+      overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in';
       const modal = document.createElement('div');
-      modal.className = 'bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full shadow-lg';
+      modal.className = 'bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full shadow-2xl transform scale-100 animate-scale-in border border-gray-200 dark:border-gray-700';
 
       modal.innerHTML = `
-      <h3 class="text-lg font-bold mb-2">Confirmar exclusão</h3>
-      <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">Tem certeza que deseja deletar esta tarefa?</p>
+      <div class="flex items-center gap-3 mb-4 text-red-600 dark:text-red-400">
+        <div class="p-2 bg-red-100 dark:bg-red-900/30 rounded-full">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Confirmar exclusão</h3>
+      </div>
+      <p class="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">Tem certeza que deseja deletar esta tarefa? Esta ação não pode ser desfeita.</p>
       `;
 
       const buttons = document.createElement('div');
-      buttons.className = 'flex justify-end gap-2';
+      buttons.className = 'flex justify-end gap-3';
 
       const cancelBtn = document.createElement('button');
-      cancelBtn.className = 'px-3 py-1 rounded bg-gray-200 dark:bg-gray-700';
+      cancelBtn.className = 'px-4 py-2 rounded-lg font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors';
       cancelBtn.textContent = 'Cancelar';
       cancelBtn.onclick = () => {
       document.body.removeChild(overlay);
@@ -266,8 +277,8 @@ const KanbanView: React.FC = () => {
       };
 
       const confirmBtn = document.createElement('button');
-      confirmBtn.className = 'px-3 py-1 rounded bg-red-600 text-white';
-      confirmBtn.textContent = 'Deletar';
+      confirmBtn.className = 'px-4 py-2 rounded-lg font-medium bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/30 transition-all';
+      confirmBtn.textContent = 'Sim, deletar';
       confirmBtn.onclick = () => {
       document.body.removeChild(overlay);
       resolve(true);
@@ -296,88 +307,95 @@ const KanbanView: React.FC = () => {
   };
 
   const columnColors = {
-    todo: 'bg-gradient-to-b from-warning-50 to-warning-100/50 dark:from-warning-900/10 dark:to-warning-800/5 border-2 border-warning-200 dark:border-warning-800',
-    in_progress: 'bg-gradient-to-b from-primary-50 to-primary-100/50 dark:from-primary-900/10 dark:to-primary-800/5 border-2 border-primary-200 dark:border-primary-800',
-    done: 'bg-gradient-to-b from-success-50 to-success-100/50 dark:from-success-900/10 dark:to-success-800/5 border-2 border-success-200 dark:border-success-800',
+    todo: 'bg-gray-100/80 dark:bg-gray-900/40',
+    in_progress: 'bg-blue-50/80 dark:bg-blue-900/20',
+    done: 'bg-green-50/80 dark:bg-green-900/20',
   };
 
   const activeTask = activeId ? tasks.find(t => t.id === activeId) : null;
 
   if (isLoading) {
     return (
-      <div className="text-center py-16">
-        <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-primary-200 border-t-primary-600 dark:border-primary-800 dark:border-t-primary-400"></div>
-        <p className="mt-6 text-gray-600 dark:text-gray-400 font-medium">Carregando tarefas...</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="relative w-20 h-20">
+          <div className="absolute top-0 left-0 w-full h-full border-4 border-gray-200 dark:border-gray-700 rounded-full"></div>
+          <div className="absolute top-0 left-0 w-full h-full border-4 border-primary-600 rounded-full animate-spin border-t-transparent"></div>
+        </div>
+        <p className="mt-6 text-gray-600 dark:text-gray-400 font-medium animate-pulse">Carregando seu quadro...</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 animate-fade-in">
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+      <div className="w-full max-w-[1800px] mx-auto p-4 sm:p-8 animate-fade-in">
+        <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-display font-bold text-gradient-primary mb-2">Quadro Kanban</h1>
-            <p className="text-gray-600 dark:text-gray-400">Arraste e solte as tarefas para alterar o status</p>
+            <h1 className="text-4xl font-display font-bold text-gray-900 dark:text-white mb-2 tracking-tight">
+              Quadro <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-purple-600 dark:from-primary-400 dark:to-purple-400">Kanban</span>
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 text-lg font-medium">Gerencie o fluxo das suas tarefas visualmente</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium shadow-md flex items-center gap-2"
+            className="px-8 py-3 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white rounded-2xl transition-all duration-300 font-bold shadow-lg hover:shadow-primary-500/40 flex items-center gap-2 active:scale-95 transform hover:-translate-y-0.5"
           >
-            <span className="text-xl">➕</span>
-            <span>Criar Tarefa</span>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Nova Tarefa</span>
           </button>
         </div>
+
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
+        >
+          <div className="flex gap-6 items-start pb-4 overflow-x-auto min-h-[calc(100vh-16rem)] px-2">
+            {Object.entries(columns).map(([columnId, columnTasks]) => (
+              <DroppableColumn
+                key={columnId}
+                id={columnId}
+                title={columnTitles[columnId as keyof typeof columnTitles]}
+                tasks={columnTasks}
+                colorClass={columnColors[columnId as keyof typeof columnColors]}
+                onEdit={(task) => setSelectedTaskForEdit(task)}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+
+          <DragOverlay>
+            {activeTask ? (
+              <div className="opacity-90 rotate-2 scale-105 cursor-grabbing">
+                <TaskCard task={activeTask} onDelete={handleDelete} />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+
+        {selectedTaskForEdit && (
+          <TaskEditModal
+            task={selectedTaskForEdit}
+            onClose={() => setSelectedTaskForEdit(null)}
+            onSaved={() => fetchTasks({})}
+          />
+        )}
+
+        {/* Task Create Modal */}
+        {showCreateModal && (
+          <TaskCreateModal
+            onClose={() => setShowCreateModal(false)}
+            onCreated={() => {
+              setShowCreateModal(false);
+              fetchTasks({});
+            }}
+          />
+        )}
       </div>
-
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onDragCancel={handleDragCancel}
-      >
-        <div className="flex gap-6 items-start pb-4 overflow-x-auto">
-          {Object.entries(columns).map(([columnId, columnTasks]) => (
-            <DroppableColumn
-              key={columnId}
-              id={columnId}
-              title={columnTitles[columnId as keyof typeof columnTitles]}
-              tasks={columnTasks}
-              colorClass={columnColors[columnId as keyof typeof columnColors]}
-              onEdit={(task) => setSelectedTaskForEdit(task)}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-
-        <DragOverlay>
-          {activeTask ? (
-            <div className="opacity-80">
-              <TaskCard task={activeTask} onDelete={handleDelete} />
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
-
-      {selectedTaskForEdit && (
-        <TaskEditModal
-          task={selectedTaskForEdit}
-          onClose={() => setSelectedTaskForEdit(null)}
-          onSaved={() => fetchTasks({})}
-        />
-      )}
-
-      {/* Task Create Modal */}
-      {showCreateModal && (
-        <TaskCreateModal
-          onClose={() => setShowCreateModal(false)}
-          onCreated={() => {
-            setShowCreateModal(false);
-            fetchTasks({});
-          }}
-        />
-      )}
     </div>
   );
 };
