@@ -214,14 +214,11 @@ const KanbanView: React.FC = () => {
     const taskId = active.id as string;
     const overId = over.id as string;
 
-    // Find which column the task is being dropped into
     let newStatus: Task['status'] | null = null;
 
-    // Check if dropped directly on a column or on another task
     if (overId === 'todo' || overId === 'in_progress' || overId === 'done') {
       newStatus = overId as Task['status'];
     } else {
-      // Find the status of the task we're dropping on
       for (const [status, columnTasks] of Object.entries(columns)) {
         if (columnTasks.some(t => t.id === overId)) {
           newStatus = status as Task['status'];
@@ -232,7 +229,6 @@ const KanbanView: React.FC = () => {
 
     if (!newStatus) return;
 
-    // Find the current status of the dragged task
     const currentTask = tasks.find(t => t.id === taskId);
     if (!currentTask || currentTask.status === newStatus) return;
 
@@ -248,7 +244,6 @@ const KanbanView: React.FC = () => {
   };
 
   const handleDelete = async (taskId: string) => {
-    // show a simple DOM modal instead of window.confirm
     const confirmed = await new Promise<boolean>((resolve) => {
       const overlay = document.createElement('div');
       overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in';
@@ -385,7 +380,6 @@ const KanbanView: React.FC = () => {
           />
         )}
 
-        {/* Task Create Modal */}
         {showCreateModal && (
           <TaskCreateModal
             onClose={() => setShowCreateModal(false)}
