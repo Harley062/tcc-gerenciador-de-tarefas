@@ -526,7 +526,7 @@ Quer que eu marque esta tarefa como concluída quando terminar? Basta dizer "con
         return labels.get(p, p.capitalize())
     
     def _format_status(self, status) -> str:
-        """Format status for display"""
+        """Format status for display with emoji"""
         s = str(status).lower().replace("taskstatus.", "")
         labels = {
             "todo": "📋 A Fazer",
@@ -534,6 +534,33 @@ Quer que eu marque esta tarefa como concluída quando terminar? Basta dizer "con
             "in_progress": "🔄 Em Progresso",
             "done": "✅ Concluída",
             "cancelled": "❌ Cancelada"
+        }
+        return labels.get(s, s.capitalize())
+    
+    def _format_priority_text(self, priority) -> str:
+        """Format priority to Portuguese text without emoji"""
+        p = str(priority).lower().replace("priority.", "")
+        labels = {
+            "urgente": "Urgente",
+            "urgent": "Urgente",
+            "alta": "Alta",
+            "high": "Alta",
+            "media": "Média",
+            "medium": "Média",
+            "baixa": "Baixa",
+            "low": "Baixa"
+        }
+        return labels.get(p, p.capitalize())
+    
+    def _format_status_text(self, status) -> str:
+        """Format status to Portuguese text without emoji"""
+        s = str(status).lower().replace("taskstatus.", "")
+        labels = {
+            "todo": "A Fazer",
+            "pending": "A Fazer",
+            "in_progress": "Em Progresso",
+            "done": "Concluída",
+            "cancelled": "Cancelada"
         }
         return labels.get(s, s.capitalize())
     
@@ -634,12 +661,26 @@ Quer que eu marque esta tarefa como concluída quando terminar? Basta dizer "con
                 "done": "CONCLUÍDA",
                 "cancelled": "CANCELADA"
             }.get(status, status.upper())
+        
+        def format_priority(priority):
+            """Format priority to Portuguese"""
+            p = str(priority).lower().replace("priority.", "")
+            return {
+                "urgente": "URGENTE",
+                "urgent": "URGENTE",
+                "alta": "ALTA",
+                "high": "ALTA",
+                "media": "MÉDIA",
+                "medium": "MÉDIA",
+                "baixa": "BAIXA",
+                "low": "BAIXA"
+            }.get(p, p.upper())
 
         # Build formatted task list
         task_lines = []
         for idx, t in enumerate(filtered_tasks[:10], 1):
             status = format_status(t.status)
-            priority = t.priority.upper()
+            priority = format_priority(t.priority)
             date_info = format_date(t.due_date)
 
             # Truncate title if too long
@@ -1182,8 +1223,12 @@ Quer que eu marque esta tarefa como concluída quando terminar? Basta dizer "con
                     temporal_tag = " [HOJE]"
                 elif task_date == tomorrow:
                     temporal_tag = " [AMANHÃ]"
+            
+            # Format status and priority in Portuguese
+            status_pt = self._format_status_text(t.status)
+            priority_pt = self._format_priority_text(t.priority)
 
-            task_line = f"- {t.title} | Status: {t.status} | Prioridade: {t.priority}"
+            task_line = f"• {t.title} | Status: {status_pt} | Prioridade: {priority_pt}"
             if t.due_date:
                 task_line += f" | Prazo: {t.due_date.strftime('%d/%m/%Y %H:%M')}{temporal_tag}"
 
