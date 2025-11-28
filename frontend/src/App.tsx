@@ -8,7 +8,7 @@ import KanbanView from './components/KanbanView';
 import CalendarView from './components/CalendarView';
 import SettingsView from './components/SettingsView';
 import DashboardView from './components/DashboardView';
-import ChatAssistant from './components/ChatAssistant';
+// import ChatAssistant from './components/ChatAssistant'; // Desativado temporariamente
 import CreateTaskAIModal from './components/CreateTaskAIModal';
 import NotificationBell from './components/NotificationBell';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -259,7 +259,7 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <ChatAssistant />
+      {/* <ChatAssistant /> */}{/* Desativado temporariamente */}
       {showAIModal && (
         <CreateTaskAIModal
           onClose={() => setShowAIModal(false)}
